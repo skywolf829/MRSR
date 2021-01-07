@@ -100,8 +100,7 @@ def trilinear_interpolate(im, x, y, z, periodic=False):
     c1 = c01 * y1_diff + c11 * y0_diff
 
     c = c0 * z1_diff + c1 * z0_diff
-    return c
-    
+    return c   
     
 def lagrangian_transport(VF, x_res, y_res, time_length, ts_per_sec, device):
     #x = torch.arange(-1, 1, int(VF.shape[2] / x_res), dtype=torch.float32).unsqueeze(1).expand([int(VF.shape[2] / x_res), int(VF.shape[3] / y_res)]).unsqueeze(0)

@@ -1,4 +1,4 @@
-from SinGAN_models import *
+from models import *
 from options import *
 from utility_functions import *
 import torch.multiprocessing as mp
@@ -99,15 +99,6 @@ if __name__ == '__main__':
         generators, discriminators = load_models(opt,args["device"])
         dataset = Dataset(os.path.join(input_folder, opt["data_folder"]), opt)
 
-
-    
-
-
-   
-
-
-
-    
     now = datetime.datetime.now()
     start_time = time.time()
     print_to_log_and_console("Started training at " + str(now), 
@@ -132,6 +123,7 @@ if __name__ == '__main__':
         i += 1
         opt['scale_in_training'] += 1
         opt['iteration_number'] = 0
+        opt['epoch_number'] = 0
 
         save_models(generators, discriminators, opt)
             
