@@ -1,23 +1,9 @@
-from models import *
-from options import *
-from utility_functions import *
-import torch.nn.functional as F
-import torch
 import os
 import imageio
 import argparse
 from typing import Union, Tuple
-from matplotlib.pyplot import cm
-import matplotlib.pyplot as plt
-from skimage.transform.pyramids import pyramid_reduce
-from skimage.feature import match_template
-import cv2 as cv
 
 
-MVTVSSR_folder_path = os.path.dirname(os.path.abspath(__file__))
-input_folder = os.path.join(MVTVSSR_folder_path, "InputData")
-output_folder = os.path.join(MVTVSSR_folder_path, "Output")
-save_folder = os.path.join(MVTVSSR_folder_path, "SavedModels")
 
 import zeep
 import struct
@@ -141,9 +127,6 @@ sim_name, timestep, field, num_components, num_workers):
            print("Done: %i/%i" % (done, len(threads)))
     return full
 
-#f = get_full_frame(0, 1024, 0, 1024, 0, 1, "isotropic1024coarse", 1, "u", 3)
-#f = get_full_frame_parallel(0, 1024, 0, 1024, 0, 1, "isotropic1024coarse", 1, "u", 3, 16)
-#f = get_full_frame_parallel(0, 10240, 0, 1536, 1, 2, "channel5200", 1, "u", 3, 64)
 
 frames = []
 
@@ -163,70 +146,10 @@ for i in range(startts, endts, ts_skip):
     name, i, 
     "u", 3, 
     64)
-    #np.save(os.path.join(input_folder, "JHUturbulence",
-    #name,
-    #str(count) + ".npy"), f[0].swapaxes(0,2).swapaxes(1,2).astype(np.float32))
     print(f.shape)
     np.save(str(i-1)+".npy", f.astype(np.float32).swapaxes(0,3).swapaxes(3,2).swapaxes(2,1))
     count += 1
     frames.append(f[0])
-#f = laplace_pyramid_downscale3D(np2torch(f, 
-#"cuda").permute(3, 0, 1, 2).unsqueeze(0), 2, 0.5,"cuda")[0].permute(1,2,3,0).cpu().numpy()
 
-#np.save("0.npy", f.astype(np.float32).swapaxes(0,3).swapaxes(3,2).swapaxes(2,1))
-#print(f.shape)
 print("finished")
 print(time.time() - t0)
-#lJHTDB.finalize()
-
-'''
-from netCDF4 import Dataset
-rootgrp = Dataset("test.nc", "w", format="NETCDF4")
-velocity = rootgrp.createGroup("velocity")
-u = rootgrp.createDimension("u")
-v = rootgrp.createDimension("v")
-w = rootgrp.createDimension("w")
-w = rootgrp.createDimension("channels", 3)
-us = rootgrp.createVariable("u", f.dtype, ("u","v","w"))
-vs = rootgrp.createVariable("v", f.dtype, ("u","v","w"))
-ws = rootgrp.createVariable("w", f.dtype, ("u","v","w"))
-mags = rootgrp.createVariable("magnitude", f.dtype, ("u","v","w"))
-velocities = rootgrp.createVariable("velocities", f.dtype, ("u","v","w", "channels"))
-mags[:] = np.linalg.norm(f,axis=3)
-us[:] = f[:,:,:,0]
-vs[:] = f[:,:,:,1]
-ws[:] = f[:,:,:,2]
-
-#velocities[:] = f
-'''
-
-'''
-f = np.array(frames)
-max_mag = None
-mags = np.zeros(f.shape)
-for i in range(f.shape[0]):
-    for j in range(f.shape[1]):
-        for k in range(f.shape[2]):
-            mag = (f[i,j,k,0]**2 + f[i,j,k,1]**2 + f[i,j,k,2]**2)**0.5
-            mags[i,j,k,0] = mag
-            if max_mag is None or mag > max_mag:
-                max_mag = mag
-
-mags *= (1 / max_mag)
-
-
-f[:,:,:,0] -= f[:,:,:,0].min()
-f[:,:,:,0] *= (1/ f[:,:,:,0].max())
-f[:,:,:,1] -= f[:,:,:,1].min()
-f[:,:,:,1] *= (1/ f[:,:,:,1].max())
-f[:,:,:,2] -= f[:,:,:,2].min()
-f[:,:,:,2] *= (1/ f[:,:,:,2].max())
-
-
-mags = cm.coolwarm(mags[:,:,:,0])
-
-imageio.mimwrite(name + "_vmag.gif", mags)
-imageio.mimwrite(name + ".gif", f)
-
-
-'''
