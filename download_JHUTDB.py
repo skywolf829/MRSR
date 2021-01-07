@@ -1,4 +1,4 @@
-from SinGAN_models import *
+from models import *
 from options import *
 from utility_functions import *
 import torch.nn.functional as F
@@ -107,7 +107,8 @@ def download_file(url, file_name):
        return e
 
 def get_full_frame_parallel(x_start, x_end, x_step,
-y_start, y_end, y_step, z_start, z_end, z_step,
+y_start, y_end, y_step, 
+z_start, z_end, z_step,
 sim_name, timestep, field, num_components, num_workers):
     threads= []
     full = np.zeros((int((z_end-z_start)/z_step), 
@@ -152,13 +153,13 @@ name = "isotropic1024coarse"
 t0 = time.time()
 count = 0
 startts = 1
-endts = 100
+endts = 101
 ts_skip = 1
 for i in range(startts, endts, ts_skip):
     print("TS %i/%i" % (i, endts))
-    f = get_full_frame_parallel(0, 1024, 8,#x
-    0, 1024, 8, #y
-    0, 1024, 8, #z
+    f = get_full_frame_parallel(0, 1024, 1,#x
+    0, 1024, 1, #y
+    0, 1024, 1, #z
     name, i, 
     "u", 3, 
     64)
