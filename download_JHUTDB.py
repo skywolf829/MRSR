@@ -2,9 +2,7 @@ import os
 import imageio
 import argparse
 from typing import Union, Tuple
-
-
-
+import numpy as np
 import zeep
 import struct
 import base64
