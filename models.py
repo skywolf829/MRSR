@@ -745,13 +745,13 @@ def train_single_scale(generators, discriminators, opt, dataset):
                 real_hr = downsample(real_hr, opt['resolutions'][len(generators)], opt['downsample_mode'])
             if(opt['mode'] == '2D' or opt['mode'] == "3Dto2D"):
                 if(real_hr.shape[2] > opt['cropping_resolution']):
-                    rand_crop_x_start = torch.randint(real_hr.shape[2] - opt['cropping_resolution'])
+                    rand_crop_x_start = torch.randint(real_hr.shape[2] - opt['cropping_resolution'], 1)
                     rand_crop_x_end = rand_crop_x_start + opt['cropping_resolution']
                 else:
                     rand_crop_x_start = 0
                     rand_crop_x_end = real_hr.shape[2]
                 if(real_hr.shape[3] > opt['cropping_resolution']):
-                    rand_crop_y_start = torch.randint(real_hr.shape[3] - opt['cropping_resolution'])
+                    rand_crop_y_start = torch.randint(real_hr.shape[3] - opt['cropping_resolution'], 1)
                     rand_crop_y_end = rand_crop_y_start + opt['cropping_resolution']
                 else:
                     rand_crop_y_start = 0
@@ -760,19 +760,19 @@ def train_single_scale(generators, discriminators, opt, dataset):
                 
             else:
                 if(real_hr.shape[2] > opt['cropping_resolution']):
-                    rand_crop_x_start = torch.randint(real_hr.shape[2] - opt['cropping_resolution'])
+                    rand_crop_x_start = torch.randint(real_hr.shape[2] - opt['cropping_resolution'], 1)
                     rand_crop_x_end = rand_crop_x_start + opt['cropping_resolution']
                 else:
                     rand_crop_x_start = 0
                     rand_crop_x_end = real_hr.shape[2]
                 if(real_hr.shape[3] > opt['cropping_resolution']):    
-                    rand_crop_y_start = torch.randint(real_hr.shape[3] - opt['cropping_resolution'])
+                    rand_crop_y_start = torch.randint(real_hr.shape[3] - opt['cropping_resolution'], 1)
                     rand_crop_y_end = rand_crop_y_start + opt['cropping_resolution']
                 else:
                     rand_crop_y_start = 0
                     rand_crop_y_end = real_hr.shape[3]
                 if(real_hr.shape[4] > opt['cropping_resolution']):
-                    rand_crop_z_start = torch.randint(real_hr.shape[4] - opt['cropping_resolution'])
+                    rand_crop_z_start = torch.randint(real_hr.shape[4] - opt['cropping_resolution'], 1)
                     rand_crop_z_end = rand_crop_z_start + opt['cropping_resolution']
                 else:
                     rand_crop_z_start = 0
