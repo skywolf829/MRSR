@@ -772,7 +772,7 @@ def train_single_scale(generators, discriminators, opt):
                 else:
                     rand_crop_y_start = 0
                     rand_crop_y_end = real_hr.shape[3]
-                if(real_hr.shape[4] > opt['cropping_resolution'])
+                if(real_hr.shape[4] > opt['cropping_resolution']):
                     rand_crop_z_start = torch.randint(real_hr.shape[4] - opt['cropping_resolution'])
                     rand_crop_z_end = rand_crop_z_start + opt['cropping_resolution']
                 else:
