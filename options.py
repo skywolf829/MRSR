@@ -50,7 +50,7 @@ class Options():
         opt["alpha_2"]                 = 0        # Adversarial loss coefficient
         opt["alpha_3"]                 = 0        # Soft physical loss coefficient
         opt["alpha_4"]                 = 1        # mag_and_angle loss
-        opt["alpha_5"]                 = 1          # first derivative loss coeff
+        opt["alpha_5"]                 = 0          # first derivative loss coeff
         opt["alpha_6"]                 = 0  # Lagrangian transport loss
 
         opt["adaptive_streamlines"]    = False
