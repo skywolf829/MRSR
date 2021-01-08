@@ -87,7 +87,7 @@ if __name__ == '__main__':
             if args[k] is not None:
                 opt[k] = args[k]
          # Determine scales    
-        dataset = Dataset(os.path.join(input_folder, opt["data_folder"]), opt)
+        dataset = Dataset(os.path.join(input_folder, opt)
         init_scales(opt, dataset)
     else:        
         opt = load_options(os.path.join(save_folder, args["load_from"]))
