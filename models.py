@@ -781,9 +781,9 @@ def train_single_scale(generators, discriminators, opt, dataset):
                 real_hr = real_hr[:,:,rand_crop_x_start:rand_crop_x_end,rand_crop_y_start:rand_crop_y_end,rand_crop_z_start:rand_crop_z_end]
             print("Adjusted HR shape: %s" % str(real_hr.shape))
             real_hr = real_hr.to(opt["device"])
-            real_lr = F.interpolate(real_hr, scale_factor=opt['spatial_downscale_ratio'],align_corners=False)
+            real_lr = F.interpolate(real_hr, scale_factor=opt['spatial_downscale_ratio'],mode=opt['downsample_mode'],align_corners=False)
             print("LR shapeafter interp downscale: %s" % str(real_lr.shape))
-            real_lr = F.interpolate(real_lr, scale_factor=1/opt['spatial_downscale_ratio'],align_corners=False)
+            real_lr = F.interpolate(real_lr, scale_factor=1/opt['spatial_downscale_ratio'],mode=opt['upsample_mode'],align_corners=False)
             print("LR shape after interp upscale: %s" % str(real_lr.shape))
             D_loss = 0
             G_loss = 0        
