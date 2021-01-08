@@ -745,7 +745,7 @@ def train_single_scale(generators, discriminators, opt, dataset):
 
         #for iteration in range(len(dataset)):
         for batch_num, real_hr in enumerate(dataloader):
-            print("Original data shape: %s" % str(real_hr.shape))
+            #print("Original data shape: %s" % str(real_hr.shape))
             if(len(generators) < opt['n'] - 1):
                 real_hr = downsample(real_hr, opt['resolutions'][len(generators)], opt['downsample_mode'])
             if(opt['mode'] == '2D' or opt['mode'] == "3Dto2D"):
