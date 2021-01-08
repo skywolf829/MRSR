@@ -1309,7 +1309,7 @@ class Dataset(torch.utils.data.Dataset):
         elif(self.opt['scaling_mode'] == "magnitude"):
             data *= (1 / self.max_mag)
             
-        if(self.mode == "3Dto2D"):
+        if(self.opt['mode'] == "3Dto2D"):
             data = data[:,:,:,int(data.shape[3]/2)]
 
         data = np2torch(data, "cpu")
