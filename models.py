@@ -1208,9 +1208,9 @@ class Dataset(torch.utils.data.Dataset):
         self.num_items = 0
 
         for filename in os.listdir(self.opt['data_folder']):
-            print(filename)
             d = np.load(os.path.join(self.opt['data_folder'], filename))
 
+            print(filename + " " + str(d.shape))
             if(self.num_items == 0):
                 self.num_channels = d.shape[0]
                 self.resolution = d.shape[1:]
