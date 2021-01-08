@@ -1069,7 +1069,7 @@ class Generator(nn.Module):
         if(self.opt['physical_constraints'] == "hard" and self.opt['mode'] == '3D'):
             output = curl3D(output, self.opt['device'])
             return output
-        elif(self.physical_constraints == "hard" and (self.opt['mode'] == '2D' or self.opt['mode'] == '3Dto2D')):
+        elif(self.opt['physical_constraints'] == "hard" and (self.opt['mode'] == '2D' or self.opt['mode'] == '3Dto2D')):
             output = curl2D(output, self.opt['device'])
             gradx = spatial_derivative2D(output[:,0:1], 0, self.opt['device'])
             grady = spatial_derivative2D(output[:,1:2], 1, self.opt['device'])
