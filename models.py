@@ -432,6 +432,7 @@ def generate_padded_noise(size, pad_size, pad_with_noise, mode, device):
 
 def init_scales(opt, dataset):
     ns = []
+    print(dataset.resolution)
     if(opt["spatial_downscale_ratio"] < 1.0):
         for i in range(len(dataset.resolution)):
             ns.append(round(math.log(opt["min_dimension_size"] / dataset.resolution[i]) / math.log(opt["spatial_downscale_ratio"])))
