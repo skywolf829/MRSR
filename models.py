@@ -738,8 +738,8 @@ def train_single_scale(generators, discriminators, opt, dataset):
     
     for epoch in range(opt['epoch_number'], opt["epochs"]):
 
-        for iteration in len(dataset):
-            real_hr = dataset[i]
+        for iteration in range(len(dataset)):
+            real_hr = dataset[iteration]
             if(len(generators) < opt['n'] - 1):
                 real_hr = downsample(real, opt['resolutions'][len(generators)], opt['downsample_mode'])
             if(opt['mode'] == '2D' or opt['mode'] == "3Dto2D"):
@@ -905,58 +905,63 @@ def train_single_scale(generators, discriminators, opt, dataset):
                     path_loss = path_loss.item()
                 
                 generator_optimizer.step()
-        
-        if(epoch % 50 == 0):
-            rec_numpy = fake.detach().cpu().numpy()[0]
-            rec_cm = toImg(rec_numpy)
-            rec_cm -= rec_cm.min()
-            rec_cm *= (1/rec_cm.max())
-            writer.add_image("reconstructed/%i"%len(generators), 
-            rec_cm.clip(0,1), epoch)
+            volumes_seen += 1
 
-            real_numpy = real_hr.detach().cpu().numpy()[0]
-            real_cm = toImg(real_numpy)
-            real_cm -= real_cm.min()
-            real_cm *= (1/real_cm.max())
-            writer.add_image("real/%i"%len(generators), 
-            real_cm.clip(0,1), epoch)
+            if(volumes_seen % 50 == 0):
+                rec_numpy = fake.detach().cpu().numpy()[0]
+                rec_cm = toImg(rec_numpy)
+                rec_cm -= rec_cm.min()
+                rec_cm *= (1/rec_cm.max())
+                writer.add_image("reconstructed/%i"%len(generators), 
+                rec_cm.clip(0,1), volumes_seen)
 
-            if(opt["alpha_3"] > 0.0):
-                g_cm = toImg(g_map.detach().cpu().numpy()[0])
-                writer.add_image("Divergence/%i"%len(generators), 
-                g_cm, epoch)
+                real_numpy = real_hr.detach().cpu().numpy()[0]
+                real_cm = toImg(real_numpy)
+                real_cm -= real_cm.min()
+                real_cm *= (1/real_cm.max())
+                writer.add_image("real/%i"%len(generators), 
+                real_cm.clip(0,1), volumes_seen)
 
-            if(opt["alpha_4"] > 0.0):
-                angles_cm = toImg(angles.detach().cpu().numpy())
-                writer.add_image("angle/%i"%len(generators), 
-                angles_cm , epoch)
+                if(opt["alpha_3"] > 0.0):
+                    g_cm = toImg(g_map.detach().cpu().numpy()[0])
+                    writer.add_image("Divergence/%i"%len(generators), 
+                    g_cm, volumes_seen)
 
-                mags_cm = toImg(mags.detach().cpu().numpy())
-                writer.add_image("mag/%i"%len(generators), 
-                mags_cm, epoch)
-                
+                if(opt["alpha_4"] > 0.0):
+                    angles_cm = toImg(angles.detach().cpu().numpy())
+                    writer.add_image("angle/%i"%len(generators), 
+                    angles_cm , volumes_seen)
+
+                    mags_cm = toImg(mags.detach().cpu().numpy())
+                    writer.add_image("mag/%i"%len(generators), 
+                    mags_cm, volumes_seen)
+
+            print_to_log_and_console("%i/%i: Dloss=%.02f Gloss=%.02f L1=%.04f AMD=%.02f AAD=%.02f" %
+            (volumes_seen, opt['epochs']*len(dataset), D_loss, G_loss, rec_loss, mags.mean(), angles.mean()), 
+            os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
+
+            writer.add_scalar('D_loss_scale/%i'%len(generators), D_loss, volumes_seen) 
+            writer.add_scalar('G_loss_scale/%i'%len(generators), G_loss, volumes_seen) 
+            writer.add_scalar('L1/%i'%len(generators), rec_loss, volumes_seen)
+            writer.add_scalar('Gradient_loss/%i'%len(generators), gradient_loss / (opt['alpha_5']+1e-6), volumes_seen)
+            writer.add_scalar('TAD/%i'%len(generators), phys_loss / (opt["alpha_3"]+1e-6), volumes_seen)
+            writer.add_scalar('path_loss/%i'%len(generators), path_loss / (opt['alpha_6']+1e-6), volumes_seen)
+            writer.add_scalar('Mag_loss_scale/%i'%len(generators), mags.mean(), volumes_seen) 
+            writer.add_scalar('Angle_loss_scale/%i'%len(generators), angles.mean(), volumes_seen) 
+
+            discriminator_scheduler.step()
+            generator_scheduler.step()  
 
         if(epoch % opt['save_every'] == 0):
             opt["iteration_number"] = iteration
             opt["epoch_number"] = epoch
             save_models(generators + [generator], discriminators + [discriminator], opt)
-            
+        
+        
 
-        print_to_log_and_console("%i/%i: Dloss=%.02f Gloss=%.02f L1=%.04f AMD=%.02f AAD=%.02f" %
-        (epoch, opt['epochs'], D_loss, G_loss, rec_loss, mags.mean(), angles.mean()), 
-        os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
+        
 
-        writer.add_scalar('D_loss_scale/%i'%len(generators), D_loss, epoch) 
-        writer.add_scalar('G_loss_scale/%i'%len(generators), G_loss, epoch) 
-        writer.add_scalar('L1/%i'%len(generators), rec_loss, epoch)
-        writer.add_scalar('Gradient_loss/%i'%len(generators), gradient_loss / (opt['alpha_5']+1e-6), epoch)
-        writer.add_scalar('TAD/%i'%len(generators), phys_loss / (opt["alpha_3"]+1e-6), epoch)
-        writer.add_scalar('path_loss/%i'%len(generators), path_loss / (opt['alpha_6']+1e-6), epoch)
-        writer.add_scalar('Mag_loss_scale/%i'%len(generators), mags.mean(), epoch) 
-        writer.add_scalar('Angle_loss_scale/%i'%len(generators), angles.mean(), epoch) 
-
-        discriminator_scheduler.step()
-        generator_scheduler.step()
+        
 
     generator = reset_grads(generator, False)
     generator.eval()
