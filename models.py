@@ -974,7 +974,7 @@ class Generator(nn.Module):
         if(opt['physical_constraints'] == "hard" and (opt['mode'] == "2D" or opt['mode'] =="3Dto2D")):
             output_chans = 1
         else:
-            output_chans = num_channels
+            output_chans = opt['num_channels']
 
         if(opt['pre_padding']):
             pad_amount = int(kernel_size/2)
