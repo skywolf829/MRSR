@@ -744,7 +744,7 @@ def train_single_scale(generators, discriminators, opt):
             real_hr = dataset[i]
             if(len(generators) < opt['n'] - 1):
                 real_hr = downsample(real, opt['resolutions'][len(generators)], opt['downsample_mode'])
-            if(opt['mode'] == '2D' or opt['mode'] == "3Dto2D")
+            if(opt['mode'] == '2D' or opt['mode'] == "3Dto2D"):
                 if(real_hr.shape[2] > opt['cropping_resolution']):
                     rand_crop_x_start = torch.randint(real_hr.shape[2] - opt['cropping_resolution'])
                     rand_crop_x_end = rand_crop_x_start + opt['cropping_resolution']
