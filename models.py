@@ -1082,10 +1082,10 @@ class Discriminator(nn.Module):
         self.num_kernels = num_kernels
 
         use_sn = opt['regularization'] == "SN"
-        if(mode == "2D" or mode == "3Dto2D"):
+        if(opt['mode'] == "2D" or opt['mode'] == "3Dto2D"):
             conv_layer = nn.Conv2d
             batchnorm_layer = nn.BatchNorm2d
-        elif(mode == "3D"):
+        elif(opt['mode'] == "3D"):
             conv_layer = nn.Conv3d
             batchnorm_layer = nn.BatchNorm3d
 
