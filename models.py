@@ -614,7 +614,6 @@ def save_models(generators, discriminators, opt, optimizer=None):
         
         for i in range(len(generators)):
             gen_states[str(i)] = generators[i].state_dict()
-            optimal_noises[str(i)] = generators[i].optimal_noise
         torch.save(gen_states, os.path.join(path_to_save, "generators"))
 
     if(opt["save_discriminators"]):
