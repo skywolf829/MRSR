@@ -738,7 +738,6 @@ def train_single_scale(generators, discriminators, opt, dataset):
     
     dataloader = torch.utils.data.DataLoader(
         dataset=dataset,
-        batch_size=1,
         shuffle=False,
         num_workers=opt["num_workers"]
     )
@@ -1317,4 +1316,4 @@ class Dataset(torch.utils.data.Dataset):
             data = data[:,:,:,int(data.shape[3]/2)]
 
         data = np2torch(data, "cpu")
-        return data.unsqueeze(0)
+        return data
