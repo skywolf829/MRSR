@@ -961,7 +961,7 @@ def train_single_scale(generators, discriminators, opt, dataset):
             generator_scheduler.step()  
 
         if(epoch % opt['save_every'] == 0):
-            opt["iteration_number"] = iteration
+            opt["iteration_number"] = batch_num
             opt["epoch_number"] = epoch
             save_models(generators + [generator], discriminators + [discriminator], opt)
         
