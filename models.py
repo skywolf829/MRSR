@@ -998,11 +998,11 @@ class Generator(nn.Module):
         if(not opt['separate_chans']):
             self.model = self.create_model(opt['num_blocks'], opt['num_channels'], output_chans,
             num_kernels, opt['kernel_size'], opt['stride'], 1,
-            conv_layer, batchnorm_layer).to(device)
+            conv_layer, batchnorm_layer).to(opt['device'])
         else:
             self.model = self.create_model(opt['num_blocks'], opt['num_channels'], output_chans, 
             num_kernels, opt['kernel_size'], opt['stride'], opt['num_channels'],
-            conv_layer, batchnorm_layer).to(device)
+            conv_layer, batchnorm_layer).to(opt['device'])
 
     def create_model(self, num_blocks, num_channels, output_chans,
     num_kernels, kernel_size, stride, groups, conv_layer, batchnorm_layer):
@@ -1115,7 +1115,7 @@ class Discriminator(nn.Module):
                     nn.LeakyReLU(0.2, inplace=True)
                 ))
         self.model =  nn.Sequential(*modules)
-        self.model = self.model.to(device)
+        self.model = self.model.to(opt['device'])
 
     def receptive_field(self):
         return (self.opt['kernel_size']-1)*self.opt['num_blocks']
