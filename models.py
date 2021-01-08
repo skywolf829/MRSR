@@ -736,9 +736,16 @@ def train_single_scale(generators, discriminators, opt, dataset):
     
     print(str(len(generators)) + ": " + str(opt["resolutions"][len(generators)]))
     
+    dataloader = torch.utils.data.DataLoader(
+        dataset=dataset,
+        batch_size=1,
+        shuffle=False,
+        num_workers=opt["num_workers"]
+    )
     for epoch in range(opt['epoch_number'], opt["epochs"]):
 
-        for iteration in range(len(dataset)):
+        #for iteration in range(len(dataset)):
+        for batch_num, real_hr in enumerate(dataloader):
             real_hr = dataset[iteration]
             #print("Original data shape: %s" % str(real_hr.shape))
             if(len(generators) < opt['n'] - 1):
