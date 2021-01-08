@@ -684,11 +684,9 @@ def train_single_scale_wrapper(generators, discriminators, opt):
     print(prof.display())
     return g, d
 
-def train_single_scale(generators, discriminators, opt):
+def train_single_scale(generators, discriminators, opt, dataset):
     
     start_t = time.time()
-    # Initialize the dataset
-    dataset = Dataset(os.path.join(input_folder, opt["data_folder"]), opt)
 
     torch.manual_seed(0)
     
