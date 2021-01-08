@@ -97,13 +97,13 @@ if __name__ == '__main__':
             if args[k] is not None:
                 opt[k] = args[k]
         generators, discriminators = load_models(opt,args["device"])
-        dataset = Dataset(os.path.join(input_folder, opt["data_folder"]), opt)
+        dataset = Dataset(opt)
 
     now = datetime.datetime.now()
     start_time = time.time()
     print_to_log_and_console("Started training at " + str(now), 
     os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
-    opt["num_training_examples"] = len(os.listdir(os.path.join(input_folder,opt["data_folder"])))
+    opt["num_training_examples"] = len(os.listdir(opt["data_folder"]))
 
     # Train each scale 1 by 1
     i = opt['scale_in_training']
