@@ -1090,7 +1090,7 @@ class Discriminator(nn.Module):
             batchnorm_layer = nn.BatchNorm3d
 
         modules = []
-        for i in range(num_blocks):
+        for i in range(opt['num_blocks']):
             # The head goes from 3 channels (RGB) to num_kernels
             if i == 0:
                 modules.append(nn.Sequential(
