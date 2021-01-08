@@ -1100,7 +1100,7 @@ class Discriminator(nn.Module):
                     nn.LeakyReLU(0.2, inplace=True)
                 ))
             # The tail will go from num_kernels to 1 channel for discriminator optimization
-            elif i == num_blocks-1:  
+            elif i == opt['num_blocks']-1:  
                 tail = nn.Sequential(
                     create_conv_layer(conv_layer, num_kernels, 1, 
                     opt['kernel_size'], opt['stride'], 0, use_sn)
