@@ -1242,7 +1242,7 @@ class Dataset(torch.utils.data.Dataset):
         d = data.clone()
         if(self.opt['scaling_mode'] == "magnitude"):
             d *= (1/self.max_mag)
-        else if (self.opt['scaling_mode'] == "channel"):
+        elif (self.opt['scaling_mode'] == "channel"):
             for i in range(self.num_channels):
                 d[:,i] -= self.channel_mins[i]
                 d[:,i] /= (self.channel_maxs[i] - self.channel_mins[i])
