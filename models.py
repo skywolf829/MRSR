@@ -432,7 +432,7 @@ def generate_padded_noise(size, pad_size, pad_with_noise, mode, device):
 
 def init_scales(opt, dataset):
     ns = []
-    print(dataset.resolution)
+    
     if(opt["spatial_downscale_ratio"] < 1.0):
         for i in range(len(dataset.resolution)):
             ns.append(round(math.log(opt["min_dimension_size"] / dataset.resolution[i]) / math.log(opt["spatial_downscale_ratio"])))
@@ -441,11 +441,11 @@ def init_scales(opt, dataset):
     print("The model will have %i generators" % (opt["n"]))
     for i in range(opt["n"]+1):
         scaling = []
-        factor =  opt["spatial_downscale_ratio"]**(opt["n"] - i - 1)
+        factor =  opt["spatial_downscale_ratio"]**i
         for j in range(len(dataset.resolution)):
             x = int(dataset.resolution[j] * factor)
             scaling.append(x)
-        opt["resolutions"].append(scaling)
+        opt["resolutions"].insert(0,scaling)
     for i in range(opt['n']):
         print("Scale %i: %s -> %s" % (opt["n"] - 1 - i, str(opt["resolutions"][i]), str(opt["resolutions"][i+1])))
 
