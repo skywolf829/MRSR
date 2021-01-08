@@ -1212,7 +1212,7 @@ class Dataset(torch.utils.data.Dataset):
             if(self.num_items == 0):
                 self.num_channels = d.shape[0]
                 self.resolution = d.shape[1:]
-                if(self.mode == "3Dto2D"):
+                if(self.opt['mode'] == "3Dto2D"):
                     self.resolution = self.resolution[0:len(self.resolution)-1]
 
             mags = np.linalg.norm(d, axis=0)
