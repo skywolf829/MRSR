@@ -1074,14 +1074,21 @@ class Generator(nn.Module):
         return (self.opt['kernel_size']-1)*self.opt['num_blocks']
 
     def forward(self, data):
+        data_copy = data.clone()
         if(self.opt['scaling_mode'] == "learned"):
             for i in range(self.opt['num_channels']):
-                data[:,i] *= self.learned_scaling_weights[i]
-                data[:,i] += self.learned_scaling_bias[i]
+                data_copy[:,i] = data_copy[:,i] * self.learned_scaling_weights[i]
+                data_copy[:,i] = data_copy[:,i] + self.learned_scaling_bias[i]
                 
         if(self.opt['pre_padding']):
-            data = F.pad(data, self.required_padding)
-        output = self.model(data)
+            data_copy = F.pad(data_copy, self.required_padding)
+        output = self.model(data_copy)
+
+        if(self.opt['scaling_mode'] == "learned"):
+            for i in range(self.opt['num_channels']):
+                output[:,i] = output[:,i] - self.learned_scaling_bias[i]
+                output[:,i] = output[:,i] / self.learned_scaling_weights[i]
+
 
         if(self.opt['physical_constraints'] == "hard" and self.opt['mode'] == '3D'):
             output = curl3D(output, self.opt['device'])
