@@ -1004,12 +1004,9 @@ class Generator(nn.Module):
             pad_amount, pad_amount, pad_amount]
             self.upscale_method = "trilinear"
 
-        if(self.opt['scaling_mode'] == "learned"):
-            
-            self.learned_scaling_weights = torch.nn.Parameter(torch.ones([self.opt['num_channels']]))
-            self.learned_scaling_bias = torch.nn.Parameter(torch.ones([self.opt['num_channels']]) * 0.001)
-            self.learned_scaling_weights.requires_grad = True
-            self.learned_scaling_bias.requires_grad = True
+        if(self.opt['scaling_mode'] == "learned"):            
+            self.learned_scaling_weights = torch.nn.Parameter(torch.ones(self.opt['num_channels']))
+            self.learned_scaling_bias = torch.nn.Parameter(torch.ones(self.opt['num_channels']) * 0.001)
             
 
         if(not opt['separate_chans']):
