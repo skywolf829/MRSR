@@ -783,6 +783,7 @@ def train_single_scale(generators, discriminators, opt, dataset):
                     rand_crop_z_start = 0
                     rand_crop_z_end = real_hr.shape[4]    
                 real_hr = real_hr[:,:,rand_crop_x_start:rand_crop_x_end,rand_crop_y_start:rand_crop_y_end,rand_crop_z_start:rand_crop_z_end]
+            
             #print("Adjusted HR shape: %s" % str(real_hr.shape))
             real_hr = real_hr.to(opt["device"])
             real_lr = F.interpolate(real_hr, scale_factor=opt['spatial_downscale_ratio'],mode=opt['downsample_mode'],align_corners=False)
@@ -796,7 +797,7 @@ def train_single_scale(generators, discriminators, opt, dataset):
             g = 0
             mags = np.zeros(1)
             angles = np.zeros(1)
-           
+            print(generator.learned_scaling_weights)
             # Update discriminator: maximize D(x) + D(G(z))
             if(opt["alpha_2"] > 0.0):            
                 for j in range(opt["discriminator_steps"]):
@@ -1003,6 +1004,14 @@ class Generator(nn.Module):
             pad_amount, pad_amount, pad_amount]
             self.upscale_method = "trilinear"
 
+        if(self.opt['scaling_mode'] == "learned"):
+            
+            self.learned_scaling_weights = torch.ones([self.opt['num_channels']])
+            self.learned_scaling_bias = torch.ones([self.opt['num_channels']]) * 0.001
+            self.learned_scaling_weights.requires_grad = True
+            self.learned_scaling_bias.requires_grad = True
+            
+
         if(not opt['separate_chans']):
             self.model = self.create_model(opt['num_blocks'], opt['num_channels'], output_chans,
             num_kernels, opt['kernel_size'], opt['stride'], 1,
@@ -1065,7 +1074,11 @@ class Generator(nn.Module):
         return (self.opt['kernel_size']-1)*self.opt['num_blocks']
 
     def forward(self, data):
-       
+        if(self.opt['scaling_mode'] == "learned"):
+            for i in range(self.opt['num_channels']):
+                data[:,i] *= self.learned_scaling_weights[i]
+                data[:,i] += self.learned_scaling_bias[i]
+                
         if(self.opt['pre_padding']):
             data = F.pad(data, self.required_padding)
         output = self.model(data)
@@ -1209,33 +1222,36 @@ class Dataset(torch.utils.data.Dataset):
         self.channel_mins = []
         self.channel_maxs = []
         self.max_mag = None
-
         self.num_items = 0
 
         for filename in os.listdir(self.opt['data_folder']):
-            d = np.load(os.path.join(self.opt['data_folder'], filename))
-
-            print(filename + " " + str(d.shape))
             if(self.num_items == 0):
+                d = np.load(os.path.join(self.opt['data_folder'], filename))
+                print(filename + " " + str(d.shape))                
                 self.num_channels = d.shape[0]
                 self.resolution = d.shape[1:]
                 if(self.opt['mode'] == "3Dto2D"):
                     self.resolution = self.resolution[0:len(self.resolution)-1]
 
-            mags = np.linalg.norm(d, axis=0)
-            m_mag = mags.max()
-            if(self.max_mag is None or self.max_mag < m_mag):
-                self.max_mag = m_mag
+            if(self.num_items > 0 and (opt['scaling_mode'] == "magnitude" or opt['scaling_mode'] == "channel")):
+                d = np.load(os.path.join(self.opt['data_folder'], filename))
 
-            for i in range(d.shape[0]):                
-                if(len(self.channel_mins) <= i):
-                    self.channel_mins.append(d[i].min())
-                    self.channel_maxs.append(d[i].max())
-                else:
-                    if(d[i].max() > self.channel_maxs[i]):
-                        self.channel_maxs[i] = d[i].max()
-                    if(d[i].min() < self.channel_mins[i]):
-                        self.channel_mins[i] = d[i].min()
+            if(opt['scaling_mode'] == "magnitude"):  
+                mags = np.linalg.norm(d, axis=0)
+                m_mag = mags.max()
+                if(self.max_mag is None or self.max_mag < m_mag):
+                    self.max_mag = m_mag
+
+            if(opt['scaling_mode'] == "channel"):
+                for i in range(d.shape[0]):                
+                    if(len(self.channel_mins) <= i):
+                        self.channel_mins.append(d[i].min())
+                        self.channel_maxs.append(d[i].max())
+                    else:
+                        if(d[i].max() > self.channel_maxs[i]):
+                            self.channel_maxs[i] = d[i].max()
+                        if(d[i].min() < self.channel_mins[i]):
+                            self.channel_mins[i] = d[i].min()
             
             self.num_items += 1
 

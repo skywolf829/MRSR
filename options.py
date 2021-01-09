@@ -7,7 +7,7 @@ class Options():
         # Input info
         opt["mode"]                    = "3D"      # What SinGAN to use - 2D or 3D
         opt["data_folder"]             = "InputData/iso512"
-        opt['scaling_mode']            = "magnitude" # magnitude, channel, learned, none
+        opt['scaling_mode']            = "learned" # magnitude, channel, learned, none
         
         opt['single_shot']            =  False
         opt["save_folder"]             = "SavedModels"
