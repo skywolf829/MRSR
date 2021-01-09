@@ -742,10 +742,13 @@ def train_single_scale(generators, discriminators, opt, dataset):
         num_workers=opt["num_workers"]
     )
     for epoch in range(opt['epoch_number'], opt["epochs"]):
-
+        t_io_start = time.time()
+        t_update_start = time.time()
         #for iteration in range(len(dataset)):
         for batch_num, real_hr in enumerate(dataloader):
             #print("Original data shape: %s" % str(real_hr.shape))
+            print("IO time: %0.06f" % (time.time() - t_io_start))
+            t_update_start = time.time()
             if(len(generators) < opt['n'] - 1):
                 real_hr = downsample(real_hr, opt['resolutions'][len(generators)], opt['downsample_mode'])
             if(opt['mode'] == '2D' or opt['mode'] == "3Dto2D"):
@@ -797,7 +800,8 @@ def train_single_scale(generators, discriminators, opt, dataset):
             g = 0
             mags = np.zeros(1)
             angles = np.zeros(1)
-            print(generator.learned_scaling_weights)
+            print(generator.learned_scaling_weights.data)
+            print(generator.learned_scaling_bias.data)
             # Update discriminator: maximize D(x) + D(G(z))
             if(opt["alpha_2"] > 0.0):            
                 for j in range(opt["discriminator_steps"]):
@@ -960,6 +964,9 @@ def train_single_scale(generators, discriminators, opt, dataset):
 
             discriminator_scheduler.step()
             generator_scheduler.step()  
+            
+            print("Update time: %0.06f" % (time.time() - t_update_start))
+            t_io_start = time.time()
 
         if(epoch % opt['save_every'] == 0):
             opt["iteration_number"] = batch_num
