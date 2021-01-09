@@ -62,7 +62,7 @@ class Options():
         opt["discriminator_steps"]     = 1
         opt["epochs"]                  = 2000
         opt["minibatch"]               = 1        # Minibatch for training
-        opt["num_workers"]             = 8
+        opt["num_workers"]             = 16
         opt["learning_rate"]           = 0.0005    # Learning rate for GAN
         opt["beta_1"]                  = 0.5
         opt["beta_2"]                  = 0.999
@@ -72,7 +72,7 @@ class Options():
         opt["scale_in_training"]       = 0
         opt["iteration_number"]        = 0
         opt["epoch_number"]            = 0
-        opt["save_every"]              = 100
+        opt["save_every"]              = 1
         opt["save_training_loss"]      = True
 
         return opt
