@@ -1074,20 +1074,17 @@ class Generator(nn.Module):
         return (self.opt['kernel_size']-1)*self.opt['num_blocks']
 
     def forward(self, data):
-        data_copy = data.clone()
+        
         if(self.opt['scaling_mode'] == "learned"):
             for i in range(self.opt['num_channels']):
-                data_copy[:,i] = data_copy[:,i] * self.learned_scaling_weights[i]
-                data_copy[:,i] = data_copy[:,i] + self.learned_scaling_bias[i]
+                data[:,i] = data[:,i] * self.learned_scaling_weights[i]
+                data[:,i] = data[:,i] + self.learned_scaling_bias[i]
                 
         if(self.opt['pre_padding']):
-            data_copy = F.pad(data_copy, self.required_padding)
-        output = self.model(data_copy)
+            data = F.pad(data, self.required_padding)
 
-        if(self.opt['scaling_mode'] == "learned"):
-            for i in range(self.opt['num_channels']):
-                output[:,i] = output[:,i] - self.learned_scaling_bias[i]
-                output[:,i] = output[:,i] / self.learned_scaling_weights[i]
+
+        output = self.model(data)        
 
 
         if(self.opt['physical_constraints'] == "hard" and self.opt['mode'] == '3D'):
@@ -1098,6 +1095,12 @@ class Generator(nn.Module):
             gradx = spatial_derivative2D(output[:,0:1], 0, self.opt['device'])
             grady = spatial_derivative2D(output[:,1:2], 1, self.opt['device'])
             output = torch.cat([-grady, gradx], axis=1)
+            return output
+        elif(self.opt['scaling_mode'] == "learned"):
+            output = data + output
+            for i in range(self.opt['num_channels']):
+                output[:,i] = output[:,i] - self.learned_scaling_bias[i]
+                output[:,i] = output[:,i] / self.learned_scaling_weights[i]
             return output
         else:
             return output + data
