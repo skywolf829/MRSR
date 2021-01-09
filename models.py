@@ -1005,8 +1005,11 @@ class Generator(nn.Module):
             self.upscale_method = "trilinear"
 
         if(self.opt['scaling_mode'] == "learned"):            
-            self.learned_scaling_weights = torch.nn.Parameter(torch.ones(self.opt['num_channels']))
-            self.learned_scaling_bias = torch.nn.Parameter(torch.ones(self.opt['num_channels']) * 0.001)
+            shp = [1, self.opt['num_channels']]
+            for i in range(len(self.resolution)):
+                shp.append(1)
+            self.learned_scaling_weights = torch.nn.Parameter(torch.ones(shp))
+            self.learned_scaling_bias = torch.nn.Parameter(torch.ones(shp) * 0.001)
             
 
         if(not opt['separate_chans']):
@@ -1073,9 +1076,8 @@ class Generator(nn.Module):
     def forward(self, data):
         
         if(self.opt['scaling_mode'] == "learned"):
-            for i in range(self.opt['num_channels']):
-                data[:,i] = data[:,i] * self.learned_scaling_weights[i]
-                data[:,i] = data[:,i] + self.learned_scaling_bias[i]
+            data = data * self.learned_scaling_weights.expand(data.shape)
+            data = data + self.learned_scaling_bias.expand(data.shape)
                 
         if(self.opt['pre_padding']):
             data = F.pad(data, self.required_padding)
@@ -1095,9 +1097,8 @@ class Generator(nn.Module):
             return output
         elif(self.opt['scaling_mode'] == "learned"):
             output = data + output
-            for i in range(self.opt['num_channels']):
-                output[:,i] = output[:,i] - self.learned_scaling_bias[i]
-                output[:,i] = output[:,i] / self.learned_scaling_weights[i]
+            output = output - self.learned_scaling_bias.expand(output.shape)
+            output = output / self.learned_scaling_weights.expand(output.shape)
             return output
         else:
             return output + data
