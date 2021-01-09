@@ -747,7 +747,7 @@ def train_single_scale(generators, discriminators, opt, dataset):
         #for iteration in range(len(dataset)):
         for batch_num, real_hr in enumerate(dataloader):
             #print("Original data shape: %s" % str(real_hr.shape))
-            print("IO time: %0.06f" % (time.time() - t_io_start))
+            #print("IO time: %0.06f" % (time.time() - t_io_start))
             t_update_start = time.time()
             if(len(generators) < opt['n'] - 1):
                 real_hr = downsample(real_hr, opt['resolutions'][len(generators)], opt['downsample_mode'])
@@ -965,7 +965,7 @@ def train_single_scale(generators, discriminators, opt, dataset):
             discriminator_scheduler.step()
             generator_scheduler.step()  
             
-            print("Update time: %0.06f" % (time.time() - t_update_start))
+            #print("Update time: %0.06f" % (time.time() - t_update_start))
             t_io_start = time.time()
         
         if(epoch % opt['save_every'] == 0):
