@@ -747,6 +747,7 @@ def train_single_scale(generators, discriminators, opt, dataset):
         t_update_start = time.time()
         #for iteration in range(len(dataset)):
         for batch_num, real_hr in enumerate(dataloader):
+            real_hr = real_hr.to(opt['device'])
             #print("Original data shape: %s" % str(real_hr.shape))
             #print("IO time: %0.06f" % (time.time() - t_io_start))
             t_update_start = time.time()
