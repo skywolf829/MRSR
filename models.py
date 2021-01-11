@@ -1241,7 +1241,9 @@ class Dataset(torch.utils.data.Dataset):
 
         for filename in os.listdir(self.opt['data_folder']):
             if(self.num_items == 0):
-                d = np.load(os.path.join(self.opt['data_folder'], filename))
+                f = h5py.File(os.path.join(self.opt['data_folder'], filename), 'r')
+                d = f.get('data')
+                f.close()
                 print(filename + " " + str(d.shape))                
                 self.num_channels = d.shape[0]
                 self.resolution = d.shape[1:]
@@ -1249,7 +1251,9 @@ class Dataset(torch.utils.data.Dataset):
                     self.resolution = self.resolution[0:len(self.resolution)-1]
 
             if(self.num_items > 0 and (opt['scaling_mode'] == "magnitude" or opt['scaling_mode'] == "channel")):
-                d = np.load(os.path.join(self.opt['data_folder'], filename))
+                f = h5py.File(os.path.join(self.opt['data_folder'], filename), 'r')
+                d = f.get('data')
+                f.close()
 
             if(opt['scaling_mode'] == "magnitude"):  
                 mags = np.linalg.norm(d, axis=0)
@@ -1333,7 +1337,9 @@ class Dataset(torch.utils.data.Dataset):
         return starts, ends
 
     def __getitem__(self, index):
-        data = np.load(os.path.join(self.opt['data_folder'], str(index) + ".npy"))
+        f = h5py.File(os.path.join(self.opt['data_folder'], filename), 'r')
+        data = f.get('data')
+        f.close()
         if(self.opt['scaling_mode'] == "channel"):
             for i in range(self.num_channels):
                 data[i] -= self.channel_mins[i]
