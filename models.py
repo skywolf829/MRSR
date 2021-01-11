@@ -1243,7 +1243,7 @@ class Dataset(torch.utils.data.Dataset):
         for filename in os.listdir(self.opt['data_folder']):
             if(self.num_items == 0):
                 f = h5py.File(os.path.join(self.opt['data_folder'], filename), 'r')
-                d = f.get('data')
+                d = np.array(f.get('data'))
                 f.close()
                 print(filename + " " + str(d.shape))                
                 self.num_channels = d.shape[0]
@@ -1339,7 +1339,7 @@ class Dataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         f = h5py.File(os.path.join(self.opt['data_folder'], filename), 'r')
-        data = f.get('data')
+        data =  np.array(f.get('data'))
         f.close()
         if(self.opt['scaling_mode'] == "channel"):
             for i in range(self.num_channels):
