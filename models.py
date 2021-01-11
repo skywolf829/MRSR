@@ -1340,8 +1340,10 @@ class Dataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         print("trying to load " + str(index) + ".h5")
         f = h5py.File(os.path.join(self.opt['data_folder'], str(index)+".h5"), 'r')
+        print("converting " + str(index) + ".h5 to numpy")
         data =  np.array(f.get('data'))
         f.close()
+        print("converted " + str(index) + ".h5 to numpy")
         if(self.opt['scaling_mode'] == "channel"):
             for i in range(self.num_channels):
                 data[i] -= self.channel_mins[i]
@@ -1355,4 +1357,5 @@ class Dataset(torch.utils.data.Dataset):
             data = data[:,:,:,int(data.shape[3]/2)]
 
         data = np2torch(data, "cpu")
+        print("returning " + str(index) " data")
         return data
