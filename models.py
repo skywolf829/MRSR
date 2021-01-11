@@ -1242,25 +1242,28 @@ class Dataset(torch.utils.data.Dataset):
         self.channel_maxs = []
         self.max_mag = None
         self.num_items = 0
-
+        self.items = []
+        print("Initializing dataset")
         for filename in os.listdir(self.opt['data_folder']):
-            if(self.num_items == 0):
+
+            if(opt['load_data_at_start'] or (self.num_items > 0 and \
+            (opt['scaling_mode'] == "magnitude" or opt['scaling_mode'] == "channel"))):
+                print("Loading " + filename)   
                 f = h5py.File(os.path.join(self.opt['data_folder'], filename), 'r')
-                d = np.array(f.get('data'))
+                d = torch.tensor(f.get('data'))
                 f.close()
-                print(filename + " " + str(d.shape))                
+
+            if(self.num_items == 0):                             
                 self.num_channels = d.shape[0]
                 self.resolution = d.shape[1:]
                 if(self.opt['mode'] == "3Dto2D"):
                     self.resolution = self.resolution[0:len(self.resolution)-1]
 
-            if(self.num_items > 0 and (opt['scaling_mode'] == "magnitude" or opt['scaling_mode'] == "channel")):
-                f = h5py.File(os.path.join(self.opt['data_folder'], filename), 'r')
-                d = f.get('data')
-                f.close()
+            if(opt['load_data_at_start']):
+                self.items.append(d)
 
             if(opt['scaling_mode'] == "magnitude"):  
-                mags = np.linalg.norm(d, axis=0)
+                mags = torch.linalg.norm(d, dim=0)
                 m_mag = mags.max()
                 if(self.max_mag is None or self.max_mag < m_mag):
                     self.max_mag = m_mag
@@ -1341,25 +1344,28 @@ class Dataset(torch.utils.data.Dataset):
         return starts, ends
 
     def __getitem__(self, index):
-        print("trying to load " + str(index) + ".h5")
-        f = h5py.File(os.path.join(self.opt['data_folder'], str(index)+".h5"), 'r')
-        print("converting " + str(index) + ".h5 to tensor")
-        data =  torch.tensor(f.get('data'))
-        
-        print("converted " + str(index) + ".h5 to tensor")
-        if(self.opt['scaling_mode'] == "channel"):
-            for i in range(self.num_channels):
-                data[i] -= self.channel_mins[i]
-                data[i] *= (1 / (self.channel_maxs[i] - self.channel_mins[i]))
-                data[i] -= 0.5
-                data[i] *= 2
-        elif(self.opt['scaling_mode'] == "magnitude"):
-            data *= (1 / self.max_mag)
+        if(opt['load_data_at_start']):
+            data = self.data[index]
+        else:
+            print("trying to load " + str(index) + ".h5")
+            f = h5py.File(os.path.join(self.opt['data_folder'], str(index)+".h5"), 'r')
+            print("converting " + str(index) + ".h5 to tensor")
+            data =  torch.tensor(f.get('data'))
             
-        if(self.opt['mode'] == "3Dto2D"):
-            data = data[:,:,:,int(data.shape[3]/2)]
+            print("converted " + str(index) + ".h5 to tensor")
+            if(self.opt['scaling_mode'] == "channel"):
+                for i in range(self.num_channels):
+                    data[i] -= self.channel_mins[i]
+                    data[i] *= (1 / (self.channel_maxs[i] - self.channel_mins[i]))
+                    data[i] -= 0.5
+                    data[i] *= 2
+            elif(self.opt['scaling_mode'] == "magnitude"):
+                data *= (1 / self.max_mag)
+                
+            if(self.opt['mode'] == "3Dto2D"):
+                data = data[:,:,:,int(data.shape[3]/2)]
 
-        #data = np2torch(data, "cpu")
-        print("returning " + str(index) + " data")
-        f.close()
+            #data = np2torch(data, "cpu")
+            print("returning " + str(index) + " data")
+            f.close()
         return data
