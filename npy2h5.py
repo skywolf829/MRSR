@@ -4,6 +4,7 @@ import os
 
 MVTVSSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 
+
 for filename in os.listdir(MVTVSSR_folder_path):
     if(".npy" in filename):
         print("Removing " + filename)
@@ -18,3 +19,12 @@ for filename in os.listdir(MVTVSSR_folder_path):
         print("Deleted " + os.path.join(MVTVSSR_folder_path, filename))
     else:
         print("Skipping " + filename)
+
+
+for filename in os.listdir(MVTVSSR_folder_path):
+    if(".h5" in filename):
+        print("Opening " + filename)
+        f = h5py.File(filename, 'r')
+        a = f.get('data')
+        f.close()
+        print("Closing " + filename)
