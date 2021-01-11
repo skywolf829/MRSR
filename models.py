@@ -747,9 +747,8 @@ def train_single_scale(generators, discriminators, opt, dataset):
         t_update_start = time.time()
         #for iteration in range(len(dataset)):
         for batch_num, real_hr in enumerate(dataloader):
-            real_hr = real_hr.to(opt['device'])
-            #print("Original data shape: %s" % str(real_hr.shape))
-            #print("IO time: %0.06f" % (time.time() - t_io_start))
+            print("Original data shape: %s" % str(real_hr.shape))
+            print("IO time: %0.06f" % (time.time() - t_io_start))
             t_update_start = time.time()
             if(len(generators) < opt['n'] - 1):
                 real_hr = downsample(real_hr, opt['resolutions'][len(generators)], opt['downsample_mode'])
@@ -789,12 +788,12 @@ def train_single_scale(generators, discriminators, opt, dataset):
                     rand_crop_z_end = real_hr.shape[4]    
                 real_hr = real_hr[:,:,rand_crop_x_start:rand_crop_x_end,rand_crop_y_start:rand_crop_y_end,rand_crop_z_start:rand_crop_z_end]
             
-            #print("Adjusted HR shape: %s" % str(real_hr.shape))
+            print("Adjusted HR shape: %s" % str(real_hr.shape))
             real_hr = real_hr.to(opt["device"])
             real_lr = F.interpolate(real_hr, scale_factor=opt['spatial_downscale_ratio'],mode=opt['downsample_mode'],align_corners=False)
-            #print("LR shapeafter interp downscale: %s" % str(real_lr.shape))
+            print("LR shapeafter interp downscale: %s" % str(real_lr.shape))
             real_lr = F.interpolate(real_lr, scale_factor=1/opt['spatial_downscale_ratio'],mode=opt['upsample_mode'],align_corners=False)
-            #print("LR shape after interp upscale: %s" % str(real_lr.shape))
+            print("LR shape after interp upscale: %s" % str(real_lr.shape))
             D_loss = 0
             G_loss = 0        
             gradient_loss = 0
