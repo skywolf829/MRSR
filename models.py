@@ -969,7 +969,7 @@ def train_single_scale(generators, discriminators, opt, dataset):
             discriminator_scheduler.step()
             generator_scheduler.step()  
             
-            #print("Update time: %0.06f" % (time.time() - t_update_start))
+            print("Update time: %0.06f" % (time.time() - t_update_start))
             t_io_start = time.time()
         
         if(epoch % opt['save_every'] == 0):
