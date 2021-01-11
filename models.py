@@ -1359,7 +1359,7 @@ class Dataset(torch.utils.data.Dataset):
         if(self.opt['mode'] == "3Dto2D"):
             data = data[:,:,:,int(data.shape[3]/2)]
 
-        data = np2torch(data, "cpu")
+        #data = np2torch(data, "cpu")
         print("returning " + str(index) + " data")
         f.close()
         return data
