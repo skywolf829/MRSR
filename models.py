@@ -1338,6 +1338,7 @@ class Dataset(torch.utils.data.Dataset):
         return starts, ends
 
     def __getitem__(self, index):
+        print("trying to load " + str(index) + ".h5")
         f = h5py.File(os.path.join(self.opt['data_folder'], str(index)+".h5"), 'r')
         data =  np.array(f.get('data'))
         f.close()
