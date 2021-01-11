@@ -15,6 +15,6 @@ for filename in os.listdir(MVTVSSR_folder_path):
         hf.close()
         print("Created " + f_name)
         os.remove(os.path.join(MVTVSSR_folder_path, filename))
-        print("Deleted + " os.path.join(MVTVSSR_folder_path, filename))
+        print("Deleted " + os.path.join(MVTVSSR_folder_path, filename))
     else:
         print("Skipping " + filename)
