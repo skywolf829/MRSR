@@ -747,8 +747,8 @@ def train_single_scale(generators, discriminators, opt, dataset):
         t_update_start = time.time()
         #for iteration in range(len(dataset)):
         for batch_num, real_hr in enumerate(dataloader):
-            print("Original data shape: %s" % str(real_hr.shape))
-            print("IO time: %0.06f" % (time.time() - t_io_start))
+            #print("Original data shape: %s" % str(real_hr.shape))
+            #print("IO time: %0.06f" % (time.time() - t_io_start))
             t_update_start = time.time()
             if(len(generators) < opt['n'] - 1):
                 real_hr = downsample(real_hr, opt['resolutions'][len(generators)], opt['downsample_mode'])
@@ -788,12 +788,12 @@ def train_single_scale(generators, discriminators, opt, dataset):
                     rand_crop_z_end = real_hr.shape[4]    
                 real_hr = real_hr[:,:,rand_crop_x_start:rand_crop_x_end,rand_crop_y_start:rand_crop_y_end,rand_crop_z_start:rand_crop_z_end]
             
-            print("Adjusted HR shape: %s" % str(real_hr.shape))
+            #print("Adjusted HR shape: %s" % str(real_hr.shape))
             real_hr = real_hr.to(opt["device"])
             real_lr = F.interpolate(real_hr, scale_factor=opt['spatial_downscale_ratio'],mode=opt['downsample_mode'],align_corners=False)
-            print("LR shapeafter interp downscale: %s" % str(real_lr.shape))
+            #print("LR shapeafter interp downscale: %s" % str(real_lr.shape))
             real_lr = F.interpolate(real_lr, scale_factor=1/opt['spatial_downscale_ratio'],mode=opt['upsample_mode'],align_corners=False)
-            print("LR shape after interp upscale: %s" % str(real_lr.shape))
+            #print("LR shape after interp upscale: %s" % str(real_lr.shape))
             D_loss = 0
             G_loss = 0        
             gradient_loss = 0
@@ -870,14 +870,14 @@ def train_single_scale(generators, discriminators, opt, dataset):
                         gen_err_total += phys_loss.item()
                         phys_loss = phys_loss.item()
                 if(opt['alpha_4'] > 0.0):   
-                    print("About to calculate loss")                 
+                    #print("About to calculate loss")                 
                     cs = torch.nn.CosineSimilarity(dim=1).to(opt['device'])
                     mags = torch.abs(torch.norm(fake, dim=1) - torch.norm(real_hr, dim=1))
                     angles = torch.abs(cs(fake, real_hr) - 1) / 2
                     r_loss = opt['alpha_4'] * (mags.mean() + angles.mean()) / 2
-                    print("calculated loss, about to backward")
+                    #print("calculated loss, about to backward")
                     r_loss.backward(retain_graph=True)
-                    print("backward pass finished")
+                    #print("backward pass finished")
                     gen_err_total += r_loss.item()
 
                 if(opt['alpha_5'] > 0.0):
@@ -969,7 +969,7 @@ def train_single_scale(generators, discriminators, opt, dataset):
             discriminator_scheduler.step()
             generator_scheduler.step()  
             
-            print("Update time: %0.06f" % (time.time() - t_update_start))
+            #print("Update time: %0.06f" % (time.time() - t_update_start))
             t_io_start = time.time()
         
         if(epoch % opt['save_every'] == 0):
@@ -1344,7 +1344,7 @@ class Dataset(torch.utils.data.Dataset):
         return starts, ends
 
     def __getitem__(self, index):
-        if(opt['load_data_at_start']):
+        if(self.opt['load_data_at_start']):
             data = self.data[index]
         else:
             print("trying to load " + str(index) + ".h5")
