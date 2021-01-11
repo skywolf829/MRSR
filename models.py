@@ -1353,19 +1353,19 @@ class Dataset(torch.utils.data.Dataset):
             data =  torch.tensor(f.get('data'))
             
             print("converted " + str(index) + ".h5 to tensor")
-            if(self.opt['scaling_mode'] == "channel"):
-                for i in range(self.num_channels):
-                    data[i] -= self.channel_mins[i]
-                    data[i] *= (1 / (self.channel_maxs[i] - self.channel_mins[i]))
-                    data[i] -= 0.5
-                    data[i] *= 2
-            elif(self.opt['scaling_mode'] == "magnitude"):
-                data *= (1 / self.max_mag)
-                
-            if(self.opt['mode'] == "3Dto2D"):
-                data = data[:,:,:,int(data.shape[3]/2)]
+        if(self.opt['scaling_mode'] == "channel"):
+            for i in range(self.num_channels):
+                data[i] -= self.channel_mins[i]
+                data[i] *= (1 / (self.channel_maxs[i] - self.channel_mins[i]))
+                data[i] -= 0.5
+                data[i] *= 2
+        elif(self.opt['scaling_mode'] == "magnitude"):
+            data *= (1 / self.max_mag)
+            
+        if(self.opt['mode'] == "3Dto2D"):
+            data = data[:,:,:,int(data.shape[3]/2)]
 
-            #data = np2torch(data, "cpu")
-            print("returning " + str(index) + " data")
-            f.close()
+        #data = np2torch(data, "cpu")
+        print("returning " + str(index) + " data")
+        f.close()
         return data
