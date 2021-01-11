@@ -869,12 +869,15 @@ def train_single_scale(generators, discriminators, opt, dataset):
                         phys_loss.backward(retain_graph=True)
                         gen_err_total += phys_loss.item()
                         phys_loss = phys_loss.item()
-                if(opt['alpha_4'] > 0.0):                    
+                if(opt['alpha_4'] > 0.0):   
+                    print("About to calculate loss")                 
                     cs = torch.nn.CosineSimilarity(dim=1).to(opt['device'])
                     mags = torch.abs(torch.norm(fake, dim=1) - torch.norm(real_hr, dim=1))
                     angles = torch.abs(cs(fake, real_hr) - 1) / 2
                     r_loss = opt['alpha_4'] * (mags.mean() + angles.mean()) / 2
+                    print("calculated loss, about to backward")
                     r_loss.backward(retain_graph=True)
+                    print("backward pass finished")
                     gen_err_total += r_loss.item()
 
                 if(opt['alpha_5'] > 0.0):
@@ -1340,10 +1343,10 @@ class Dataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         print("trying to load " + str(index) + ".h5")
         f = h5py.File(os.path.join(self.opt['data_folder'], str(index)+".h5"), 'r')
-        print("converting " + str(index) + ".h5 to numpy")
-        data =  np.array(f.get('data'))
-        f.close()
-        print("converted " + str(index) + ".h5 to numpy")
+        print("converting " + str(index) + ".h5 to tensor")
+        data =  torch.tensor(f.get('data'))
+        
+        print("converted " + str(index) + ".h5 to tensor")
         if(self.opt['scaling_mode'] == "channel"):
             for i in range(self.num_channels):
                 data[i] -= self.channel_mins[i]
@@ -1358,4 +1361,5 @@ class Dataset(torch.utils.data.Dataset):
 
         data = np2torch(data, "cpu")
         print("returning " + str(index) + " data")
+        f.close()
         return data
