@@ -1345,7 +1345,7 @@ class Dataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         if(self.opt['load_data_at_start']):
-            data = self.data[index]
+            data = self.items[index]
         else:
             print("trying to load " + str(index) + ".h5")
             f = h5py.File(os.path.join(self.opt['data_folder'], str(index)+".h5"), 'r')
