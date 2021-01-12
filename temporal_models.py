@@ -91,14 +91,14 @@ class ConvLSTMCell(nn.Module):
         self._num_filter = num_filter
 
     # inputs and states should not be all none
-    # inputs: S*B*C*H*W
+    # inputs: S*B*C*H*W*D
     def forward(self, inputs=None, states=None, seq_len=cfg.HKO.BENCHMARK.IN_LEN):
 
         if states is None:
             c = torch.zeros((inputs.size(1), self._num_filter, self._state_height,
-                                  self._state_width), dtype=torch.float).to(cfg.GLOBAL.DEVICE)
+                            self._state_width, self._state_depth), dtype=torch.float).to(cfg.GLOBAL.DEVICE)
             h = torch.zeros((inputs.size(1), self._num_filter, self._state_height,
-                             self._state_width), dtype=torch.float).to(cfg.GLOBAL.DEVICE)
+                            self._state_width, self._state_depth), dtype=torch.float).to(cfg.GLOBAL.DEVICE)
         else:
             h, c = states
 

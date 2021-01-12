@@ -1277,7 +1277,7 @@ class Dataset(torch.utils.data.Dataset):
                 self.items.append(d)
 
             if(opt['scaling_mode'] == "magnitude"):  
-                mags = torch.linalg.norm(d, dim=0)
+                mags = torch.norm(d, dim=0)
                 m_mag = mags.max()
                 if(self.max_mag is None or self.max_mag < m_mag):
                     self.max_mag = m_mag
