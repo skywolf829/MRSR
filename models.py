@@ -731,7 +731,7 @@ def train_single_scale(generators, discriminators, opt, dataset):
 
     start_time = time.time()
     next_save = 0
-    volumes_seen = 0
+    volumes_seen = opt['epoch_number'] * len(dataset)
 
     # Get properly sized frame for this generator
     
@@ -942,7 +942,7 @@ def train_single_scale(generators, discriminators, opt, dataset):
                 rec_cm = toImg(rec_numpy)
                 rec_cm -= rec_cm.min()
                 rec_cm *= (1/rec_cm.max())
-                
+
                 writer.add_image("reconstructed/%i"%len(generators), 
                 rec_cm.clip(0,1), volumes_seen)
 

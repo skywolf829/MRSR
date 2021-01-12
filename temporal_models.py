@@ -30,59 +30,33 @@ output_folder = os.path.join(MVTVSSR_folder_path, "Output")
 save_folder = os.path.join(MVTVSSR_folder_path, "SavedModels")
 
 
-class Generator(nn.Module):
-    def __init__ (self, resolution, num_kernels, opt):
-        super(Generator, self).__init__()
-        self.resolution = resolution
-        self.opt = opt
+class Temporal_Generator(nn.Module):
+    def __init__ (self, opt):
+        super(Temporal_Generator, self).__init__()
+        
+        self.resBlock1 = ResidualBlock(opt['num_channels'], 16, 5, 1)
+        self.resBlock2 = ResidualBlock(16, 32, 3, 1)
+        self.resBlock3 = ResidualBlock(32, 64, 3, 1)
+        self.resBlock4 = ResidualBlock(64, 64, 3, 1)
 
-        if(opt['physical_constraints'] == "hard" and (opt['mode'] == "2D" or opt['mode'] =="3Dto2D")):
-            output_chans = 1
-        else:
-            output_chans = opt['num_channels']
+        self.convlstm = ConvLSTM(64, [64], 3)
 
-        if(opt['pre_padding']):
-            pad_amount = int(kernel_size/2)
-            self.layer_padding = 0
-        else:
-            pad_amount = 0
-            self.layer_padding = 1
 
-        if(opt['mode'] == "2D" or opt['mode'] == "3Dto2D"):
-            conv_layer = nn.Conv2d
-            batchnorm_layer = nn.BatchNorm2d
-            self.required_padding = [pad_amount, pad_amount, pad_amount, pad_amount]
-            self.upscale_method = "bicubic"
-        elif(opt['mode'] == "3D"):
-            conv_layer = nn.Conv3d
-            batchnorm_layer = nn.BatchNorm3d
-            self.required_padding = [pad_amount, pad_amount, pad_amount, 
-            pad_amount, pad_amount, pad_amount]
-            self.upscale_method = "trilinear"
-
-        if(not opt['separate_chans']):
-            self.model = self.create_model(opt['num_blocks'], opt['num_channels'], output_chans,
-            num_kernels, opt['kernel_size'], opt['stride'], 1,
-            conv_layer, batchnorm_layer).to(opt['device'])
-        else:
-            self.model = self.create_model(opt['num_blocks'], opt['num_channels'], output_chans, 
-            num_kernels, opt['kernel_size'], opt['stride'], opt['num_channels'],
-            conv_layer, batchnorm_layer).to(opt['device'])
-
-    def ResidualBlock(input_channels, output_channels, kernel_size, padding):
-        return [
+class ResidualBlock(nn.Module):
+    def __init__(self, input_channels, output_channels, kernel_size, padding):
+        self.block = [
             nn.Sequential(
                 nn.utils.spectral_norm(nn.Conv3D(input_channels, output_channels, 
+                kernel_size=kernel_size, padding=padding, stride=1)),
+                nn.ReLU(),
+                nn.utils.spectral_norm(nn.Conv3D(output_channels, output_channels, 
+                kernel_size=kernel_size, padding=padding, stride=1)),
+                nn.ReLU(),
+                nn.utils.spectral_norm(nn.Conv3D(output_channels, output_channels, 
+                kernel_size=kernel_size, padding=padding, stride=1)),
+                nn.ReLU(),
+                nn.utils.spectral_norm(nn.Conv3D(output_channels, output_channels, 
                 kernel_size=kernel_size, padding=padding, stride=2)),
-                nn.ReLU(),
-                nn.utils.spectral_norm(nn.Conv3D(output_channels, output_channels, 
-                kernel_size=kernel_size, padding=padding, stride=1)),
-                nn.ReLU(),
-                nn.utils.spectral_norm(nn.Conv3D(output_channels, output_channels, 
-                kernel_size=kernel_size, padding=padding, stride=1)),
-                nn.ReLU(),
-                nn.utils.spectral_norm(nn.Conv3D(output_channels, output_channels, 
-                kernel_size=kernel_size, padding=padding, stride=1)),
                 nn.ReLU()            
             ),
             nn.Sequential(
@@ -90,157 +64,104 @@ class Generator(nn.Module):
                 kernel_size=kernel_size, padding=padding, stride=2)))
             )
         ]
-        
-    def get_input_shape(self):
-        shape = []
-        shape.append(1)
-        shape.append(self.opt['num_channels'])
-        for i in range(len(self.resolution)):
-            shape.append(self.resolution[i])
-        return shape
 
-    def get_params(self):
-        if(self.opt['separate_chans']):
-            p = []
-            for i in range(self.opt['num_channels']):
-                p = p + list(self.model[i].parameters())
-            return p
+    def forward(self, x):
+        return self.block[0](x) + self.block[1](x)
+
+
+'''
+From https://github.com/Hzzone/Precipitation-Nowcasting/blob/master/nowcasting/models/convLSTM.py
+'''
+class ConvLSTMCell(nn.Module):
+    def __init__(self, input_channel, num_filter, b_h_w_d, kernel_size, opt, stride=1, padding=1):
+        super().__init__()
+        self._conv = nn.Conv3d(in_channels=input_channel + num_filter,
+                               out_channels=num_filter*4,
+                               kernel_size=kernel_size,
+                               stride=stride,
+                               padding=padding)
+        self._batch_size, self._state_height, self._state_width, self._state_depth = b_h_w_d
+        # if using requires_grad flag, torch.save will not save parameters in deed although it may be updated every epoch.
+        # Howerver, if you use declare an optimizer like Adam(model.parameters()),
+        # parameters will not be updated forever.
+        self.Wci = nn.Parameter(torch.zeros(1, num_filter, self._state_height, self._state_width, self._state_depth)).to(opt['device'])
+        self.Wcf = nn.Parameter(torch.zeros(1, num_filter, self._state_height, self._state_width, self._state_depth)).to(opt['device'])
+        self.Wco = nn.Parameter(torch.zeros(1, num_filter, self._state_height, self._state_width, self._state_depth)).to(opt['device'])
+        self._input_channel = input_channel
+        self._num_filter = num_filter
+
+    # inputs and states should not be all none
+    # inputs: S*B*C*H*W
+    def forward(self, inputs=None, states=None, seq_len=cfg.HKO.BENCHMARK.IN_LEN):
+
+        if states is None:
+            c = torch.zeros((inputs.size(1), self._num_filter, self._state_height,
+                                  self._state_width), dtype=torch.float).to(cfg.GLOBAL.DEVICE)
+            h = torch.zeros((inputs.size(1), self._num_filter, self._state_height,
+                             self._state_width), dtype=torch.float).to(cfg.GLOBAL.DEVICE)
         else:
-            return self.model.parameters()
+            h, c = states
 
-    def receptive_field(self):
-        return (self.opt['kernel_size']-1)*self.opt['num_blocks']
+        outputs = []
+        for index in range(seq_len):
+            # initial inputs
+            if inputs is None:
+                x = torch.zeros((h.size(0), self._input_channel, self._state_height,
+                                      self._state_width), dtype=torch.float).to(cfg.GLOBAL.DEVICE)
+            else:
+                x = inputs[index, ...]
+            cat_x = torch.cat([x, h], dim=1)
+            conv_x = self._conv(cat_x)
 
-    def forward(self, data):
-       
-        if(self.opt['pre_padding']):
-            data = F.pad(data, self.required_padding)
-        output = self.model(data)
+            i, f, tmp_c, o = torch.chunk(conv_x, 4, dim=1)
 
-        if(self.opt['physical_constraints'] == "hard" and self.opt['mode'] == '3D'):
-            output = curl3D(output, self.opt['device'])
-            return output
-        elif(self.opt['physical_constraints'] == "hard" and (self.opt['mode'] == '2D' or self.opt['mode'] == '3Dto2D')):
-            output = curl2D(output, self.opt['device'])
-            gradx = spatial_derivative2D(output[:,0:1], 0, self.opt['device'])
-            grady = spatial_derivative2D(output[:,1:2], 1, self.opt['device'])
-            output = torch.cat([-grady, gradx], axis=1)
-            return output
-        else:
-            return output + data
+            i = torch.sigmoid(i+self.Wci*c)
+            f = torch.sigmoid(f+self.Wcf*c)
+            c = f*c + i*torch.tanh(tmp_c)
+            o = torch.sigmoid(o+self.Wco*c)
+            h = o*torch.tanh(c)
+            outputs.append(h)
+        return torch.stack(outputs), (h, c)
 
-class Dataset(torch.utils.data.Dataset):
-    def __init__(self, opt):
-        
-        self.opt = opt
-        self.channel_mins = []
-        self.channel_maxs = []
-        self.max_mag = None
 
-        self.num_items = 0
+class ConvLSTM(nn.Module):
+    # input_channels corresponds to the first input feature map
+    # hidden state is a list of succeeding lstm layers.
+    def __init__(self, input_channels, hidden_channels, kernel_size, step=1, effective_step=[1]):
+        super(ConvLSTM, self).__init__()
+        self.input_channels = [input_channels] + hidden_channels
+        self.hidden_channels = hidden_channels
+        self.kernel_size = kernel_size
+        self.num_layers = len(hidden_channels)
+        self.step = step
+        self.effective_step = effective_step
+        self._all_layers = []
+        for i in range(self.num_layers):
+            name = 'cell{}'.format(i)
+            cell = ConvLSTMCell(self.input_channels[i], self.hidden_channels[i], self.kernel_size)
+            setattr(self, name, cell)
+            self._all_layers.append(cell)
 
-        for filename in os.listdir(self.opt['data_folder']):
-            d = np.load(os.path.join(self.opt['data_folder'], filename))
+    def forward(self, input):
+        internal_state = []
+        outputs = []
+        for step in range(self.step):
+            x = input
+            for i in range(self.num_layers):
+                # all cells are initialized in the first step
+                name = 'cell{}'.format(i)
+                if step == 0:
+                    bsize, _, height, width, depth = x.size()
+                    (h, c) = getattr(self, name).init_hidden(batch_size=bsize, hidden=self.hidden_channels[i],
+                                                             shape=(height, width, depth))
+                    internal_state.append((h, c))
 
-            print(filename + " " + str(d.shape))
-            if(self.num_items == 0):
-                self.num_channels = d.shape[0]
-                self.resolution = d.shape[1:]
-                if(self.opt['mode'] == "3Dto2D"):
-                    self.resolution = self.resolution[0:len(self.resolution)-1]
+                # do forward
+                (h, c) = internal_state[i]
+                x, new_c = getattr(self, name)(x, h, c)
+                internal_state[i] = (x, new_c)
+            # only record effective steps
+            if step in self.effective_step:
+                outputs.append(x)
 
-            mags = np.linalg.norm(d, axis=0)
-            m_mag = mags.max()
-            if(self.max_mag is None or self.max_mag < m_mag):
-                self.max_mag = m_mag
-
-            for i in range(d.shape[0]):                
-                if(len(self.channel_mins) <= i):
-                    self.channel_mins.append(d[i].min())
-                    self.channel_maxs.append(d[i].max())
-                else:
-                    if(d[i].max() > self.channel_maxs[i]):
-                        self.channel_maxs[i] = d[i].max()
-                    if(d[i].min() < self.channel_mins[i]):
-                        self.channel_mins[i] = d[i].min()
-            
-            self.num_items += 1
-
-    def __len__(self):
-        return self.num_items
-
-    def resolution(self):
-        return self.resolution
-
-    def scale(self, data):
-        d = data.clone()
-        if(self.opt['scaling_mode'] == "magnitude"):
-            d *= (1/self.max_mag)
-        elif (self.opt['scaling_mode'] == "channel"):
-            for i in range(self.num_channels):
-                d[:,i] -= self.channel_mins[i]
-                d[:,i] /= (self.channel_maxs[i] - self.channel_mins[i])
-                d[:,i] -= 0.5
-                d[:,i] *= 2
-        return d
-
-    def unscale(self, data):
-        d = data.clone()
-        if(self.opt['scaling_mode'] == "channel"):
-            for i in range(self.num_channels):
-                d[0, i] *= 0.5
-                d[0, i] += 0.5
-                d[0, i] *= (self.channel_maxs[i] - self.channel_mins[i])
-                d[0, i] += self.channel_mins[i]
-        elif(self.opt['scaling_mode'] == "magnitude"):
-            d *= self.max_mag
-        return d
-
-    def get_patch_ranges(self, frame, patch_size, receptive_field, mode):
-        starts = []
-        rf = receptive_field
-        ends = []
-        if(mode == "3D"):
-            for z in range(0,max(1,frame.shape[2]), patch_size-2*rf):
-                z = min(z, max(0, frame.shape[2] - patch_size))
-                z_stop = min(frame.shape[2], z + patch_size)
-                
-                for y in range(0, max(1,frame.shape[3]), patch_size-2*rf):
-                    y = min(y, max(0, frame.shape[3] - patch_size))
-                    y_stop = min(frame.shape[3], y + patch_size)
-
-                    for x in range(0, max(1,frame.shape[4]), patch_size-2*rf):
-                        x = min(x, max(0, frame.shape[4] - patch_size))
-                        x_stop = min(frame.shape[4], x + patch_size)
-
-                        starts.append([z, y, x])
-                        ends.append([z_stop, y_stop, x_stop])
-        elif(mode == "2D" or mode == "3Dto2D"):
-            for y in range(0, max(1,frame.shape[2]-patch_size+1), patch_size-2*rf):
-                y = min(y, max(0, frame.shape[2] - patch_size))
-                y_stop = min(frame.shape[2], y + patch_size)
-
-                for x in range(0, max(1,frame.shape[3]-patch_size+1), patch_size-2*rf):
-                    x = min(x, max(0, frame.shape[3] - patch_size))
-                    x_stop = min(frame.shape[3], x + patch_size)
-
-                    starts.append([y, x])
-                    ends.append([y_stop, x_stop])
-        return starts, ends
-
-    def __getitem__(self, index):
-        data = np.load(os.path.join(self.opt['data_folder'], str(index) + ".npy"))
-        if(self.opt['scaling_mode'] == "channel"):
-            for i in range(self.num_channels):
-                data[i] -= self.channel_mins[i]
-                data[i] *= (1 / (self.channel_maxs[i] - self.channel_mins[i]))
-                data[i] -= 0.5
-                data[i] *= 2
-        elif(self.opt['scaling_mode'] == "magnitude"):
-            data *= (1 / self.max_mag)
-            
-        if(self.opt['mode'] == "3Dto2D"):
-            data = data[:,:,:,int(data.shape[3]/2)]
-
-        data = np2torch(data, "cpu")
-        return data
+        return outputs, (x, new_c)
