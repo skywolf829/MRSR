@@ -1351,7 +1351,7 @@ class Dataset(torch.utils.data.Dataset):
             f = h5py.File(os.path.join(self.opt['data_folder'], str(index)+".h5"), 'r')
             print("converting " + str(index) + ".h5 to tensor")
             data =  torch.tensor(f.get('data'))
-            
+            f.close()
             print("converted " + str(index) + ".h5 to tensor")
         if(self.opt['scaling_mode'] == "channel"):
             for i in range(self.num_channels):
@@ -1367,5 +1367,5 @@ class Dataset(torch.utils.data.Dataset):
 
         #data = np2torch(data, "cpu")
         print("returning " + str(index) + " data")
-        f.close()
+        
         return data
