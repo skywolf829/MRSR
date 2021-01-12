@@ -720,12 +720,12 @@ def train_single_scale(generators, discriminators, opt, dataset):
     generator_optimizer = optim.Adam(generator.parameters(), lr=opt["learning_rate"], 
     betas=(opt["beta_1"],opt["beta_2"]))
     generator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=generator_optimizer,
-    milestones=[1600-opt['iteration_number']],gamma=opt['gamma'])
+    milestones=[8000-opt['iteration_number']],gamma=opt['gamma'])
 
     discriminator_optimizer = optim.Adam(filter(lambda p: p.requires_grad, discriminator.parameters()), 
     lr=opt["learning_rate"], betas=(opt["beta_1"],opt["beta_2"]))
     discriminator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=discriminator_optimizer,
-    milestones=[1600-opt['iteration_number']],gamma=opt['gamma'])
+    milestones=[8000-opt['iteration_number']],gamma=opt['gamma'])
  
     writer = SummaryWriter(os.path.join('tensorboard',opt['save_name']))
 
