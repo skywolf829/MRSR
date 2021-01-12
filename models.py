@@ -794,6 +794,10 @@ def train_single_scale(generators, discriminators, opt, dataset):
             #print("LR shapeafter interp downscale: %s" % str(real_lr.shape))
             real_lr = F.interpolate(real_lr, scale_factor=1/opt['spatial_downscale_ratio'],mode=opt['upsample_mode'],align_corners=False)
             #print("LR shape after interp upscale: %s" % str(real_lr.shape))
+            
+            real_hr = dataset.scale(real_hr)
+            real_lr = dataset.scale(real_lr)
+
             D_loss = 0
             G_loss = 0        
             gradient_loss = 0
@@ -824,7 +828,8 @@ def train_single_scale(generators, discriminators, opt, dataset):
 
                     if(opt['regularization'] == "GP"):
                         # Gradient penalty 
-                        gradient_penalty = calc_gradient_penalty(discriminator, real_hr, fake, 1, opt['device'])
+                        gradient_penalty = calc_gradient_penalty(discriminator, real_hr, 
+                        fake, 1, opt['device'])
                         gradient_penalty.backward()
                     elif(opt['regularization'] == "TV"):
                         # Total variance penalty
@@ -852,7 +857,7 @@ def train_single_scale(generators, discriminators, opt, dataset):
                     G_loss = output.mean().item()
 
                 if(opt['alpha_1'] > 0.0):
-                    rec_loss = loss(fake, real_hr) * opt["alpha_1"]
+                    rec_loss = loss(dataset.unscale(fake), dataset.unscale(real_hr)) * opt["alpha_1"]
                     rec_loss.backward(retain_graph=True)
                     gen_err_total += rec_loss.item()
                     rec_loss = rec_loss.detach()
@@ -872,8 +877,10 @@ def train_single_scale(generators, discriminators, opt, dataset):
                 if(opt['alpha_4'] > 0.0):   
                     #print("About to calculate loss")                 
                     cs = torch.nn.CosineSimilarity(dim=1).to(opt['device'])
-                    mags = torch.abs(torch.norm(fake, dim=1) - torch.norm(real_hr, dim=1))
-                    angles = torch.abs(cs(fake, real_hr) - 1) / 2
+                    mags = torch.abs(torch.norm(dataset.unscale(fake), dim=1) \
+                    - torch.norm(dataset.unscale(real_hr), dim=1))
+                    angles = torch.abs(cs(dataset.unscale(fake), 
+                    dataset.unscale(real_hr)) - 1) / 2
                     r_loss = opt['alpha_4'] * (mags.mean() + angles.mean()) / 2
                     #print("calculated loss, about to backward")
                     r_loss.backward(retain_graph=True)
@@ -886,11 +893,15 @@ def train_single_scale(generators, discriminators, opt, dataset):
                     for ax1 in range(real_hr.shape[1]):
                         for ax2 in range(len(real_hr.shape[2:])):
                             if(opt["mode"] == '2D' or opt['mode'] == '3Dto2D'):
-                                r_deriv = spatial_derivative2D(real_hr[:,ax1:ax1+1], ax2, opt['device'])
-                                rec_deriv = spatial_derivative2D(fake[:,ax1:ax1+1], ax2, opt['device'])
+                                r_deriv = spatial_derivative2D(dataset.unscale(real_hr)[:,ax1:ax1+1], 
+                                ax2, opt['device'])
+                                rec_deriv = spatial_derivative2D(dataset.unscale(fake)[:,ax1:ax1+1], 
+                                ax2, opt['device'])
                             elif(opt['mode'] == '3D'):
-                                r_deriv = spatial_derivative3D_CD(real_hr[:,ax1:ax1+1], ax2, opt['device'])
-                                rec_deriv = spatial_derivative3D_CD(fake[:,ax1:ax1+1], ax2, opt['device'])
+                                r_deriv = spatial_derivative3D_CD(dataset.unscale(real_hr)[:,ax1:ax1+1],
+                                ax2, opt['device'])
+                                rec_deriv = spatial_derivative3D_CD(dataset.unscale(fake)[:,ax1:ax1+1], 
+                                ax2, opt['device'])
                             real_gradient.append(r_deriv)
                             rec_gradient.append(rec_deriv)
                     real_gradient = torch.cat(real_gradient, 1)
@@ -903,12 +914,14 @@ def train_single_scale(generators, discriminators, opt, dataset):
                 if(opt["alpha_6"] > 0):
                     if(opt['mode'] == '3D'):
                         if(opt['adaptive_streamlines']):
-                            path_loss = adaptive_streamline_loss3D(real_hr, fake, 
+                            path_loss = adaptive_streamline_loss3D(dataset.unscale(real_hr), 
+                            dataset.unscale(fake), 
                             torch.abs(mags[0] + angles[0]), int(opt['streamline_res']**3), 
                             3, 1, opt['streamline_length'], opt['device'], 
                             periodic=opt['periodic'])* opt['alpha_6']
                         else:
-                            path_loss = streamline_loss3D(real_hr, fake, 
+                            path_loss = streamline_loss3D(dataset.unscale(real_hr),
+                            dataset.unscale(fake), 
                             opt['streamline_res'], opt['streamline_res'], opt['streamline_res'], 
                             1, opt['streamline_length'], opt['device'], 
                             periodic=opt['periodic'] and fake.shape == real.shape) * opt['alpha_6']
@@ -929,6 +942,7 @@ def train_single_scale(generators, discriminators, opt, dataset):
                 rec_cm = toImg(rec_numpy)
                 rec_cm -= rec_cm.min()
                 rec_cm *= (1/rec_cm.max())
+                
                 writer.add_image("reconstructed/%i"%len(generators), 
                 rec_cm.clip(0,1), volumes_seen)
 
@@ -1353,6 +1367,8 @@ class Dataset(torch.utils.data.Dataset):
             data =  torch.tensor(f.get('data'))
             f.close()
             print("converted " + str(index) + ".h5 to tensor")
+
+        '''
         if(self.opt['scaling_mode'] == "channel"):
             for i in range(self.num_channels):
                 data[i] -= self.channel_mins[i]
@@ -1361,7 +1377,8 @@ class Dataset(torch.utils.data.Dataset):
                 data[i] *= 2
         elif(self.opt['scaling_mode'] == "magnitude"):
             data *= (1 / self.max_mag)
-            
+        '''
+
         if(self.opt['mode'] == "3Dto2D"):
             data = data[:,:,:,int(data.shape[3]/2)]
 
