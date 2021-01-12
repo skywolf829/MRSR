@@ -1366,6 +1366,6 @@ class Dataset(torch.utils.data.Dataset):
             data = data[:,:,:,int(data.shape[3]/2)]
 
         #data = np2torch(data, "cpu")
-        print("returning " + str(index) + " data")
+        #print("returning " + str(index) + " data")
         
         return data
