@@ -69,37 +69,27 @@ class Generator(nn.Module):
             num_kernels, opt['kernel_size'], opt['stride'], opt['num_channels'],
             conv_layer, batchnorm_layer).to(opt['device'])
 
-    def create_model(self, num_blocks, num_channels, output_chans,
-    num_kernels, kernel_size, stride, groups, conv_layer, batchnorm_layer):
-        modules = []
-        
-        for i in range(num_blocks):
-            # The head goes from numChannels channels to numKernels
-            if i == 0:
-                modules.append(nn.Sequential(
-                    conv_layer(num_channels, num_kernels*groups, kernel_size=kernel_size, 
-                    stride=stride, padding=self.layer_padding, groups=groups),
-                    batchnorm_layer(num_kernels*groups),
-                    nn.LeakyReLU(0.2, inplace=True)
-                ))
-            # The tail will go from kernel_size to num_channels before tanh [-1,1]
-            elif i == num_blocks-1:  
-                tail = nn.Sequential(
-                    conv_layer(num_kernels*groups, output_chans, kernel_size=kernel_size, 
-                    stride=stride, padding=self.layer_padding, groups=groups),
-                    nn.Tanh()
-                )              
-                modules.append(tail)
-            # Other layers will have 32 channels for the 32 kernels
-            else:
-                modules.append(nn.Sequential(
-                    conv_layer(num_kernels*groups, num_kernels*groups, kernel_size=kernel_size,
-                    stride=stride, padding=self.layer_padding, groups=groups),
-                    batchnorm_layer(num_kernels*groups),
-                    nn.LeakyReLU(0.2, inplace=True)
-                ))
-        m = nn.Sequential(*modules)
-        return m
+    def ResidualBlock(input_channels, output_channels, kernel_size, padding):
+        return [
+            nn.Sequential(
+                nn.utils.spectral_norm(nn.Conv3D(input_channels, output_channels, 
+                kernel_size=kernel_size, padding=padding, stride=2)),
+                nn.ReLU(),
+                nn.utils.spectral_norm(nn.Conv3D(output_channels, output_channels, 
+                kernel_size=kernel_size, padding=padding, stride=1)),
+                nn.ReLU(),
+                nn.utils.spectral_norm(nn.Conv3D(output_channels, output_channels, 
+                kernel_size=kernel_size, padding=padding, stride=1)),
+                nn.ReLU(),
+                nn.utils.spectral_norm(nn.Conv3D(output_channels, output_channels, 
+                kernel_size=kernel_size, padding=padding, stride=1)),
+                nn.ReLU()            
+            ),
+            nn.Sequential(
+                nn.utils.spectral_norm(nn.Conv3D(input_channels, output_channels, 
+                kernel_size=kernel_size, padding=padding, stride=2)))
+            )
+        ]
         
     def get_input_shape(self):
         shape = []

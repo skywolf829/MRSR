@@ -22,6 +22,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_channels',default=None,type=int,help='Number of channels to use')
     parser.add_argument('--spatial_downscale_ratio',default=None,type=float,help='Ratio for spatial downscaling')
     parser.add_argument('--min_dimension_size',default=None,type=int,help='Minimum dimension size')
+    parser.add_argument('--scaling_mode',default=None,type=str,help='Scaling mode, learned, magnitude, channel, or none')
 
     parser.add_argument('--num_blocks',default=None,type=int, help='Num of conv-batchnorm-relu blocks per gen/discrim')
     parser.add_argument('--base_num_kernels',default=None,type=int, help='Num conv kernels in lowest layer')
