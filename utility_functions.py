@@ -496,6 +496,19 @@ def toImg(vectorField, renorm_channels = False):
     elif(len(vf.shape) == 4):
         return toImg(vf[:,:,:,0], renorm_channels)
 
+def crop_to_size(frame, max_dim_size):
+    x_crop_start = max(frame.shape[2]-max_dim_size, 0)
+    x_crop_end = min(frame.shape[2], x_crop_start + max_dim_size)
+    
+    y_crop_start = max(frame.shape[3]-max_dim_size, 0)
+    y_crop_end = min(frame.shape[3], y_crop_start + max_dim_size)
+    
+    z_crop_start = max(frame.shape[4]-max_dim_size, 0)
+    z_crop_end = min(frame.shape[4], z_crop_start + max_dim_size)
+
+    return frame[:,:,x_crop_start:x_crop_end,
+    y_crop_start:y_crop_end,z_crop_start:z_crop_end]
+
 def to_mag(vectorField, normalize=True, max_mag = None):
     vf = vectorField.copy()
     r = np.zeros(vf.shape)

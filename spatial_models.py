@@ -26,9 +26,9 @@ from pytorch_memlab import LineProfiler, MemReporter, profile, profile_every
 import h5py
 
 MVTVSSR_folder_path = os.path.dirname(os.path.abspath(__file__))
-input_folder = os.path.join(MVTVSSR_folder_path, "InputData")
-output_folder = os.path.join(MVTVSSR_folder_path, "Output")
-save_folder = os.path.join(MVTVSSR_folder_path, "SavedModels")
+input_folder = os.path.join(FlowSTSR_folder_path, "InputData")
+output_folder = os.path.join(FlowSTSR_folder_path, "Output")
+save_folder = os.path.join(FlowSTSR_folder_path, "SavedModels")
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -1317,10 +1317,10 @@ class Dataset(torch.utils.data.Dataset):
         d = data.clone()
         if(self.opt['scaling_mode'] == "channel"):
             for i in range(self.num_channels):
-                d[0, i] *= 0.5
-                d[0, i] += 0.5
-                d[0, i] *= (self.channel_maxs[i] - self.channel_mins[i])
-                d[0, i] += self.channel_mins[i]
+                d[:, i] *= 0.5
+                d[:, i] += 0.5
+                d[:, i] *= (self.channel_maxs[i] - self.channel_mins[i])
+                d[:, i] += self.channel_mins[i]
         elif(self.opt['scaling_mode'] == "magnitude"):
             d *= self.max_mag
         return d

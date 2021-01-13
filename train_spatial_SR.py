@@ -1,4 +1,4 @@
-from models import *
+from spatial_models import *
 from options import *
 from utility_functions import *
 import torch.multiprocessing as mp
@@ -23,6 +23,9 @@ if __name__ == '__main__':
     parser.add_argument('--spatial_downscale_ratio',default=None,type=float,help='Ratio for spatial downscaling')
     parser.add_argument('--min_dimension_size',default=None,type=int,help='Minimum dimension size')
     parser.add_argument('--scaling_mode',default=None,type=str,help='Scaling mode, learned, magnitude, channel, or none')
+    
+    parser.add_argument('--num_lstm_layers',default=None,type=int,help='num lstm layers')
+    parser.add_argument('--training_seq_length',default=None,type=int,help='length of sequence to train LSTM with')
 
     parser.add_argument('--num_blocks',default=None,type=int, help='Num of conv-batchnorm-relu blocks per gen/discrim')
     parser.add_argument('--base_num_kernels',default=None,type=int, help='Num conv kernels in lowest layer')
@@ -71,10 +74,10 @@ if __name__ == '__main__':
 
     args = vars(parser.parse_args())
 
-    MVTVSSR_folder_path = os.path.dirname(os.path.abspath(__file__))
-    input_folder = os.path.join(MVTVSSR_folder_path, "InputData")
-    output_folder = os.path.join(MVTVSSR_folder_path, "Output")
-    save_folder = os.path.join(MVTVSSR_folder_path, "SavedModels")
+    FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
+    input_folder = os.path.join(FlowSTSR_folder_path, "InputData")
+    output_folder = os.path.join(FlowSTSR_folder_path, "Output")
+    save_folder = os.path.join(FlowSTSR_folder_path, "SavedModels")
 
 
     if(args['load_from'] is None):

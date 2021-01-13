@@ -24,23 +24,116 @@ from torch.utils.tensorboard import SummaryWriter
 import copy
 from pytorch_memlab import LineProfiler, MemReporter, profile, profile_every
 
-MVTVSSR_folder_path = os.path.dirname(os.path.abspath(__file__))
-input_folder = os.path.join(MVTVSSR_folder_path, "InputData")
-output_folder = os.path.join(MVTVSSR_folder_path, "Output")
-save_folder = os.path.join(MVTVSSR_folder_path, "SavedModels")
+FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
+input_folder = os.path.join(FlowSTSR_folder_path, "InputData")
+output_folder = os.path.join(FlowSTSR_folder_path, "Output")
+save_folder = os.path.join(FlowSTSR_folder_path, "SavedModels")
 
+
+def train_temporal_network(model, dataset, opt):
+    model = model.to(opt['device'])
+
+    print_to_log_and_console("Training on %s" % (opt["device"]), 
+        os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
+    
+    generator_optimizer = optim.Adam(model.parameters(), lr=opt["learning_rate"], 
+    betas=(opt["beta_1"],opt["beta_2"]))
+    generator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=generator_optimizer,
+    milestones=[8000-opt['iteration_number']],gamma=opt['gamma'])
+
+    writer = SummaryWriter(os.path.join('tensorboard',opt['save_name']))
+    dataloader = torch.utils.data.DataLoader(
+        dataset=dataset,
+        shuffle=False,
+        num_workers=opt["num_workers"]
+    )
+
+    loss = nn.MSEloss().to(opt['device'])
+    iters = 0
+    for epoch in range(opt['epoch_number'], opt["epochs"]):        
+        for batch_num, items in enumerate(dataloader):
+            gt_frames = crop_to_size(items[0], opt['cropping_resolution']).to(opt['device'])
+            gt_next_frame = crop_to_size(items[1], opt['cropping_resolution']).to(opt['device'])
+
+            pred_next_frame = model(gt_frames)
+            loss = loss(pred_next_frame, gt_next_frame)
+            loss.backward()
+            
+            generator_scheduler.step()  
+
+            pred_next_frame_cm_image = toImg(pred_next_frame.detach().cpu().numpy())
+            gt_next_frame_cm_image = toImg(gt_next_frame.detach().cpu().numpy())
+            
+            writer.add_scalar('MSE', loss.item(), iters) 
+            writer.add_image("Predicted next frame",pred_next_frame_cm_image, iters)
+            writer.add_image("GT next frame",gt_next_frame_cm_image, iters)
+
+            print_to_log_and_console("%i/%i: MSE=%.02f" %
+            (iters, opt['epochs']*len(dataset), loss.item()), 
+            os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
+
+            iters += 1
+
+    return model
+
+def save_model(model, opt):
+    folder = create_folder(opt["save_folder"], opt["save_name"])
+    path_to_save = os.path.join(opt["save_folder"], folder)
+    print_to_log_and_console("Saving model to %s" % (path_to_save), 
+    os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
+
+    if(opt["save_generators"]):
+        torch.save(generator.state_dict(), os.path.join(path_to_save, "temporal_generator"))
+
+    save_options(opt, path_to_save)
+
+def load_model(model, opt, device):
+    generators = []
+    discriminators = []
+    load_folder = os.path.join(opt["save_folder"], opt["save_name"])
+
+    if not os.path.exists(load_folder):
+        print_to_log_and_console("%s doesn't exist, load failed" % load_folder, 
+        os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
+        return
+
+    model.load_state_dict(torch.load(os.path.join(
+        load_folder, "temporal_generator"), map_location=device))
+    return model
 
 class Temporal_Generator(nn.Module):
     def __init__ (self, opt):
         super(Temporal_Generator, self).__init__()
         
-        self.resBlock1 = ResidualBlock(opt['num_channels'], 16, 5, 1)
-        self.resBlock2 = ResidualBlock(16, 32, 3, 1)
-        self.resBlock3 = ResidualBlock(32, 64, 3, 1)
-        self.resBlock4 = ResidualBlock(64, 64, 3, 1)
+        self.feature_learning = nn.Sequential(
+            self.resBlock1 = ResidualBlock(opt['num_channels'], 16, 5, 2)
+            self.resBlock2 = ResidualBlock(16, 32, 3, 1)
+            self.resBlock3 = ResidualBlock(32, 64, 3, 1)
+            self.resBlock4 = ResidualBlock(64, 64, 3, 1)
+        )
+        self.convlstm = ConvLSTM(opt)
 
-        self.convlstm = ConvLSTM(64, [64], 3)
+        self.upscaling = nn.Sequential(
+            self.upscaleBlock1 = UpscalingBlock(64, 64*8, 3, 1)
+            self.upscaleBlock2 = UpscalingBlock(64, 32*8, 3, 1)
+            self.upscaleBlock3 = UpscalingBlock(32, 32*8, 3, 1)
+            self.upscaleBlock4 = UpscalingBlock(32, opt['num_channels']*8, 5, 2)
+        )
 
+        self.finalConv = nn.Conv2d(opt['num_channels'], opt['num_channels'], padding=0, kernel_size=1, stride=1)
+        self.finalactivation = nn.tanh()
+
+    def forward(self, x):
+        '''
+        x should be of shape (seq_length, c, x, y, z)
+        '''
+        x = self.feature_learning(x)
+        x = x.unsqueeze(0)
+        x = self.convlstm(x)
+        x = self.upscaling(x)
+        res = self.finalConv(x)
+        res = self.finalactivation(res)
+        return x + res
 
 class ResidualBlock(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size, padding):
@@ -68,100 +161,309 @@ class ResidualBlock(nn.Module):
     def forward(self, x):
         return self.block[0](x) + self.block[1](x)
 
+class UpscalingBlock(nn.Module):
+    def __init__(self, input_channels, output_channels, kernel_size, padding):
+        self.block = [
+            nn.Sequential(
+                nn.utils.spectral_norm(nn.Conv3D(input_channels, input_channels, 
+                kernel_size=kernel_size, padding=padding, stride=1)),
+                nn.ReLU(),
+                nn.utils.spectral_norm(nn.Conv3D(input_channels, input_channels, 
+                kernel_size=kernel_size, padding=padding, stride=1)),
+                nn.ReLU(),
+                nn.utils.spectral_norm(nn.Conv3D(input_channels, input_channels, 
+                kernel_size=kernel_size, padding=padding, stride=1)),
+                nn.ReLU(),
+                nn.utils.spectral_norm(nn.Conv3D(input_channels, output_channels, 
+                kernel_size=kernel_size, padding=padding, stride=2)),
+                nn.ReLU()            
+            ),
+            nn.Sequential(
+                nn.utils.spectral_norm(nn.Conv3D(input_channels, output_channels, 
+                kernel_size=kernel_size, padding=padding, stride=2)))
+            )
+        ]
 
-'''
-From https://github.com/Hzzone/Precipitation-Nowcasting/blob/master/nowcasting/models/convLSTM.py
-'''
+    def forward(self, x):
+        return VoxelShuffle(self.block[0](x) + self.block[1](x))
+
+def VoxelShuffle(t):
+    # t has shape [batch, channels, x, y, z]
+    # channels should be divisible by 8
+    shape = list(t.shape)
+    shape[2] = shape[2] / 8
+    shape[3] = shape[3] * 2
+    shape[4] = shape[4] * 2
+    shape[5] = shape[5] * 2
+
+    a = torch.zeros(shape).to(t.device)
+    a.requires_grad = t.requires_grad
+    a[:,:,::2,::2,::2] = t[:,::8,:,:,:]
+    a[:,:,::2,::2,1::2] = t[:,::8,:,:,:]
+    a[:,:,::2,1::2,::2] = t[:,::8,:,:,:]
+    a[:,:,::2,1::2,1::2] = t[:,::8,:,:,:]
+    a[:,:,1::2,::2,::2] = t[:,::8,:,:,:]
+    a[:,:,1::2,::2,1::2] = t[:,::8,:,:,:]
+    a[:,:,1::2,1::2,::2] = t[:,::8,:,:,:]
+    a[:,:,1::2,1::2,1::2] = t[:,::8,:,:,:]
+
+    return a
+
 class ConvLSTMCell(nn.Module):
-    def __init__(self, input_channel, num_filter, b_h_w_d, kernel_size, opt, stride=1, padding=1):
-        super().__init__()
-        self._conv = nn.Conv3d(in_channels=input_channel + num_filter,
-                               out_channels=num_filter*4,
-                               kernel_size=kernel_size,
-                               stride=stride,
-                               padding=padding)
-        self._batch_size, self._state_height, self._state_width, self._state_depth = b_h_w_d
-        # if using requires_grad flag, torch.save will not save parameters in deed although it may be updated every epoch.
-        # Howerver, if you use declare an optimizer like Adam(model.parameters()),
-        # parameters will not be updated forever.
-        self.Wci = nn.Parameter(torch.zeros(1, num_filter, self._state_height, self._state_width, self._state_depth)).to(opt['device'])
-        self.Wcf = nn.Parameter(torch.zeros(1, num_filter, self._state_height, self._state_width, self._state_depth)).to(opt['device'])
-        self.Wco = nn.Parameter(torch.zeros(1, num_filter, self._state_height, self._state_width, self._state_depth)).to(opt['device'])
-        self._input_channel = input_channel
-        self._num_filter = num_filter
+    def __init__(self, opt):
 
-    # inputs and states should not be all none
-    # inputs: S*B*C*H*W*D
-    def forward(self, inputs=None, states=None, seq_len=cfg.HKO.BENCHMARK.IN_LEN):
+        super(ConvLSTMCell, self).__init__()
 
-        if states is None:
-            c = torch.zeros((inputs.size(1), self._num_filter, self._state_height,
-                            self._state_width, self._state_depth), dtype=torch.float).to(cfg.GLOBAL.DEVICE)
-            h = torch.zeros((inputs.size(1), self._num_filter, self._state_height,
-                            self._state_width, self._state_depth), dtype=torch.float).to(cfg.GLOBAL.DEVICE)
-        else:
-            h, c = states
+        self.opt = opt
 
-        outputs = []
-        for index in range(seq_len):
-            # initial inputs
-            if inputs is None:
-                x = torch.zeros((h.size(0), self._input_channel, self._state_height,
-                                      self._state_width), dtype=torch.float).to(cfg.GLOBAL.DEVICE)
-            else:
-                x = inputs[index, ...]
-            cat_x = torch.cat([x, h], dim=1)
-            conv_x = self._conv(cat_x)
+        self.conv = nn.Conv3d(in_channels=64,
+                              out_channels=8*64,
+                              kernel_size=3,
+                              padding=1, 
+                              groups=2)
 
-            i, f, tmp_c, o = torch.chunk(conv_x, 4, dim=1)
+    def forward(self, input_tensor, cur_state):
+        h_cur, c_cur = cur_state
 
-            i = torch.sigmoid(i+self.Wci*c)
-            f = torch.sigmoid(f+self.Wcf*c)
-            c = f*c + i*torch.tanh(tmp_c)
-            o = torch.sigmoid(o+self.Wco*c)
-            h = o*torch.tanh(c)
-            outputs.append(h)
-        return torch.stack(outputs), (h, c)
+        combined = torch.cat([input_tensor, h_cur], dim=1)  # concatenate along channel axis
 
+        combined_conv = self.conv(combined)
+        i_x, f_x, o_x, c_x, i_h, f_h, o_h, c_h = torch.split(combined_conv, 8, dim=1)
+        
+        i = torch.sigmoid(i_x + i_h)
+        f = torch.sigmoid(f_x + f_h)
+        o = torch.sigmoid(o_x + o_h)
+        
+        c_next = f * c_cur + i * torch.tanh(cc_g)
+        h_next = o * torch.tanh(c_next)
+
+        return h_next, c_next
+
+    def init_hidden(self):
+        return (torch.zeros(1, 64, 32, 32, 32, device=self.opt['device']),
+                torch.zeros(1, 64, 32, 32, 32, device=self.opt['device']))
 
 class ConvLSTM(nn.Module):
-    # input_channels corresponds to the first input feature map
-    # hidden state is a list of succeeding lstm layers.
-    def __init__(self, input_channels, hidden_channels, kernel_size, step=1, effective_step=[1]):
+     """
+    Parameters:
+        input_dim: Number of channels in input
+        hidden_dim: Number of hidden channels
+        kernel_size: Size of kernel in convolutions
+        num_layers: Number of LSTM layers stacked on each other
+        batch_first: Whether or not dimension 0 is the batch or not
+        bias: Bias or no bias in Convolution
+        return_all_layers: Return the list of computations for all layers
+        Note: Will do same padding.
+    Input:
+        A tensor of size B, T, C, H, W or T, B, C, H, W
+    Output:
+        A tuple of two lists of length num_layers (or length 1 if return_all_layers is False).
+            0 - layer_output_list is the list of lists of length T of each output
+            1 - last_state_list is the list of last states
+                    each element of the list is a tuple (h, c) for hidden state and memory
+    Example:
+        >> x = torch.rand((32, 10, 64, 128, 128))
+        >> convlstm = ConvLSTM(64, 16, 3, 1, True, True, False)
+        >> _, last_states = convlstm(x)
+        >> h = last_states[0][0]  # 0 for layer index, 0 for h index
+    """
+
+    def __init__(self, opt):
         super(ConvLSTM, self).__init__()
-        self.input_channels = [input_channels] + hidden_channels
-        self.hidden_channels = hidden_channels
-        self.kernel_size = kernel_size
-        self.num_layers = len(hidden_channels)
-        self.step = step
-        self.effective_step = effective_step
-        self._all_layers = []
-        for i in range(self.num_layers):
-            name = 'cell{}'.format(i)
-            cell = ConvLSTMCell(self.input_channels[i], self.hidden_channels[i], self.kernel_size)
-            setattr(self, name, cell)
-            self._all_layers.append(cell)
+        self.opt = opt
 
-    def forward(self, input):
-        internal_state = []
-        outputs = []
-        for step in range(self.step):
-            x = input
-            for i in range(self.num_layers):
-                # all cells are initialized in the first step
-                name = 'cell{}'.format(i)
-                if step == 0:
-                    bsize, _, height, width, depth = x.size()
-                    (h, c) = getattr(self, name).init_hidden(batch_size=bsize, hidden=self.hidden_channels[i],
-                                                             shape=(height, width, depth))
-                    internal_state.append((h, c))
+        cell_list = []
+        for i in range(0, opt['num_lstm_layers']):
+            cell_list.append(ConvLSTMCell())
 
-                # do forward
-                (h, c) = internal_state[i]
-                x, new_c = getattr(self, name)(x, h, c)
-                internal_state[i] = (x, new_c)
-            # only record effective steps
-            if step in self.effective_step:
-                outputs.append(x)
+        self.cell_list = nn.ModuleList(cell_list)
 
-        return outputs, (x, new_c)
+    def forward(self, input_tensor, hidden_state=None):
+        """
+        Parameters
+        ----------
+        input_tensor: todo
+            6-D Tensor shape (b, seq_length, c, h, w,d ) 
+        hidden_state: todo
+            None. todo implement stateful
+        Returns
+        -------
+        last_state_list, layer_output
+        """
+
+        b, seq_length, _, h, w, d = input_tensor.size()
+
+        # Implement stateful ConvLSTM
+        if hidden_state is not None:
+            raise NotImplementedError()
+        else:
+            # Since the init is done in forward. Can send image size here
+            hidden_state = self._init_hidden()
+
+        layer_output_list = []
+        last_state_list = []
+
+        cur_layer_input = input_tensor
+
+        for layer_idx in range(self.opt['num_lstm_layers']):
+
+            h, c = hidden_state[layer_idx]
+            output_inner = []
+            for t in range(seq_len):
+                h, c = self.cell_list[layer_idx](input_tensor=cur_layer_input[:, t, :, :, :, :],
+                                                 cur_state=[h, c])
+                output_inner.append(h)
+
+            layer_output = torch.stack(output_inner, dim=1)
+            cur_layer_input = layer_output
+
+            layer_output_list.append(layer_output)
+            last_state_list.append([h, c])
+
+        return layer_output[:,-1,:,:,:,:]
+
+    def _init_hidden(self):
+        init_states = []
+        for i in range(self.opt['num_lstm_layers']):
+            init_states.append(self.cell_list[i].init_hidden())
+        return init_states
+
+class Dataset(torch.utils.data.Dataset):
+    def __init__(self, opt):
+        
+        self.opt = opt
+        self.channel_mins = []
+        self.channel_maxs = []
+        self.max_mag = None
+        self.num_items = 0
+        self.items = []
+        print("Initializing dataset")
+        for filename in os.listdir(self.opt['data_folder']):
+
+            if(opt['load_data_at_start'] or (self.num_items > 0 and \
+            (opt['scaling_mode'] == "magnitude" or opt['scaling_mode'] == "channel"))):
+                print("Loading " + filename)   
+                f = h5py.File(os.path.join(self.opt['data_folder'], filename), 'r')
+                d = torch.tensor(f.get('data'))
+                f.close()
+
+            if(self.num_items == 0):                             
+                self.num_channels = d.shape[0]
+                self.resolution = d.shape[1:]
+                if(self.opt['mode'] == "3Dto2D"):
+                    self.resolution = self.resolution[0:len(self.resolution)-1]
+
+            if(opt['load_data_at_start']):
+                self.items.append(d)
+
+            if(opt['scaling_mode'] == "magnitude"):  
+                mags = torch.norm(d, dim=0)
+                m_mag = mags.max()
+                if(self.max_mag is None or self.max_mag < m_mag):
+                    self.max_mag = m_mag
+
+            if(opt['scaling_mode'] == "channel"):
+                for i in range(d.shape[0]):                
+                    if(len(self.channel_mins) <= i):
+                        self.channel_mins.append(d[i].min())
+                        self.channel_maxs.append(d[i].max())
+                    else:
+                        if(d[i].max() > self.channel_maxs[i]):
+                            self.channel_maxs[i] = d[i].max()
+                        if(d[i].min() < self.channel_mins[i]):
+                            self.channel_mins[i] = d[i].min()
+            
+            self.num_items += 1
+
+    def __len__(self):
+        return self.num_items - opt['training_seq_length']
+
+    def resolution(self):
+        return self.resolution
+
+    def scale(self, data):
+        d = data.clone()
+        if(self.opt['scaling_mode'] == "magnitude"):
+            d *= (1/self.max_mag)
+        elif (self.opt['scaling_mode'] == "channel"):
+            for i in range(self.num_channels):
+                d[:,i] -= self.channel_mins[i]
+                d[:,i] /= (self.channel_maxs[i] - self.channel_mins[i])
+                d[:,i] -= 0.5
+                d[:,i] *= 2
+        return d
+
+    def unscale(self, data):
+        d = data.clone()
+        if(self.opt['scaling_mode'] == "channel"):
+            for i in range(self.num_channels):
+                d[:, i] *= 0.5
+                d[:, i] += 0.5
+                d[:, i] *= (self.channel_maxs[i] - self.channel_mins[i])
+                d[:, i] += self.channel_mins[i]
+        elif(self.opt['scaling_mode'] == "magnitude"):
+            d *= self.max_mag
+        return d
+
+    def get_patch_ranges(self, frame, patch_size, receptive_field, mode):
+        starts = []
+        rf = receptive_field
+        ends = []
+        if(mode == "3D"):
+            for z in range(0,max(1,frame.shape[2]), patch_size-2*rf):
+                z = min(z, max(0, frame.shape[2] - patch_size))
+                z_stop = min(frame.shape[2], z + patch_size)
+                
+                for y in range(0, max(1,frame.shape[3]), patch_size-2*rf):
+                    y = min(y, max(0, frame.shape[3] - patch_size))
+                    y_stop = min(frame.shape[3], y + patch_size)
+
+                    for x in range(0, max(1,frame.shape[4]), patch_size-2*rf):
+                        x = min(x, max(0, frame.shape[4] - patch_size))
+                        x_stop = min(frame.shape[4], x + patch_size)
+
+                        starts.append([z, y, x])
+                        ends.append([z_stop, y_stop, x_stop])
+        elif(mode == "2D" or mode == "3Dto2D"):
+            for y in range(0, max(1,frame.shape[2]-patch_size+1), patch_size-2*rf):
+                y = min(y, max(0, frame.shape[2] - patch_size))
+                y_stop = min(frame.shape[2], y + patch_size)
+
+                for x in range(0, max(1,frame.shape[3]-patch_size+1), patch_size-2*rf):
+                    x = min(x, max(0, frame.shape[3] - patch_size))
+                    x_stop = min(frame.shape[3], x + patch_size)
+
+                    starts.append([y, x])
+                    ends.append([y_stop, x_stop])
+        return starts, ends
+
+    def __getitem__(self, index):
+        if(self.opt['load_data_at_start']):
+            data_seq = (torch.stack(self.items[index:index+self.opt['seq_length']], dim=0), 
+            self.items[index+self.opt['seq_length']]) 
+        else:
+            print("trying to load " + str(index) + ".h5")
+            f = h5py.File(os.path.join(self.opt['data_folder'], str(index)+".h5"), 'r')
+            print("converting " + str(index) + ".h5 to tensor")
+            data =  torch.tensor(f.get('data'))
+            f.close()
+            print("converted " + str(index) + ".h5 to tensor")
+
+        '''
+        if(self.opt['scaling_mode'] == "channel"):
+            for i in range(self.num_channels):
+                data[i] -= self.channel_mins[i]
+                data[i] *= (1 / (self.channel_maxs[i] - self.channel_mins[i]))
+                data[i] -= 0.5
+                data[i] *= 2
+        elif(self.opt['scaling_mode'] == "magnitude"):
+            data *= (1 / self.max_mag)
+        '''
+
+        if(self.opt['mode'] == "3Dto2D"):
+            data = data[:,:,:,int(data.shape[3]/2)]
+
+        #data = np2torch(data, "cpu")
+        #print("returning " + str(index) + " data")
+        
+        return data

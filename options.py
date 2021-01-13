@@ -27,6 +27,10 @@ class Options():
         opt['conv_groups']             = 1
         opt['separate_chans']          = False
         
+        opt['num_lstm_layers']         = 3
+        opt['training_seq_length']     = 3
+
+
         opt["n"]                       = 0         # Number of scales in the heirarchy, defined by the input and min_dimension_size
         opt["resolutions"]             = []        # The scales for the GAN
         opt["downsample_mode"]         = "trilinear"
