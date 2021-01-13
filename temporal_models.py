@@ -244,30 +244,6 @@ class ConvLSTMCell(nn.Module):
                 torch.zeros(1, 64, 32, 32, 32, device=self.opt['device']))
 
 class ConvLSTM(nn.Module):
-     """
-    Parameters:
-        input_dim: Number of channels in input
-        hidden_dim: Number of hidden channels
-        kernel_size: Size of kernel in convolutions
-        num_layers: Number of LSTM layers stacked on each other
-        batch_first: Whether or not dimension 0 is the batch or not
-        bias: Bias or no bias in Convolution
-        return_all_layers: Return the list of computations for all layers
-        Note: Will do same padding.
-    Input:
-        A tensor of size B, T, C, H, W or T, B, C, H, W
-    Output:
-        A tuple of two lists of length num_layers (or length 1 if return_all_layers is False).
-            0 - layer_output_list is the list of lists of length T of each output
-            1 - last_state_list is the list of last states
-                    each element of the list is a tuple (h, c) for hidden state and memory
-    Example:
-        >> x = torch.rand((32, 10, 64, 128, 128))
-        >> convlstm = ConvLSTM(64, 16, 3, 1, True, True, False)
-        >> _, last_states = convlstm(x)
-        >> h = last_states[0][0]  # 0 for layer index, 0 for h index
-    """
-
     def __init__(self, opt):
         super(ConvLSTM, self).__init__()
         self.opt = opt
