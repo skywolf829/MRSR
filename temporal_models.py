@@ -106,17 +106,17 @@ class Temporal_Generator(nn.Module):
         super(Temporal_Generator, self).__init__()
         
         self.feature_learning = nn.Sequential(
-            self.resBlock1 = ResidualBlock(opt['num_channels'], 16, 5, 2)
-            self.resBlock2 = ResidualBlock(16, 32, 3, 1)
-            self.resBlock3 = ResidualBlock(32, 64, 3, 1)
+            self.resBlock1 = ResidualBlock(opt['num_channels'], 16, 5, 2),
+            self.resBlock2 = ResidualBlock(16, 32, 3, 1),
+            self.resBlock3 = ResidualBlock(32, 64, 3, 1),
             self.resBlock4 = ResidualBlock(64, 64, 3, 1)
         )
         self.convlstm = ConvLSTM(opt)
 
         self.upscaling = nn.Sequential(
-            self.upscaleBlock1 = UpscalingBlock(64, 64*8, 3, 1)
-            self.upscaleBlock2 = UpscalingBlock(64, 32*8, 3, 1)
-            self.upscaleBlock3 = UpscalingBlock(32, 32*8, 3, 1)
+            self.upscaleBlock1 = UpscalingBlock(64, 64*8, 3, 1),
+            self.upscaleBlock2 = UpscalingBlock(64, 32*8, 3, 1),
+            self.upscaleBlock3 = UpscalingBlock(32, 32*8, 3, 1),
             self.upscaleBlock4 = UpscalingBlock(32, opt['num_channels']*8, 5, 2)
         )
 
