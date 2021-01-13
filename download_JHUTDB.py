@@ -7,6 +7,7 @@ import zeep
 import struct
 import base64
 import time
+import h5py
 from concurrent.futures import ThreadPoolExecutor, as_completed
 client = zeep.Client('http://turbulence.pha.jhu.edu/service/turbulence.asmx?WSDL')
 ArrayOfFloat = client.get_type('ns0:ArrayOfFloat')
@@ -126,8 +127,6 @@ sim_name, timestep, field, num_components, num_workers):
     return full
 
 
-frames = []
-
 #name = "channel"
 name = "isotropic1024coarse"
 #name="mixing"
@@ -145,9 +144,11 @@ for i in range(startts, endts, ts_skip):
     "u", 3, 
     64)
     print(f.shape)
-    np.save(str(i-1)+".npy", f.astype(np.float32).swapaxes(0,3).swapaxes(3,2).swapaxes(2,1))
+    f = f.astype(np.float32).swapaxes(0,3).swapaxes(3,2).swapaxes(2,1)
+    f_h5 = h5py.File(str(i-1)+'.h5', 'w')
+    f_h5.create_dataset("data", data=f)
+    f_h5.close()
     count += 1
-    frames.append(f[0])
 
 print("finished")
 print(time.time() - t0)
