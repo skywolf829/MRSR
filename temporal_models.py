@@ -180,7 +180,7 @@ class UpscalingBlock(nn.Module):
             ),
             nn.Sequential(
                 nn.utils.spectral_norm(nn.Conv3D(input_channels, output_channels, 
-                kernel_size=kernel_size, padding=padding, stride=2)))
+                kernel_size=kernel_size, padding=padding, stride=2))
             )
         ]
 
