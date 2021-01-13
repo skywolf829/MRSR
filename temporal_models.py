@@ -23,6 +23,7 @@ from skimage.transform.pyramids import pyramid_reduce
 from torch.utils.tensorboard import SummaryWriter
 import copy
 from pytorch_memlab import LineProfiler, MemReporter, profile, profile_every
+import h5py
 
 FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 input_folder = os.path.join(FlowSTSR_folder_path, "InputData")
