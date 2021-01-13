@@ -16,7 +16,8 @@ SpatialInterpolation = client.get_type('ns0:SpatialInterpolation')
 TemporalInterpolation = client.get_type('ns0:TemporalInterpolation')
 token="edu.osu.buckeyemail.wurster.18-92fb557b" #replace with your own token
 
-def get_frame(x_start, x_end, x_step, y_start, y_end, y_step, 
+def get_frame(x_start, x_end, x_step, 
+y_start, y_end, y_step, 
 z_start, z_end, z_step, 
 sim_name, timestep, field, num_components):
     #print(x_start)
@@ -132,8 +133,8 @@ name = "isotropic1024coarse"
 #name="mixing"
 t0 = time.time()
 count = 0
-startts = 18
-endts = 101
+startts = 1
+endts = 18
 ts_skip = 1
 for i in range(startts, endts, ts_skip):
     print("TS %i/%i" % (i, endts))
