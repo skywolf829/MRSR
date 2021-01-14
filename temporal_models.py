@@ -53,24 +53,27 @@ def train_temporal_network(model, dataset, opt):
     iters = 0
     for epoch in range(opt['epoch_number'], opt["epochs"]):        
         for batch_num, items in enumerate(dataloader):
-            gt_frames = crop_to_size(items[0][0], opt['cropping_resolution']).to(opt['device'])
-            gt_next_frame = crop_to_size(items[1], opt['cropping_resolution']).to(opt['device'])
+            gt_start_frame = crop_to_size(items[0], opt['cropping_resolution']).to(opt['device'])
+            gt_end_frame = crop_to_size(items[1], opt['cropping_resolution']).to(opt['device'])
+            gt_middle_frame = crop_to_size(items[2], opt['cropping_resolution']).to(opt['device'])
+            timesteps = items[3]
+
+            gt_start_frame = dataset.scale(gt_start_frame)
+            gt_end_frame = dataset.scale(gt_end_frame)
             
-            gt_frames = dataset.scale(gt_frames)
-            
-            pred_next_frame = dataset.unscale(model(gt_frames))
-            loss = loss_function(pred_next_frame, gt_next_frame)
+            pred_frame = dataset.unscale(model(gt_start_frame, gt_end_frame, timesteps))
+            loss = loss_function(pred_frame, gt_middle_frame)
             loss.backward()
             
             generator_optimizer.step()
             generator_scheduler.step()  
 
-            pred_next_frame_cm_image = toImg(pred_next_frame[0].detach().cpu().numpy())
-            gt_next_frame_cm_image = toImg(gt_next_frame[0].detach().cpu().numpy())
+            pred_frame_cm_image = toImg(pred_frame[0].detach().cpu().numpy())
+            gt_middle_frame_cm_image = toImg(gt_middle_frame[0].detach().cpu().numpy())
             
             writer.add_scalar('MSE', loss.item(), iters) 
-            writer.add_image("Predicted next frame",pred_next_frame_cm_image, iters)
-            writer.add_image("GT next frame",gt_next_frame_cm_image, iters)
+            writer.add_image("Predicted next frame",pred_frame_cm_image, iters)
+            writer.add_image("GT next frame",gt_middle_frame_cm_image, iters)
 
             print_to_log_and_console("%i/%i: MSE=%.02f" %
             (iters, opt['epochs']*len(dataset), loss.item()), 
@@ -120,7 +123,9 @@ class Temporal_Generator(nn.Module):
             DownscaleBlock(32, 64, 3, 1),
             DownscaleBlock(64, 64, 3, 1)
         )
-        self.convlstm = ConvLSTM(opt)
+
+        self.convlstm_forward = ConvLSTM(opt)
+        self.convlstm_backward = ConvLSTM(opt)
 
         self.upscaling = nn.Sequential(
             UpscalingBlock(64, 64, 3, 1),
@@ -131,15 +136,29 @@ class Temporal_Generator(nn.Module):
 
         self.act = nn.Tanh()
 
-    def forward(self, x):
+    def forward(self, x_start, x_end, timesteps):
         '''
         x should be of shape (seq_length, c, x, y, z)
+        timesteps should be (ts_start, ts_predicted, ts_end)
         '''
-        x = self.feature_learning(x)
-        x = self.convlstm(x)
-        x = self.upscaling(x)
-        x = self.act(x)
-        return x
+        x_start_pred = x_start
+        for i in range(timesteps[1]-timesteps[0]):
+            x_start_pred = self.feature_learning(x_start_pred)
+            x_start_pred = self.convlstm_forward(x_start_pred)
+            x_start_pred = self.upscaling(x_start_pred)
+            x_start_pred = self.act(x_start_pred)
+
+        x_end_pred = x_end
+        for i in range(timesteps[2]-timesteps[1]):
+            x_end_pred = self.feature_learning(x_end_pred)
+            x_end_pred = self.convlstm_backward(x_end_pred)
+            x_end_pred = self.upscaling(x_end_pred)
+            x_end_pred = self.act(x_end_pred)
+
+        lerp_factor = (timesteps[1]-timesteps[0]) / (timesteps[2]-timesteps[0])
+        lerped_gt = (1-lerp_factor)*x_start + lerp_factor*x_end
+
+        return lerped_gt + 0.5*(x_start_pred + x_end_pred)
 
 class DownscaleBlock(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size, padding):
@@ -460,14 +479,14 @@ class Dataset(torch.utils.data.Dataset):
                     ends.append([y_stop, x_stop])
         return starts, ends
 
-    def __getitem__(self, index):
+    def __getitem__(self, index, temporal_direction="forward"):
         if(self.opt['load_data_at_start']):
-            if(self.opt['temporal_direction'] == "forward"):
-                data_seq = (torch.stack(self.items[index:index+self.opt['training_seq_length']], dim=0), 
-                self.items[index+self.opt['training_seq_length']]) 
-            elif(self.opt['temporal_direction'] == "backward"):
-                data_seq = (torch.stack(self.items[index+1:index+self.opt['training_seq_length']+1][::-1], dim=0), 
-                self.items[index]) 
+            data_seq = (
+                self.items[index],
+                self.items[index+self.opt['training_seq_length']],                                 
+                self.items[index+int(self.opt['training_seq_length']/2)]
+                (index,index+int(self.opt['training_seq_length']/2),index+self.opt['training_seq_length'])
+            )            
         else:
             print("trying to load " + str(index) + ".h5")
             f = h5py.File(os.path.join(self.opt['data_folder'], str(index)+".h5"), 'r')
