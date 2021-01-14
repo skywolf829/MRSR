@@ -61,7 +61,7 @@ def train_temporal_network(model, dataset, opt):
             gt_start_frame = crop_to_size(items[0], opt['cropping_resolution']).to(opt['device'])
             gt_end_frame = crop_to_size(items[1], opt['cropping_resolution']).to(opt['device'])
             gt_middle_frames = crop_to_size(items[2][0], opt['cropping_resolution']).to(opt['device'])
-            timesteps = (float(items[3][0]), float(items[3][1]))
+            timesteps = (int(items[3][0]), int(items[3][1]))
 
             gt_start_frame = dataset.scale(gt_start_frame)
             gt_end_frame = dataset.scale(gt_end_frame)
@@ -77,7 +77,7 @@ def train_temporal_network(model, dataset, opt):
             gt_middle_frame_cm_image = toImg(gt_middle_frames[0].detach().cpu().numpy())
             
             lerped_frames = []
-            for i in range(int(timesteps[1]-timesteps[0]-1)):
+            for i in range(timesteps[1]-timesteps[0]-1):
                 factor = (i+1)/(timesteps[1]-timesteps[0])
                 lerped_gt = (1-factor)*gt_start_frame + \
                 factor*gt_end_frame
