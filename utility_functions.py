@@ -494,7 +494,7 @@ def toImg(vectorField, renorm_channels = False):
                     vf[j] *= (1 / vf[j].max())
             return vf
     elif(len(vf.shape) == 4):
-        return toImg(vf[:,:,:,0], renorm_channels)
+        return toImg(vf[:,:,:,int(vf.shape[3]/2)], renorm_channels)
 
 def crop_to_size(frame, max_dim_size):
     x_crop_start = max(frame.shape[2]-max_dim_size, 0)

@@ -27,6 +27,7 @@ if __name__ == '__main__':
     
     parser.add_argument('--num_lstm_layers',default=None,type=int,help='num lstm layers')
     parser.add_argument('--training_seq_length',default=None,type=int,help='length of sequence to train LSTM with')
+    parser.add_argument('--temporal_direction',default=None,type=int,help='forward or backward')
 
     parser.add_argument('--num_blocks',default=None,type=int, help='Num of conv-batchnorm-relu blocks per gen/discrim')
     parser.add_argument('--base_num_kernels',default=None,type=int, help='Num conv kernels in lowest layer')

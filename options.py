@@ -29,6 +29,7 @@ class Options():
         
         opt['num_lstm_layers']         = 3
         opt['training_seq_length']     = 3
+        opt['temporal_direction']     = "forward"
 
 
         opt["n"]                       = 0         # Number of scales in the heirarchy, defined by the input and min_dimension_size

@@ -56,7 +56,9 @@ def train_temporal_network(model, dataset, opt):
             gt_frames = crop_to_size(items[0][0], opt['cropping_resolution']).to(opt['device'])
             gt_next_frame = crop_to_size(items[1], opt['cropping_resolution']).to(opt['device'])
             
-            pred_next_frame = model(gt_frames)
+            gt_frames = dataset.scale(gt_frames)
+            
+            pred_next_frame = dataset.unscale(model(gt_frames))
             loss = loss_function(pred_next_frame, gt_next_frame)
             loss.backward()
             
@@ -122,7 +124,8 @@ class Temporal_Generator(nn.Module):
             UpscalingBlock(32, opt['num_channels']*8, 5, 2)
         )
 
-        self.finalConv = nn.Conv3d(opt['num_channels'], opt['num_channels'], padding=0, kernel_size=1, stride=1)
+        self.finalConv = nn.Conv3d(opt['num_channels'], opt['num_channels'], 
+        padding=2, kernel_size=5, stride=1)
         self.finalactivation = nn.Tanh()
 
     def forward(self, x):
@@ -132,9 +135,9 @@ class Temporal_Generator(nn.Module):
         x = self.feature_learning(x)
         x = self.convlstm(x)
         x = self.upscaling(x)
-        res = self.finalConv(x)
-        res = self.finalactivation(res)
-        return x + res
+        x = self.finalConv(x)
+        x = self.finalactivation(x)
+        return x
 
 class ResidualBlock(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size, padding):
@@ -412,8 +415,12 @@ class Dataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         if(self.opt['load_data_at_start']):
-            data_seq = (torch.stack(self.items[index:index+self.opt['training_seq_length']], dim=0), 
-            self.items[index+self.opt['training_seq_length']]) 
+            if(self.opt['temporal_direction'] == "forward"):
+                data_seq = (torch.stack(self.items[index:index+self.opt['training_seq_length']], dim=0), 
+                self.items[index+self.opt['training_seq_length']]) 
+            elif(self.opt['temporal_direction'] == "backward"):
+                data_seq = (torch.stack(self.items[index+self.opt['training_seq_length']:index], dim=0), 
+                self.items[index]) 
         else:
             print("trying to load " + str(index) + ".h5")
             f = h5py.File(os.path.join(self.opt['data_folder'], str(index)+".h5"), 'r')
