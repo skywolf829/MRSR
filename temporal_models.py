@@ -53,9 +53,7 @@ def train_temporal_network(model, dataset, opt):
     iters = 0
     for epoch in range(opt['epoch_number'], opt["epochs"]):        
         for batch_num, items in enumerate(dataloader):
-            print(items[0].shape)
-            print(items[1].shape)
-            gt_frames = crop_to_size(items[0], opt['cropping_resolution']).to(opt['device'])
+            gt_frames = crop_to_size(items[0][0], opt['cropping_resolution']).to(opt['device'])
             gt_next_frame = crop_to_size(items[1], opt['cropping_resolution']).to(opt['device'])
             print(gt_frames.shape)
             print(gt_next_frame.shape)
@@ -405,7 +403,7 @@ class Dataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         if(self.opt['load_data_at_start']):
-            data_seq = (torch.cat(self.items[index:index+self.opt['training_seq_length']]), 
+            data_seq = (torch.stack(self.items[index:index+self.opt['training_seq_length']], dim=0), 
             self.items[index+self.opt['training_seq_length']]) 
         else:
             print("trying to load " + str(index) + ".h5")
