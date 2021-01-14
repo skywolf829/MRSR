@@ -241,9 +241,9 @@ class ConvLSTMCell(nn.Module):
 
         return h_next, c_next
 
-    def init_hidden(self):
-        return (torch.zeros(1, 64, 32, 32, 32, device=self.opt['device']),
-                torch.zeros(1, 64, 32, 32, 32, device=self.opt['device']))
+    def init_hidden(self, shape):
+        return (torch.zeros(1, shape[1], shape[2], shape[3], shape[4], device=self.opt['device']),
+                torch.zeros(1, shape[1], shape[2], shape[3], shape[4], device=self.opt['device']))
 
 class ConvLSTM(nn.Module):
     def __init__(self, opt):
@@ -257,14 +257,14 @@ class ConvLSTM(nn.Module):
         self.cell_list = nn.ModuleList(cell_list)
 
     def forward(self, input_tensor, hidden_state=None):
-        seq_length, _, h, w, d = input_tensor.size()
+        seq_length, ch, h, w, d = input_tensor.size()
 
         # Implement stateful ConvLSTM
         if hidden_state is not None:
             raise NotImplementedError()
         else:
             # Since the init is done in forward. Can send image size here
-            hidden_state = self._init_hidden()
+            hidden_state = self._init_hidden(input_tensor.shape)
 
         layer_output_list = []
         last_state_list = []
@@ -288,10 +288,10 @@ class ConvLSTM(nn.Module):
 
         return layer_output[:,-1,:,:,:,:]
 
-    def _init_hidden(self):
+    def _init_hidden(self, shape):
         init_states = []
         for i in range(self.opt['num_lstm_layers']):
-            init_states.append(self.cell_list[i].init_hidden())
+            init_states.append(self.cell_list[i].init_hidden(shape))
         return init_states
 
 class Dataset(torch.utils.data.Dataset):
