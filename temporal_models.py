@@ -279,7 +279,9 @@ class ConvLSTM(nn.Module):
 
             h, c = hidden_state[layer_idx]
             output_inner = []
+            print("layer " + str(layer_idx))
             for t in range(seq_length):
+                print("Seq entry " + str(t))
                 h, c = self.cell_list[layer_idx](input_tensor=cur_layer_input[t:t+1, :, :, :, :],
                                                  cur_state=[h, c])
                 output_inner.append(h)
