@@ -57,6 +57,8 @@ def train_temporal_network(model, dataset, opt):
             gt_next_frame = crop_to_size(items[1], opt['cropping_resolution']).to(opt['device'])
             
             pred_next_frame = model(gt_frames)
+            print("gt next")
+            print(gt_next_frame.shape)
             loss = loss(pred_next_frame, gt_next_frame)
             loss.backward()
             
@@ -130,9 +132,13 @@ class Temporal_Generator(nn.Module):
         '''
         x = self.feature_learning(x)
         x = self.convlstm(x)
+        print(x.shape)
         x = self.upscaling(x)
+        print(x.shape)
         res = self.finalConv(x)
         res = self.finalactivation(res)
+        print(x.shape)
+        print(res.shape)
         return x + res
 
 class ResidualBlock(nn.Module):
