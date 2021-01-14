@@ -429,4 +429,4 @@ class Dataset(torch.utils.data.Dataset):
         #data = np2torch(data, "cpu")
         #print("returning " + str(index) + " data")
         
-        return data
+        return data_seq
