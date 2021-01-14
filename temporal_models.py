@@ -402,8 +402,8 @@ class Dataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         if(self.opt['load_data_at_start']):
-            data_seq = (torch.stack(self.items[index:index+self.opt['seq_length']], dim=0), 
-            self.items[index+self.opt['seq_length']]) 
+            data_seq = (torch.stack(self.items[index:index+self.opt['training_seq_length']], dim=0), 
+            self.items[index+self.opt['training_seq_length']]) 
         else:
             print("trying to load " + str(index) + ".h5")
             f = h5py.File(os.path.join(self.opt['data_folder'], str(index)+".h5"), 'r')
