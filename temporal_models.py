@@ -95,7 +95,7 @@ def save_model(model, opt):
     os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
 
     if(opt["save_generators"]):
-        torch.save(generator.state_dict(), os.path.join(path_to_save, "temporal_generator"))
+        torch.save(model.state_dict(), os.path.join(path_to_save, "temporal_generator"))
 
     save_options(opt, path_to_save)
 
