@@ -479,7 +479,7 @@ class Dataset(torch.utils.data.Dataset):
                     ends.append([y_stop, x_stop])
         return starts, ends
 
-    def __getitem__(self, index, temporal_direction="forward"):
+    def __getitem__(self, index):
         if(self.opt['load_data_at_start']):
             data_seq = (
                 self.items[index],
