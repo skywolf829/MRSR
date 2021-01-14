@@ -121,7 +121,7 @@ class Temporal_Generator(nn.Module):
             UpscalingBlock(64, 64*8, 3, 1),
             UpscalingBlock(64, 64*8, 3, 1),
             UpscalingBlock(64, 32*8, 3, 1),
-            UpscalingBlock(32, self.opt['num_channels']*8, 5, 2)
+            UpscalingBlock(32, opt['num_channels']*8, 5, 2)
         )
 
         self.act = nn.Tanh()
