@@ -55,8 +55,7 @@ def train_temporal_network(model, dataset, opt):
         for batch_num, items in enumerate(dataloader):
             gt_frames = crop_to_size(items[0][0], opt['cropping_resolution']).to(opt['device'])
             gt_next_frame = crop_to_size(items[1], opt['cropping_resolution']).to(opt['device'])
-            print(gt_frames.shape)
-            print(gt_next_frame.shape)
+            
             pred_next_frame = model(gt_frames)
             loss = loss(pred_next_frame, gt_next_frame)
             loss.backward()
@@ -129,11 +128,8 @@ class Temporal_Generator(nn.Module):
         '''
         x should be of shape (seq_length, c, x, y, z)
         '''
-        print(x.shape)
         x = self.feature_learning(x)
-        print(x.shape)
         x = self.convlstm(x)
-        print(x.shape)
         x = self.upscaling(x)
         res = self.finalConv(x)
         res = self.finalactivation(res)
@@ -226,10 +222,6 @@ class ConvLSTMCell(nn.Module):
 
     def forward(self, input_tensor, cur_state):
         h_cur, c_cur = cur_state
-        print("input t")
-        print(input_tensor.shape)
-        print("h_curr")
-        print(h_cur.shape)
         combined = torch.cat([input_tensor, h_cur], dim=1)  # concatenate along channel axis
 
         combined_conv = self.conv(combined)
@@ -279,9 +271,7 @@ class ConvLSTM(nn.Module):
 
             h, c = hidden_state[layer_idx]
             output_inner = []
-            print("layer " + str(layer_idx))
             for t in range(seq_length):
-                print("Seq entry " + str(t))
                 h, c = self.cell_list[layer_idx](input_tensor=cur_layer_input[t:t+1, :, :, :, :],
                                                  cur_state=[h, c])
                 output_inner.append(h)
