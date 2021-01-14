@@ -129,9 +129,11 @@ class Temporal_Generator(nn.Module):
         '''
         x should be of shape (seq_length, c, x, y, z)
         '''
+        print(x.shape)
         x = self.feature_learning(x)
-        x = x.unsqueeze(0)
+        print(x.shape)
         x = self.convlstm(x)
+        print(x.shape)
         x = self.upscaling(x)
         res = self.finalConv(x)
         res = self.finalactivation(res)
