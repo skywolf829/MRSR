@@ -155,8 +155,8 @@ class Temporal_Generator(nn.Module):
             x_end_pred = self.upscaling(x_end_pred)
             x_end_pred = self.act(x_end_pred)
 
-        lerp_factor = (timesteps[1]-timesteps[0]) / (timesteps[2]-timesteps[0])
-        lerped_gt = (1-lerp_factor)*x_start + lerp_factor*x_end
+        lerp_factor = float(timesteps[1]-timesteps[0]) / float(timesteps[2]-timesteps[0])
+        lerped_gt = (1.0-lerp_factor)*x_start + lerp_factor*x_end
 
         return lerped_gt + 0.5*(x_start_pred + x_end_pred)
 
