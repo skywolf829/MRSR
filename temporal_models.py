@@ -78,6 +78,11 @@ def train_temporal_network(model, dataset, opt):
 
             iters += 1
 
+        opt['epoch_number'] = epoch+1
+        if(epoch % opt['save_every'] == 0):
+            save_model(model, opt)
+
+
     return model
 
 def save_model(model, opt):
