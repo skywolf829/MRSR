@@ -251,7 +251,7 @@ class ConvLSTM(nn.Module):
 
         cell_list = []
         for i in range(0, opt['num_lstm_layers']):
-            cell_list.append(ConvLSTMCell())
+            cell_list.append(ConvLSTMCell(opt))
 
         self.cell_list = nn.ModuleList(cell_list)
 
