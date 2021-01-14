@@ -82,7 +82,8 @@ def train_temporal_network(model, dataset, opt):
                 lerped_gt = (1.0-(lerp_factor*(i+1)))*gt_start_frame + \
                 lerp_factor*(timesteps[1]-timesteps[0]-i+1)*gt_end_frame
                 lerped_gt = lerped_frames.append(dataset.unscale(lerped_gt))
-
+            lerped_gt = torch.cat(lerped_frames, dim=0)
+            print(lerped_gt.shape)
             reference_writer.add_scalar('MSE', loss_function(lerped_gt, gt_middle_frames).item(), iters)
             writer.add_scalar('MSE', loss.item(), iters) 
             writer.add_image("Predicted next frame",pred_frame_cm_image, iters)
@@ -185,7 +186,7 @@ class Temporal_Generator(nn.Module):
             x_start_pred = self.convlstm_forward(x_start_pred)
             x_start_pred = self.upscaling(x_start_pred)
             x_start_pred = self.act(x_start_pred)
-            pref_frames_forward.append(x_start_pred)
+            pred_frames_forward.append(x_start_pred)
 
         x_end_pred = x_end
         for i in range(timesteps[1]-timesteps[0]):
@@ -193,14 +194,16 @@ class Temporal_Generator(nn.Module):
             x_end_pred = self.convlstm_backward(x_end_pred)
             x_end_pred = self.upscaling(x_end_pred)
             x_end_pred = self.act(x_end_pred)
-            pref_frames_backward.insert(0, x_end_pred)
+            pred_frames_backward.insert(0, x_end_pred)
 
         for i in range(timesteps[1]-timesteps[0]):
             lerp_factor = float(i+1) / float(timesteps[1]-timesteps[0]+1)
             lerped_gt = (1.0-lerp_factor)*x_start + lerp_factor*x_end
             pred_frames.append(lerped_gt + 0.5*(pred_frames_forward[i] + pred_frames_backward[i]))
         
-        return torch.cat(pred_frames, dim=0)
+        pred_frames = torch.cat(pred_frames, dim=0)
+        print(pred_frames.shape)
+        return pred_frames
 
 class DownscaleBlock(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size, padding):
