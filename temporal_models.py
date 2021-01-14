@@ -60,6 +60,7 @@ def train_temporal_network(model, dataset, opt):
             loss = loss(pred_next_frame, gt_next_frame)
             loss.backward()
             
+            generator_optimizer.step()
             generator_scheduler.step()  
 
             pred_next_frame_cm_image = toImg(pred_next_frame[0].detach().cpu().numpy())
