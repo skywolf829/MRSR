@@ -491,7 +491,7 @@ class Dataset(torch.utils.data.Dataset):
             data_seq = (
                 self.items[index],
                 self.items[index+self.opt['training_seq_length']],                                 
-                torch.cat(self.items[index+1:index+self.opt['training_seq_length']], dim=0),
+                torch.stack(self.items[index+1:index+self.opt['training_seq_length']], dim=0),
                 (index,index+self.opt['training_seq_length'])
             )            
         else:
