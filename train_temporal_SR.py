@@ -113,7 +113,7 @@ if __name__ == '__main__':
    
     start_time_scale_n = time.time()
 
-    print_to_log_and_console(str(datetime.datetime.now()) + " - Beginning training on scale " + str(i),
+    print_to_log_and_console(str(datetime.datetime.now()) + " - Beginning training.",
     os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
 
 
