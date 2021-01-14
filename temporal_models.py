@@ -185,7 +185,7 @@ class UpscalingBlock(nn.Module):
         )
         self.conv2 = nn.Sequential(
             nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
-            kernel_size=kernel_size, padding=padding, stride=2))
+            kernel_size=kernel_size, padding=padding, stride=1))
         )
         
     def forward(self, x):
