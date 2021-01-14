@@ -178,7 +178,7 @@ class Temporal_Generator(nn.Module):
         '''
         pred_frames_forward = []
         pred_frames_backward = []
-        pref_frames = []
+        pred_frames = []
 
         x_start_pred = x_start
         for i in range(timesteps[1]-timesteps[0]):
