@@ -54,6 +54,10 @@ def train_temporal_network(model, dataset, opt):
     iters = 0
     for epoch in range(opt['epoch_number'], opt["epochs"]):        
         for batch_num, items in enumerate(dataloader):
+            print(items[0].shape)
+            print(items[1].shape)
+            print(items[2].shape)
+            print(items[3])
             gt_start_frame = crop_to_size(items[0], opt['cropping_resolution']).to(opt['device'])
             gt_end_frame = crop_to_size(items[1], opt['cropping_resolution']).to(opt['device'])
             gt_middle_frames = crop_to_size(items[2][0], opt['cropping_resolution']).to(opt['device'])
