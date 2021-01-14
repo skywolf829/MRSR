@@ -43,6 +43,7 @@ def train_temporal_network(model, dataset, opt):
     milestones=[8000-opt['iteration_number']],gamma=opt['gamma'])
 
     writer = SummaryWriter(os.path.join('tensorboard',opt['save_name']))
+    reference_writer = SummaryWriter(os.path.join('tensorboard', "LERP"))
     dataloader = torch.utils.data.DataLoader(
         dataset=dataset,
         shuffle=False,
@@ -71,6 +72,11 @@ def train_temporal_network(model, dataset, opt):
             pred_frame_cm_image = toImg(pred_frame[0].detach().cpu().numpy())
             gt_middle_frame_cm_image = toImg(gt_middle_frame[0].detach().cpu().numpy())
             
+            lerp_factor = float(timesteps[1]-timesteps[0]) / float(timesteps[2]-timesteps[0])
+            lerped_gt = (1.0-lerp_factor)*gt_start_frame + lerp_factor*gt_end_frame
+            lerped_gt = dataset.unscale(lerped_gt)
+
+            reference_writer.add_scalar('MSE', loss_function(lerped_gt, gt_middle_frame).item(), iters)
             writer.add_scalar('MSE', loss.item(), iters) 
             writer.add_image("Predicted next frame",pred_frame_cm_image, iters)
             writer.add_image("GT next frame",gt_middle_frame_cm_image, iters)
@@ -371,7 +377,7 @@ class Dataset(torch.utils.data.Dataset):
         print("Initializing dataset")
         for filename in range(len(os.listdir(self.opt['data_folder']))):
             filename = str(filename) + ".h5"
-            
+
             if(opt['load_data_at_start'] or (self.num_items > 0 and \
             (opt['scaling_mode'] == "magnitude" or opt['scaling_mode'] == "channel"))):
                 print("Loading " + filename)   
