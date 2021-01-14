@@ -33,7 +33,7 @@ save_folder = os.path.join(FlowSTSR_folder_path, "SavedModels")
 
 def train_temporal_network(model, dataset, opt):
     model = model.to(opt['device'])
-    
+
     print_to_log_and_console("Training on %s" % (opt["device"]), 
         os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
     
@@ -369,8 +369,9 @@ class Dataset(torch.utils.data.Dataset):
         self.num_items = 0
         self.items = []
         print("Initializing dataset")
-        for filename in os.listdir(self.opt['data_folder']):
-
+        for filename in range(len(os.listdir(self.opt['data_folder']))):
+            filename = str(filename) + ".h5"
+            
             if(opt['load_data_at_start'] or (self.num_items > 0 and \
             (opt['scaling_mode'] == "magnitude" or opt['scaling_mode'] == "channel"))):
                 print("Loading " + filename)   
