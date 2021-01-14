@@ -53,9 +53,12 @@ def train_temporal_network(model, dataset, opt):
     iters = 0
     for epoch in range(opt['epoch_number'], opt["epochs"]):        
         for batch_num, items in enumerate(dataloader):
+            print(items[0].shape)
+            print(items[1].shape)
             gt_frames = crop_to_size(items[0], opt['cropping_resolution']).to(opt['device'])
             gt_next_frame = crop_to_size(items[1], opt['cropping_resolution']).to(opt['device'])
-
+            print(gt_frames.shape)
+            print(gt_next_frame.shape)
             pred_next_frame = model(gt_frames)
             loss = loss(pred_next_frame, gt_next_frame)
             loss.backward()
