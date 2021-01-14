@@ -118,10 +118,10 @@ class Temporal_Generator(nn.Module):
         self.convlstm = ConvLSTM(opt)
 
         self.upscaling = nn.Sequential(
-            UpscalingBlock(64, 64*8, 3, 1),
-            UpscalingBlock(64, 64*8, 3, 1),
-            UpscalingBlock(64, 32*8, 3, 1),
-            UpscalingBlock(32, opt['num_channels']*8, 5, 2)
+            UpscalingBlock(64, 64, 3, 1),
+            UpscalingBlock(64, 32, 3, 1),
+            UpscalingBlock(32, 16, 3, 1),
+            UpscalingBlock(16, opt['num_channels'], 5, 2)
         )
 
         self.act = nn.Tanh()
@@ -196,32 +196,40 @@ class UpscalingBlock(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size, padding):
         super(UpscalingBlock, self).__init__()
         self.conv1 = nn.Sequential(
-            nn.Conv3d(input_channels, input_channels, 
+            nn.Conv3d(input_channels, output_channels*8, 
+            kernel_size=kernel_size, padding=padding, stride=1),
+            nn.InstanceNorm3d(output_channels*8),
+            nn.LeakyReLU(0.2, inplace=True)
+        )
+        self.conv2 = nn.Sequential(
+            nn.Conv3d(output_channels, output_channels, 
             kernel_size=kernel_size, padding=padding, stride=1),
             nn.InstanceNorm3d(output_channels),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv3d(input_channels, input_channels, 
+
+            nn.Conv3d(output_channels, output_channels, 
             kernel_size=kernel_size, padding=padding, stride=1),
             nn.InstanceNorm3d(output_channels),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv3d(input_channels, input_channels, 
-            kernel_size=kernel_size, padding=padding, stride=1),
-            nn.InstanceNorm3d(output_channels),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv3d(input_channels, output_channels, 
+
+            nn.Conv3d(output_channels, output_channels, 
             kernel_size=kernel_size, padding=padding, stride=1),
             nn.InstanceNorm3d(output_channels),
             nn.LeakyReLU(0.2, inplace=True),       
         )
-        self.conv2 = nn.Sequential(
-            nn.Conv3d(input_channels, output_channels, 
-            kernel_size=kernel_size, padding=padding, stride=1),
-            nn.InstanceNorm3d(output_channels),
+
+        self.conv3 = nn.Sequential(
+            nn.Conv3d(input_channels, output_channels*8, 
+            kernel_size=1, padding=0, stride=1),
+            nn.InstanceNorm3d(output_channels*8),
             nn.LeakyReLU(0.2, inplace=True),
         )
         
     def forward(self, x):
-        return VoxelShuffle(self.conv1(x) + self.conv2(x))
+        x1 = VoxelShuffle(self.conv1(x))
+        x1 = self.conv2(x1)
+        x2 = VoxelShuffle(self.conv3(x))
+        return x1 + x2
 
 def VoxelShuffle(t):
     # t has shape [batch, channels, x, y, z]
