@@ -121,7 +121,7 @@ class Temporal_Generator(nn.Module):
             UpscalingBlock(32, opt['num_channels']*8, 5, 2)
         )
 
-        self.finalConv = nn.Conv2d(opt['num_channels'], opt['num_channels'], padding=0, kernel_size=1, stride=1)
+        self.finalConv = nn.Conv3d(opt['num_channels'], opt['num_channels'], padding=0, kernel_size=1, stride=1)
         self.finalactivation = nn.tanh()
 
     def forward(self, x):
@@ -140,21 +140,21 @@ class ResidualBlock(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size, padding):
         self.block = [
             nn.Sequential(
-                nn.utils.spectral_norm(nn.Conv3D(input_channels, output_channels, 
+                nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
                 kernel_size=kernel_size, padding=padding, stride=1)),
                 nn.ReLU(),
-                nn.utils.spectral_norm(nn.Conv3D(output_channels, output_channels, 
+                nn.utils.spectral_norm(nn.Conv3d(output_channels, output_channels, 
                 kernel_size=kernel_size, padding=padding, stride=1)),
                 nn.ReLU(),
-                nn.utils.spectral_norm(nn.Conv3D(output_channels, output_channels, 
+                nn.utils.spectral_norm(nn.Conv3d(output_channels, output_channels, 
                 kernel_size=kernel_size, padding=padding, stride=1)),
                 nn.ReLU(),
-                nn.utils.spectral_norm(nn.Conv3D(output_channels, output_channels, 
+                nn.utils.spectral_norm(nn.Conv3d(output_channels, output_channels, 
                 kernel_size=kernel_size, padding=padding, stride=2)),
                 nn.ReLU()            
             ),
             nn.Sequential(
-                nn.utils.spectral_norm(nn.Conv3D(input_channels, output_channels, 
+                nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
                 kernel_size=kernel_size, padding=padding, stride=2))
             )
         ]
@@ -166,21 +166,21 @@ class UpscalingBlock(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size, padding):
         self.block = [
             nn.Sequential(
-                nn.utils.spectral_norm(nn.Conv3D(input_channels, input_channels, 
+                nn.utils.spectral_norm(nn.Conv3d(input_channels, input_channels, 
                 kernel_size=kernel_size, padding=padding, stride=1)),
                 nn.ReLU(),
-                nn.utils.spectral_norm(nn.Conv3D(input_channels, input_channels, 
+                nn.utils.spectral_norm(nn.Conv3d(input_channels, input_channels, 
                 kernel_size=kernel_size, padding=padding, stride=1)),
                 nn.ReLU(),
-                nn.utils.spectral_norm(nn.Conv3D(input_channels, input_channels, 
+                nn.utils.spectral_norm(nn.Conv3d(input_channels, input_channels, 
                 kernel_size=kernel_size, padding=padding, stride=1)),
                 nn.ReLU(),
-                nn.utils.spectral_norm(nn.Conv3D(input_channels, output_channels, 
+                nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
                 kernel_size=kernel_size, padding=padding, stride=2)),
                 nn.ReLU()            
             ),
             nn.Sequential(
-                nn.utils.spectral_norm(nn.Conv3D(input_channels, output_channels, 
+                nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
                 kernel_size=kernel_size, padding=padding, stride=2))
             )
         ]
@@ -256,18 +256,6 @@ class ConvLSTM(nn.Module):
         self.cell_list = nn.ModuleList(cell_list)
 
     def forward(self, input_tensor, hidden_state=None):
-        """
-        Parameters
-        ----------
-        input_tensor: todo
-            6-D Tensor shape (b, seq_length, c, h, w,d ) 
-        hidden_state: todo
-            None. todo implement stateful
-        Returns
-        -------
-        last_state_list, layer_output
-        """
-
         b, seq_length, _, h, w, d = input_tensor.size()
 
         # Implement stateful ConvLSTM
