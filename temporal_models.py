@@ -238,7 +238,7 @@ class ConvLSTMCell(nn.Module):
         f = torch.sigmoid(f_x + f_h)
         o = torch.sigmoid(o_x + o_h)
         
-        c_next = f * c_cur + i * torch.tanh(cc_g)
+        c_next = f * c_cur + i * torch.tanh(c_x + c_h)
         h_next = o * torch.tanh(c_next)
 
         return h_next, c_next
