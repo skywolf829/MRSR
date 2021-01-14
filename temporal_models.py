@@ -194,6 +194,8 @@ class UpscalingBlock(nn.Module):
 def VoxelShuffle(t):
     # t has shape [batch, channels, x, y, z]
     # channels should be divisible by 8
+    print("original t")
+    print(t.shape)
     shape = list(t.shape)
     shape[1] = int(shape[1] / 8)
     shape[2] = shape[2] * 2
@@ -202,14 +204,14 @@ def VoxelShuffle(t):
 
     a = torch.zeros(shape).to(t.device)
     a.requires_grad = t.requires_grad
-    a[:,:,::2,::2,::2] = t[:,::8,:,:,:]
-    a[:,:,::2,::2,1::2] = t[:,::8,:,:,:]
-    a[:,:,::2,1::2,::2] = t[:,::8,:,:,:]
-    a[:,:,::2,1::2,1::2] = t[:,::8,:,:,:]
-    a[:,:,1::2,::2,::2] = t[:,::8,:,:,:]
-    a[:,:,1::2,::2,1::2] = t[:,::8,:,:,:]
-    a[:,:,1::2,1::2,::2] = t[:,::8,:,:,:]
-    a[:,:,1::2,1::2,1::2] = t[:,::8,:,:,:]
+    a[:,:,::2,::2,::2] = t[:,0::8,:,:,:]
+    a[:,:,::2,::2,1::2] = t[:,1::8,:,:,:]
+    a[:,:,::2,1::2,::2] = t[:,2::8,:,:,:]
+    a[:,:,::2,1::2,1::2] = t[:,3::8,:,:,:]
+    a[:,:,1::2,::2,::2] = t[:,4::8,:,:,:]
+    a[:,:,1::2,::2,1::2] = t[:,5::8,:,:,:]
+    a[:,:,1::2,1::2,::2] = t[:,6::8,:,:,:]
+    a[:,:,1::2,1::2,1::2] = t[:,7::8,:,:,:]
     print("voxel shuffle")
     print(a.shape)
     return a
