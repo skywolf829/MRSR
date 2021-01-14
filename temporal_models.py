@@ -121,11 +121,11 @@ def load_model(model, opt, device):
 
 def weights_init(m):
     if isinstance(m, nn.Conv3d):
-        torch.nn.init.normal_(m.weight, 0.0, 0.02)
-        torch.nn.init.zeros_(m.bias)
+        nn.init.normal_(m.weight, 0.0, 0.02)
+        nn.init.zeros_(m.bias)
     elif isinstance(m, nn.InstanceNorm3d):
-        torch.nn.init.normal_(m.weight, 0.0, 0.02)
-        torch.nn.init.zeros_(m.bias)
+        nn.init.normal_(m.weight, 0.0, 0.02)
+        nn.init.zeros_(m.bias)
 
 def VoxelShuffle(t):
     # t has shape [batch, channels, x, y, z]
