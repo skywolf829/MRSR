@@ -226,7 +226,9 @@ class ConvLSTMCell(nn.Module):
 
     def forward(self, input_tensor, cur_state):
         h_cur, c_cur = cur_state
+        print("input t")
         print(input_tensor.shape)
+        print("h_curr")
         print(h_cur.shape)
         combined = torch.cat([input_tensor, h_cur], dim=1)  # concatenate along channel axis
 
