@@ -255,7 +255,7 @@ class ConvLSTM(nn.Module):
         self.cell_list = nn.ModuleList(cell_list)
 
     def forward(self, input_tensor, hidden_state=None):
-        b, seq_length, _, h, w, d = input_tensor.size()
+        seq_length, _, h, w, d = input_tensor.size()
 
         # Implement stateful ConvLSTM
         if hidden_state is not None:
@@ -274,7 +274,7 @@ class ConvLSTM(nn.Module):
             h, c = hidden_state[layer_idx]
             output_inner = []
             for t in range(seq_length):
-                h, c = self.cell_list[layer_idx](input_tensor=cur_layer_input[:, t, :, :, :, :],
+                h, c = self.cell_list[layer_idx](input_tensor=cur_layer_input[t:t+1, :, :, :, :],
                                                  cur_state=[h, c])
                 output_inner.append(h)
 
