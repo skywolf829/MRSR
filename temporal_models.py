@@ -218,8 +218,8 @@ class ConvLSTMCell(nn.Module):
 
         self.opt = opt
 
-        self.conv = nn.Conv3d(in_channels=64,
-                              out_channels=8*64,
+        self.conv = nn.Conv3d(in_channels=64*2,
+                              out_channels=64*8,
                               kernel_size=3,
                               padding=1, 
                               groups=2)
