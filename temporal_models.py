@@ -195,7 +195,7 @@ def VoxelShuffle(t):
     shape[3] = shape[3] * 2
     shape[4] = shape[4] * 2
 
-    a = torch.empty(shape).to(t.device)
+    a = torch.empty(shape, requires_grad=True).to(t.device)
     a.requires_grad = t.requires_grad
     a[:,:,::2,::2,::2] = t[:,0::8,:,:,:]
     a[:,:,::2,::2,1::2] = t[:,1::8,:,:,:]
@@ -205,7 +205,7 @@ def VoxelShuffle(t):
     a[:,:,1::2,::2,1::2] = t[:,5::8,:,:,:]
     a[:,:,1::2,1::2,::2] = t[:,6::8,:,:,:]
     a[:,:,1::2,1::2,1::2] = t[:,7::8,:,:,:]
-    return F.interpolate(t[:,::8,:,:,:], scale=2, mode="trilinear", align_corners=False)
+    return F.interpolate(t[:,::8,:,:,:], scale_factor=2, mode="trilinear", align_corners=False)
     #return a
 
 class ConvLSTMCell(nn.Module):
