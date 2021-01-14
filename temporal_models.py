@@ -122,7 +122,7 @@ class Temporal_Generator(nn.Module):
         )
 
         self.finalConv = nn.Conv3d(opt['num_channels'], opt['num_channels'], padding=0, kernel_size=1, stride=1)
-        self.finalactivation = nn.tanh()
+        self.finalactivation = nn.Tanh()
 
     def forward(self, x):
         '''
