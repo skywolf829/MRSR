@@ -57,8 +57,6 @@ def train_temporal_network(model, dataset, opt):
             gt_next_frame = crop_to_size(items[1], opt['cropping_resolution']).to(opt['device'])
             
             pred_next_frame = model(gt_frames)
-            print("gt next")
-            print(gt_next_frame.shape)
             loss = loss(pred_next_frame, gt_next_frame)
             loss.backward()
             
@@ -132,13 +130,9 @@ class Temporal_Generator(nn.Module):
         '''
         x = self.feature_learning(x)
         x = self.convlstm(x)
-        print(x.shape)
         x = self.upscaling(x)
-        print(x.shape)
         res = self.finalConv(x)
         res = self.finalactivation(res)
-        print(x.shape)
-        print(res.shape)
         return x + res
 
 class ResidualBlock(nn.Module):
@@ -194,15 +188,14 @@ class UpscalingBlock(nn.Module):
 def VoxelShuffle(t):
     # t has shape [batch, channels, x, y, z]
     # channels should be divisible by 8
-    print("original t")
-    print(t.shape)
+    
     shape = list(t.shape)
     shape[1] = int(shape[1] / 8)
     shape[2] = shape[2] * 2
     shape[3] = shape[3] * 2
     shape[4] = shape[4] * 2
 
-    a = torch.zeros(shape).to(t.device)
+    a = torch.empty(shape).to(t.device)
     a.requires_grad = t.requires_grad
     a[:,:,::2,::2,::2] = t[:,0::8,:,:,:]
     a[:,:,::2,::2,1::2] = t[:,1::8,:,:,:]
@@ -212,9 +205,8 @@ def VoxelShuffle(t):
     a[:,:,1::2,::2,1::2] = t[:,5::8,:,:,:]
     a[:,:,1::2,1::2,::2] = t[:,6::8,:,:,:]
     a[:,:,1::2,1::2,1::2] = t[:,7::8,:,:,:]
-    print("voxel shuffle")
-    print(a.shape)
-    return a
+    return F.interpolate(t[:,::8,:,:,:], scale=2, mode="trilinear", align_corners=False)
+    #return a
 
 class ConvLSTMCell(nn.Module):
     def __init__(self, opt):
