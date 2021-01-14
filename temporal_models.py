@@ -189,13 +189,14 @@ def VoxelShuffle(t):
     # t has shape [batch, channels, x, y, z]
     # channels should be divisible by 8
     
+    '''
     shape = list(t.shape)
     shape[1] = int(shape[1] / 8)
     shape[2] = shape[2] * 2
     shape[3] = shape[3] * 2
     shape[4] = shape[4] * 2
 
-    a = torch.empty(shape, requires_grad=True).to(t.device)
+    a = torch.empty(shape).to(t.device)
     a.requires_grad = t.requires_grad
     a[:,:,::2,::2,::2] = t[:,0::8,:,:,:]
     a[:,:,::2,::2,1::2] = t[:,1::8,:,:,:]
@@ -205,8 +206,16 @@ def VoxelShuffle(t):
     a[:,:,1::2,::2,1::2] = t[:,5::8,:,:,:]
     a[:,:,1::2,1::2,::2] = t[:,6::8,:,:,:]
     a[:,:,1::2,1::2,1::2] = t[:,7::8,:,:,:]
-    return F.interpolate(t[:,::8,:,:,:], scale_factor=2, mode="trilinear", align_corners=False)
     #return a
+    '''
+    input_view = t.contiguous().view(
+        1, 2, 2, 2, int(t.shape[1]/8), t.shape[2], t.shape[3], t.shape[4]
+    )
+    shuffle_out = input_view.permute(0, 4, 5, 1, 6, 2, 7, 3).contiguous()
+    out = shuffle_out.view(
+        1, int(t.shape[1]/8), 2*t.shape[2], 2*t.shape[3], 2*t.shape[4]
+    )
+    return out
 
 class ConvLSTMCell(nn.Module):
     def __init__(self, opt):
