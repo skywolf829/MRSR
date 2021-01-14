@@ -193,25 +193,25 @@ class DownscaleBlock(nn.Module):
         self.conv1 = nn.Sequential(
             nn.Conv3d(input_channels, output_channels, 
             kernel_size=kernel_size, padding=padding, stride=1),
-            nn.InstanceNorm3d(output_channels),
+            nn.InstanceNorm3d(output_channels, affine=True),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Conv3d(output_channels, output_channels, 
             kernel_size=kernel_size, padding=padding, stride=1),
-            nn.InstanceNorm3d(output_channels),
+            nn.InstanceNorm3d(output_channels, affine=True),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Conv3d(output_channels, output_channels, 
             kernel_size=kernel_size, padding=padding, stride=1),
-            nn.InstanceNorm3d(output_channels),
+            nn.InstanceNorm3d(output_channels, affine=True),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Conv3d(output_channels, output_channels, 
             kernel_size=kernel_size, padding=padding, stride=2),
-            nn.InstanceNorm3d(output_channels),
+            nn.InstanceNorm3d(output_channels, affine=True),
             nn.LeakyReLU(0.2, inplace=True)           
         )
         self.conv2 = nn.Sequential(
             nn.Conv3d(input_channels, output_channels, 
             kernel_size=kernel_size, padding=padding, stride=2),
-            nn.InstanceNorm3d(output_channels),
+            nn.InstanceNorm3d(output_channels, affine=True),
             nn.LeakyReLU(0.2, inplace=True),
         )
         
@@ -224,19 +224,19 @@ class ResidualBlock(nn.Module):
         self.conv = nn.Sequential(
             nn.Conv3d(input_channels, output_channels, 
             kernel_size=kernel_size, padding=padding, stride=1),
-            nn.InstanceNorm3d(output_channels),
+            nn.InstanceNorm3d(output_channels, affine=True),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Conv3d(input_channels, output_channels, 
             kernel_size=kernel_size, padding=padding, stride=1),
-            nn.InstanceNorm3d(output_channels),
+            nn.InstanceNorm3d(output_channels, affine=True),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Conv3d(input_channels, output_channels, 
             kernel_size=kernel_size, padding=padding, stride=1),
-            nn.InstanceNorm3d(output_channels),
+            nn.InstanceNorm3d(output_channels, affine=True),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Conv3d(input_channels, output_channels, 
             kernel_size=kernel_size, padding=padding, stride=1),
-            nn.InstanceNorm3d(output_channels),
+            nn.InstanceNorm3d(output_channels, affine=True),
             nn.LeakyReLU(0.2, inplace=True),        
         )
         
@@ -249,30 +249,30 @@ class UpscalingBlock(nn.Module):
         self.conv1 = nn.Sequential(
             nn.Conv3d(input_channels, output_channels*8, 
             kernel_size=kernel_size, padding=padding, stride=1),
-            nn.InstanceNorm3d(output_channels*8),
+            nn.InstanceNorm3d(output_channels*8, affine=True),
             nn.LeakyReLU(0.2, inplace=True)
         )
         self.conv2 = nn.Sequential(
             nn.Conv3d(output_channels, output_channels, 
             kernel_size=kernel_size, padding=padding, stride=1),
-            nn.InstanceNorm3d(output_channels),
+            nn.InstanceNorm3d(output_channels, affine=True),
             nn.LeakyReLU(0.2, inplace=True),
 
             nn.Conv3d(output_channels, output_channels, 
             kernel_size=kernel_size, padding=padding, stride=1),
-            nn.InstanceNorm3d(output_channels),
+            nn.InstanceNorm3d(output_channels, affine=True),
             nn.LeakyReLU(0.2, inplace=True),
 
             nn.Conv3d(output_channels, output_channels, 
             kernel_size=kernel_size, padding=padding, stride=1),
-            nn.InstanceNorm3d(output_channels),
+            nn.InstanceNorm3d(output_channels, affine=True),
             nn.LeakyReLU(0.2, inplace=True),       
         )
 
         self.conv3 = nn.Sequential(
             nn.Conv3d(input_channels, output_channels*8, 
             kernel_size=1, padding=0, stride=1),
-            nn.InstanceNorm3d(output_channels*8),
+            nn.InstanceNorm3d(output_channels*8, affine=True),
             nn.LeakyReLU(0.2, inplace=True),
         )
         
