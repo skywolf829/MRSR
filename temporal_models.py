@@ -484,7 +484,7 @@ class Dataset(torch.utils.data.Dataset):
             data_seq = (
                 self.items[index],
                 self.items[index+self.opt['training_seq_length']],                                 
-                self.items[index+int(self.opt['training_seq_length']/2)]
+                self.items[index+int(self.opt['training_seq_length']/2)],
                 (index,index+int(self.opt['training_seq_length']/2),index+self.opt['training_seq_length'])
             )            
         else:
