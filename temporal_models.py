@@ -339,7 +339,7 @@ class Dataset(torch.utils.data.Dataset):
             self.num_items += 1
 
     def __len__(self):
-        return self.num_items - opt['training_seq_length']
+        return self.num_items - self.opt['training_seq_length']
 
     def resolution(self):
         return self.resolution
