@@ -61,7 +61,7 @@ def train_temporal_network(model, dataset, opt):
             gt_start_frame = crop_to_size(items[0], opt['cropping_resolution']).to(opt['device'])
             gt_end_frame = crop_to_size(items[1], opt['cropping_resolution']).to(opt['device'])
             gt_middle_frames = crop_to_size(items[2][0], opt['cropping_resolution']).to(opt['device'])
-            timesteps = items[3]
+            timesteps = (float(items[3][0]), float(items[3][1]))
 
             gt_start_frame = dataset.scale(gt_start_frame)
             gt_end_frame = dataset.scale(gt_end_frame)
