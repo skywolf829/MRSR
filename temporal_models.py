@@ -56,27 +56,30 @@ def train_temporal_network(model, dataset, opt):
         for batch_num, items in enumerate(dataloader):
             gt_start_frame = crop_to_size(items[0], opt['cropping_resolution']).to(opt['device'])
             gt_end_frame = crop_to_size(items[1], opt['cropping_resolution']).to(opt['device'])
-            gt_middle_frame = crop_to_size(items[2], opt['cropping_resolution']).to(opt['device'])
+            gt_middle_frames = crop_to_size(items[2][0], opt['cropping_resolution']).to(opt['device'])
             timesteps = items[3]
 
             gt_start_frame = dataset.scale(gt_start_frame)
             gt_end_frame = dataset.scale(gt_end_frame)
             
-            pred_frame = dataset.unscale(model(gt_start_frame, gt_end_frame, timesteps))
-            loss = loss_function(pred_frame, gt_middle_frame)
+            pred_frames = dataset.unscale(model(gt_start_frame, gt_end_frame, timesteps))
+            loss = loss_function(pred_frames, gt_middle_frames)
             loss.backward()
             
             generator_optimizer.step()
             generator_scheduler.step()  
 
-            pred_frame_cm_image = toImg(pred_frame[0].detach().cpu().numpy())
-            gt_middle_frame_cm_image = toImg(gt_middle_frame[0].detach().cpu().numpy())
+            pred_frame_cm_image = toImg(pred_frames[0].detach().cpu().numpy())
+            gt_middle_frame_cm_image = toImg(gt_middle_frames[0].detach().cpu().numpy())
             
-            lerp_factor = float(timesteps[1]-timesteps[0]) / float(timesteps[2]-timesteps[0])
-            lerped_gt = (1.0-lerp_factor)*gt_start_frame + lerp_factor*gt_end_frame
-            lerped_gt = dataset.unscale(lerped_gt)
+            lerp_factor = float(1) / float(timesteps[1]-timesteps[0])
+            lerped_frames = []
+            for i in range(timesteps[1]-timesteps[0]):
+                lerped_gt = (1.0-(lerp_factor*(i+1)))*gt_start_frame + \
+                lerp_factor*(timesteps[1]-timesteps[0]-i+1)*gt_end_frame
+                lerped_gt = lerped_frames.append(dataset.unscale(lerped_gt))
 
-            reference_writer.add_scalar('MSE', loss_function(lerped_gt, gt_middle_frame).item(), iters)
+            reference_writer.add_scalar('MSE', loss_function(lerped_gt, gt_middle_frames).item(), iters)
             writer.add_scalar('MSE', loss.item(), iters) 
             writer.add_image("Predicted next frame",pred_frame_cm_image, iters)
             writer.add_image("GT next frame",gt_middle_frame_cm_image, iters)
@@ -168,24 +171,32 @@ class Temporal_Generator(nn.Module):
         x should be of shape (seq_length, c, x, y, z)
         timesteps should be (ts_start, ts_predicted, ts_end)
         '''
+        pred_frames_forward = []
+        pred_frames_backward = []
+        pref_frames = []
+
         x_start_pred = x_start
         for i in range(timesteps[1]-timesteps[0]):
             x_start_pred = self.feature_learning(x_start_pred)
             x_start_pred = self.convlstm_forward(x_start_pred)
             x_start_pred = self.upscaling(x_start_pred)
             x_start_pred = self.act(x_start_pred)
+            pref_frames_forward.append(x_start_pred)
 
         x_end_pred = x_end
-        for i in range(timesteps[2]-timesteps[1]):
+        for i in range(timesteps[1]-timesteps[0]):
             x_end_pred = self.feature_learning(x_end_pred)
             x_end_pred = self.convlstm_backward(x_end_pred)
             x_end_pred = self.upscaling(x_end_pred)
             x_end_pred = self.act(x_end_pred)
+            pref_frames_backward.insert(0, x_end_pred)
 
-        lerp_factor = float(timesteps[1]-timesteps[0]) / float(timesteps[2]-timesteps[0])
-        lerped_gt = (1.0-lerp_factor)*x_start + lerp_factor*x_end
-
-        return lerped_gt + 0.5*(x_start_pred + x_end_pred)
+        for i in range(timesteps[1]-timesteps[0]):
+            lerp_factor = float(i+1) / float(timesteps[1]-timesteps[0]+1)
+            lerped_gt = (1.0-lerp_factor)*x_start + lerp_factor*x_end
+            pred_frames.append(lerped_gt + 0.5*(pred_frames_forward[i] + pred_frames_backward[i]))
+        
+        return torch.cat(pred_frames, dim=0)
 
 class DownscaleBlock(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size, padding):
@@ -480,8 +491,8 @@ class Dataset(torch.utils.data.Dataset):
             data_seq = (
                 self.items[index],
                 self.items[index+self.opt['training_seq_length']],                                 
-                self.items[index+int(self.opt['training_seq_length']/2)],
-                (index,index+int(self.opt['training_seq_length']/2),index+self.opt['training_seq_length'])
+                torch.cat(self.items[index+1:index+self.opt['training_seq_length']], dim=0),
+                (index,index+self.opt['training_seq_length'])
             )            
         else:
             print("trying to load " + str(index) + ".h5")
