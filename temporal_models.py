@@ -49,7 +49,7 @@ def train_temporal_network(model, dataset, opt):
         num_workers=opt["num_workers"]
     )
 
-    loss = nn.MSEloss().to(opt['device'])
+    loss = nn.MSELoss().to(opt['device'])
     iters = 0
     for epoch in range(opt['epoch_number'], opt["epochs"]):        
         for batch_num, items in enumerate(dataloader):
