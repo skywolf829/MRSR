@@ -419,7 +419,7 @@ class Dataset(torch.utils.data.Dataset):
                 data_seq = (torch.stack(self.items[index:index+self.opt['training_seq_length']], dim=0), 
                 self.items[index+self.opt['training_seq_length']]) 
             elif(self.opt['temporal_direction'] == "backward"):
-                data_seq = (torch.stack(self.items[index+self.opt['training_seq_length']:index], dim=0), 
+                data_seq = (torch.stack(self.items[index+1:index+self.opt['training_seq_length']+1][::-1], dim=0), 
                 self.items[index]) 
         else:
             print("trying to load " + str(index) + ".h5")
