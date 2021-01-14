@@ -140,22 +140,28 @@ class DownscaleBlock(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size, padding):
         super(DownscaleBlock, self).__init__()
         self.conv1 = nn.Sequential(
-            nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
-            kernel_size=kernel_size, padding=padding, stride=1)),
-            nn.ReLU(),
-            nn.utils.spectral_norm(nn.Conv3d(output_channels, output_channels, 
-            kernel_size=kernel_size, padding=padding, stride=1)),
-            nn.ReLU(),
-            nn.utils.spectral_norm(nn.Conv3d(output_channels, output_channels, 
-            kernel_size=kernel_size, padding=padding, stride=1)),
-            nn.ReLU(),
-            nn.utils.spectral_norm(nn.Conv3d(output_channels, output_channels, 
-            kernel_size=kernel_size, padding=padding, stride=2)),
-            nn.ReLU()            
+            nn.Conv3d(input_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1),
+            nn.InstanceNorm3d(output_channels),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv3d(output_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1),
+            nn.InstanceNorm3d(output_channels),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv3d(output_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1),
+            nn.InstanceNorm3d(output_channels),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv3d(output_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=2),
+            nn.InstanceNorm3d(output_channels),
+            nn.LeakyReLU(0.2, inplace=True)           
         )
         self.conv2 = nn.Sequential(
-            nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
-            kernel_size=kernel_size, padding=padding, stride=2))
+            nn.Conv3d(input_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=2),
+            nn.InstanceNorm3d(output_channels),
+            nn.LeakyReLU(0.2, inplace=True),
         )
         
     def forward(self, x):
@@ -165,18 +171,22 @@ class ResidualBlock(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size, padding):
         super(ResidualBlock, self).__init__()
         self.conv = nn.Sequential(
-            nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
-            kernel_size=kernel_size, padding=padding, stride=1)),
-            nn.ReLU(),
-            nn.utils.spectral_norm(nn.Conv3d(output_channels, output_channels, 
-            kernel_size=kernel_size, padding=padding, stride=1)),
-            nn.ReLU(),
-            nn.utils.spectral_norm(nn.Conv3d(output_channels, output_channels, 
-            kernel_size=kernel_size, padding=padding, stride=1)),
-            nn.ReLU(),
-            nn.utils.spectral_norm(nn.Conv3d(output_channels, output_channels, 
-            kernel_size=kernel_size, padding=padding, stride=1)),
-            nn.ReLU()            
+            nn.Conv3d(input_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1),
+            nn.InstanceNorm3d(output_channels),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv3d(input_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1),
+            nn.InstanceNorm3d(output_channels),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv3d(input_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1),
+            nn.InstanceNorm3d(output_channels),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv3d(input_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1),
+            nn.InstanceNorm3d(output_channels),
+            nn.LeakyReLU(0.2, inplace=True),        
         )
         
     def forward(self, x):
@@ -186,23 +196,28 @@ class UpscalingBlock(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size, padding):
         super(UpscalingBlock, self).__init__()
         self.conv1 = nn.Sequential(
-            nn.utils.spectral_norm(nn.Conv3d(input_channels, input_channels, 
-            kernel_size=kernel_size, padding=padding, stride=1)),
-            nn.ReLU(),
-            nn.utils.spectral_norm(nn.Conv3d(input_channels, input_channels, 
-            kernel_size=kernel_size, padding=padding, stride=1)),
-            nn.ReLU(),
-            nn.utils.spectral_norm(nn.Conv3d(input_channels, input_channels, 
-            kernel_size=kernel_size, padding=padding, stride=1)),
-            nn.ReLU(),
-            nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
-            kernel_size=kernel_size, padding=padding, stride=1)),
-            nn.ReLU()            
+            nn.Conv3d(input_channels, input_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1),
+            nn.InstanceNorm3d(output_channels),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv3d(input_channels, input_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1),
+            nn.InstanceNorm3d(output_channels),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv3d(input_channels, input_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1),
+            nn.InstanceNorm3d(output_channels),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv3d(input_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1),
+            nn.InstanceNorm3d(output_channels),
+            nn.LeakyReLU(0.2, inplace=True),       
         )
         self.conv2 = nn.Sequential(
-            nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
-            kernel_size=kernel_size, padding=padding, stride=1)),
-            nn.ReLU()
+            nn.Conv3d(input_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1),
+            nn.InstanceNorm3d(output_channels),
+            nn.LeakyReLU(0.2, inplace=True),
         )
         
     def forward(self, x):
