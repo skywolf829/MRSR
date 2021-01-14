@@ -28,7 +28,7 @@ class Options():
         opt['separate_chans']          = False
         
         opt['num_lstm_layers']         = 3
-        opt['training_seq_length']     = 2
+        opt['training_seq_length']     = 20
         opt['temporal_direction']     = "forward"
 
 
