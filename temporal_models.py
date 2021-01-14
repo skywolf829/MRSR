@@ -138,55 +138,53 @@ class Temporal_Generator(nn.Module):
 
 class ResidualBlock(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size, padding):
-        self.block = [
-            nn.Sequential(
-                nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
-                kernel_size=kernel_size, padding=padding, stride=1)),
-                nn.ReLU(),
-                nn.utils.spectral_norm(nn.Conv3d(output_channels, output_channels, 
-                kernel_size=kernel_size, padding=padding, stride=1)),
-                nn.ReLU(),
-                nn.utils.spectral_norm(nn.Conv3d(output_channels, output_channels, 
-                kernel_size=kernel_size, padding=padding, stride=1)),
-                nn.ReLU(),
-                nn.utils.spectral_norm(nn.Conv3d(output_channels, output_channels, 
-                kernel_size=kernel_size, padding=padding, stride=2)),
-                nn.ReLU()            
-            ),
-            nn.Sequential(
-                nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
-                kernel_size=kernel_size, padding=padding, stride=2))
-            )
-        ]
-
+        super(ResidualBlock, self).__init__()
+        self.conv1 = nn.Sequential(
+            nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1)),
+            nn.ReLU(),
+            nn.utils.spectral_norm(nn.Conv3d(output_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1)),
+            nn.ReLU(),
+            nn.utils.spectral_norm(nn.Conv3d(output_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1)),
+            nn.ReLU(),
+            nn.utils.spectral_norm(nn.Conv3d(output_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=2)),
+            nn.ReLU()            
+        )
+        self.conv2 = nn.Sequential(
+            nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=2))
+        )
+        
     def forward(self, x):
-        return self.block[0](x) + self.block[1](x)
+        return self.conv1(x) + self.conv2(x)
 
 class UpscalingBlock(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size, padding):
-        self.block = [
-            nn.Sequential(
-                nn.utils.spectral_norm(nn.Conv3d(input_channels, input_channels, 
-                kernel_size=kernel_size, padding=padding, stride=1)),
-                nn.ReLU(),
-                nn.utils.spectral_norm(nn.Conv3d(input_channels, input_channels, 
-                kernel_size=kernel_size, padding=padding, stride=1)),
-                nn.ReLU(),
-                nn.utils.spectral_norm(nn.Conv3d(input_channels, input_channels, 
-                kernel_size=kernel_size, padding=padding, stride=1)),
-                nn.ReLU(),
-                nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
-                kernel_size=kernel_size, padding=padding, stride=2)),
-                nn.ReLU()            
-            ),
-            nn.Sequential(
-                nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
-                kernel_size=kernel_size, padding=padding, stride=2))
-            )
-        ]
-
+        super(UpscalingBlock, self).__init__()
+        self.conv1 = nn.Sequential(
+            nn.utils.spectral_norm(nn.Conv3d(input_channels, input_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1)),
+            nn.ReLU(),
+            nn.utils.spectral_norm(nn.Conv3d(input_channels, input_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1)),
+            nn.ReLU(),
+            nn.utils.spectral_norm(nn.Conv3d(input_channels, input_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1)),
+            nn.ReLU(),
+            nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=2)),
+            nn.ReLU()            
+        )
+        self.conv2 = nn.Sequential(
+            nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=2))
+        )
+        
     def forward(self, x):
-        return VoxelShuffle(self.block[0](x) + self.block[1](x))
+        return VoxelShuffle(self.conv1(x) + self.conv2(x))
 
 def VoxelShuffle(t):
     # t has shape [batch, channels, x, y, z]
