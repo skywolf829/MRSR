@@ -286,7 +286,7 @@ class ConvLSTM(nn.Module):
                                                  cur_state=[h, c])
                 output_inner.append(h)
 
-            layer_output = torch.stack(output_inner, dim=1)
+            layer_output = torch.cat(output_inner, dim=0)
             cur_layer_input = layer_output
 
             layer_output_list.append(layer_output)
