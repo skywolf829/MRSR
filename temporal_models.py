@@ -210,7 +210,8 @@ def VoxelShuffle(t):
     a[:,:,1::2,::2,1::2] = t[:,::8,:,:,:]
     a[:,:,1::2,1::2,::2] = t[:,::8,:,:,:]
     a[:,:,1::2,1::2,1::2] = t[:,::8,:,:,:]
-
+    print("voxel shuffle")
+    print(a.shape)
     return a
 
 class ConvLSTMCell(nn.Module):
