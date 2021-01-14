@@ -110,23 +110,21 @@ class Temporal_Generator(nn.Module):
         super(Temporal_Generator, self).__init__()
         
         self.feature_learning = nn.Sequential(
-            ResidualBlock(opt['num_channels'], 16, 5, 2),
-            ResidualBlock(16, 32, 3, 1),
-            ResidualBlock(32, 64, 3, 1),
-            ResidualBlock(64, 64, 3, 1)
+            DownscaleBlock(opt['num_channels'], 16, 5, 2),
+            DownscaleBlock(16, 32, 3, 1),
+            DownscaleBlock(32, 64, 3, 1),
+            DownscaleBlock(64, 64, 3, 1)
         )
         self.convlstm = ConvLSTM(opt)
 
         self.upscaling = nn.Sequential(
             UpscalingBlock(64, 64*8, 3, 1),
+            UpscalingBlock(64, 64*8, 3, 1),
             UpscalingBlock(64, 32*8, 3, 1),
-            UpscalingBlock(32, 32*8, 3, 1),
-            UpscalingBlock(32, opt['num_channels']*8, 5, 2)
+            UpscalingBlock(32, 32*8, 5, 2)
         )
 
-        self.finalConv = nn.Conv3d(opt['num_channels'], opt['num_channels'], 
-        padding=2, kernel_size=5, stride=1)
-        self.finalactivation = nn.Tanh()
+        self.act = nn.Tanh()
 
     def forward(self, x):
         '''
@@ -135,13 +133,12 @@ class Temporal_Generator(nn.Module):
         x = self.feature_learning(x)
         x = self.convlstm(x)
         x = self.upscaling(x)
-        x = self.finalConv(x)
-        x = self.finalactivation(x)
+        x = self.act(x)
         return x
 
-class ResidualBlock(nn.Module):
+class DownscaleBlock(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size, padding):
-        super(ResidualBlock, self).__init__()
+        super(DownscaleBlock, self).__init__()
         self.conv1 = nn.Sequential(
             nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
             kernel_size=kernel_size, padding=padding, stride=1)),
@@ -163,6 +160,27 @@ class ResidualBlock(nn.Module):
         
     def forward(self, x):
         return self.conv1(x) + self.conv2(x)
+
+class ResidualBlock(nn.Module):
+    def __init__(self, input_channels, output_channels, kernel_size, padding):
+        super(ResidualBlock, self).__init__()
+        self.conv = nn.Sequential(
+            nn.utils.spectral_norm(nn.Conv3d(input_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1)),
+            nn.ReLU(),
+            nn.utils.spectral_norm(nn.Conv3d(output_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1)),
+            nn.ReLU(),
+            nn.utils.spectral_norm(nn.Conv3d(output_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1)),
+            nn.ReLU(),
+            nn.utils.spectral_norm(nn.Conv3d(output_channels, output_channels, 
+            kernel_size=kernel_size, padding=padding, stride=1)),
+            nn.ReLU()            
+        )
+        
+    def forward(self, x):
+        return self.conv(x)
 
 class UpscalingBlock(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size, padding):
