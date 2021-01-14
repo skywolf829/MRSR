@@ -292,7 +292,7 @@ class ConvLSTM(nn.Module):
             layer_output_list.append(layer_output)
             last_state_list.append([h, c])
 
-        return layer_output[-1,:,:,:,:].unsqueeze()
+        return layer_output[-1,:,:,:,:].unsqueeze(0)
 
     def _init_hidden(self, shape):
         init_states = []
