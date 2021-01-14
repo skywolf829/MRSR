@@ -230,8 +230,9 @@ class ConvLSTMCell(nn.Module):
         combined = torch.cat([input_tensor, h_cur], dim=1)  # concatenate along channel axis
 
         combined_conv = self.conv(combined)
-        print(combined_conv.shape)
-        i_x, f_x, o_x, c_x, i_h, f_h, o_h, c_h = torch.split(combined_conv, 8, dim=1)
+        print(len(torch.split(combined_conv, combined.shape[1]/8, dim=1)))
+        i_x, f_x, o_x, c_x, i_h, f_h, o_h, c_h = torch.split(combined_conv, 
+        combined.shape[1]/8, dim=1)
         
         i = torch.sigmoid(i_x + i_h)
         f = torch.sigmoid(f_x + f_h)
