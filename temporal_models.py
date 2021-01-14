@@ -77,7 +77,7 @@ def train_temporal_network(model, dataset, opt):
             gt_middle_frame_cm_image = toImg(gt_middle_frames[0].detach().cpu().numpy())
             
             lerped_frames = []
-            for i in range(timesteps[1]-timesteps[0]-1):
+            for i in range(int(timesteps[1]-timesteps[0]-1)):
                 factor = (i+1)/(timesteps[1]-timesteps[0])
                 lerped_gt = (1-factor)*gt_start_frame + \
                 factor*gt_end_frame
