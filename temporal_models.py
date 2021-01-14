@@ -33,7 +33,7 @@ save_folder = os.path.join(FlowSTSR_folder_path, "SavedModels")
 
 def train_temporal_network(model, dataset, opt):
     model = model.to(opt['device'])
-
+    
     print_to_log_and_console("Training on %s" % (opt["device"]), 
         os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
     
@@ -112,6 +112,27 @@ def load_model(model, opt, device):
     model.load_state_dict(torch.load(os.path.join(
         load_folder, "temporal_generator"), map_location=device))
     return model
+
+def weights_init(m):
+    classname = m.__class__.__name__
+    if classname.find('Conv2d') != -1:
+        m.weight.data.normal_(0.0, 0.02)
+    elif classname.find('Norm') != -1:
+        m.weight.data.normal_(1.0, 0.02)
+        m.bias.data.fill_(0)
+
+def VoxelShuffle(t):
+    # t has shape [batch, channels, x, y, z]
+    # channels should be divisible by 8
+    
+    input_view = t.contiguous().view(
+        1, 2, 2, 2, int(t.shape[1]/8), t.shape[2], t.shape[3], t.shape[4]
+    )
+    shuffle_out = input_view.permute(0, 4, 5, 1, 6, 2, 7, 3).contiguous()
+    out = shuffle_out.view(
+        1, int(t.shape[1]/8), 2*t.shape[2], 2*t.shape[3], 2*t.shape[4]
+    )
+    return out
 
 class Temporal_Generator(nn.Module):
     def __init__ (self, opt):
@@ -254,38 +275,6 @@ class UpscalingBlock(nn.Module):
         x1 = self.conv2(x1)
         x2 = VoxelShuffle(self.conv3(x))
         return x1 + x2
-
-def VoxelShuffle(t):
-    # t has shape [batch, channels, x, y, z]
-    # channels should be divisible by 8
-    
-    '''
-    shape = list(t.shape)
-    shape[1] = int(shape[1] / 8)
-    shape[2] = shape[2] * 2
-    shape[3] = shape[3] * 2
-    shape[4] = shape[4] * 2
-
-    a = torch.empty(shape).to(t.device)
-    a.requires_grad = t.requires_grad
-    a[:,:,::2,::2,::2] = t[:,0::8,:,:,:]
-    a[:,:,::2,::2,1::2] = t[:,1::8,:,:,:]
-    a[:,:,::2,1::2,::2] = t[:,2::8,:,:,:]
-    a[:,:,::2,1::2,1::2] = t[:,3::8,:,:,:]
-    a[:,:,1::2,::2,::2] = t[:,4::8,:,:,:]
-    a[:,:,1::2,::2,1::2] = t[:,5::8,:,:,:]
-    a[:,:,1::2,1::2,::2] = t[:,6::8,:,:,:]
-    a[:,:,1::2,1::2,1::2] = t[:,7::8,:,:,:]
-    #return a
-    '''
-    input_view = t.contiguous().view(
-        1, 2, 2, 2, int(t.shape[1]/8), t.shape[2], t.shape[3], t.shape[4]
-    )
-    shuffle_out = input_view.permute(0, 4, 5, 1, 6, 2, 7, 3).contiguous()
-    out = shuffle_out.view(
-        1, int(t.shape[1]/8), 2*t.shape[2], 2*t.shape[3], 2*t.shape[4]
-    )
-    return out
 
 class ConvLSTMCell(nn.Module):
     def __init__(self, opt):

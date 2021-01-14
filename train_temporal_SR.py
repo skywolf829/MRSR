@@ -93,6 +93,7 @@ if __name__ == '__main__':
                 
         dataset = Dataset(opt)
         generator = Temporal_Generator(opt)
+        generator.apply(weights_init)
 
     else:        
         opt = load_options(os.path.join(save_folder, args["load_from"]))
