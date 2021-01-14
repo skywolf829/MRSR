@@ -76,11 +76,11 @@ def train_temporal_network(model, dataset, opt):
             pred_frame_cm_image = toImg(pred_frames[0].detach().cpu().numpy())
             gt_middle_frame_cm_image = toImg(gt_middle_frames[0].detach().cpu().numpy())
             
-            lerp_factor = 1.0 / (timesteps[1]-timesteps[0])
             lerped_frames = []
             for i in range(timesteps[1]-timesteps[0]-1):
-                lerped_gt = (1.0-(lerp_factor*(i+1)))*gt_start_frame + \
-                lerp_factor*(timesteps[1]-timesteps[0]-i+1)*gt_end_frame
+                factor = (i+1)/(timesteps[1]-timesteps[0])
+                lerped_gt = (1-factor)*gt_start_frame + \
+                factor*gt_end_frame
                 lerped_gt = lerped_frames.append(dataset.unscale(lerped_gt))
             lerped_gt = torch.cat(lerped_frames, dim=0)
             print(lerped_gt.shape)
