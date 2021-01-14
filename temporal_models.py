@@ -62,8 +62,8 @@ def train_temporal_network(model, dataset, opt):
             
             generator_scheduler.step()  
 
-            pred_next_frame_cm_image = toImg(pred_next_frame.detach().cpu().numpy())
-            gt_next_frame_cm_image = toImg(gt_next_frame.detach().cpu().numpy())
+            pred_next_frame_cm_image = toImg(pred_next_frame[0].detach().cpu().numpy())
+            gt_next_frame_cm_image = toImg(gt_next_frame[0].detach().cpu().numpy())
             
             writer.add_scalar('MSE', loss.item(), iters) 
             writer.add_image("Predicted next frame",pred_next_frame_cm_image, iters)
