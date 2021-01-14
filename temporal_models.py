@@ -49,7 +49,7 @@ def train_temporal_network(model, dataset, opt):
         num_workers=opt["num_workers"]
     )
 
-    loss = nn.MSELoss().to(opt['device'])
+    loss_function = nn.MSELoss().to(opt['device'])
     iters = 0
     for epoch in range(opt['epoch_number'], opt["epochs"]):        
         for batch_num, items in enumerate(dataloader):
@@ -57,7 +57,7 @@ def train_temporal_network(model, dataset, opt):
             gt_next_frame = crop_to_size(items[1], opt['cropping_resolution']).to(opt['device'])
             
             pred_next_frame = model(gt_frames)
-            loss = loss(pred_next_frame, gt_next_frame)
+            loss = loss_function(pred_next_frame, gt_next_frame)
             loss.backward()
             
             generator_optimizer.step()
