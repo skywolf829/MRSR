@@ -405,7 +405,7 @@ class Dataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         if(self.opt['load_data_at_start']):
-            data_seq = (self.items[index:index+self.opt['training_seq_length']], 
+            data_seq = (torch.cat(self.items[index:index+self.opt['training_seq_length']]), 
             self.items[index+self.opt['training_seq_length']]) 
         else:
             print("trying to load " + str(index) + ".h5")
