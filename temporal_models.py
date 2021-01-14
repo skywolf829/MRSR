@@ -54,10 +54,6 @@ def train_temporal_network(model, dataset, opt):
     iters = 0
     for epoch in range(opt['epoch_number'], opt["epochs"]):        
         for batch_num, items in enumerate(dataloader):
-            print(items[0].shape)
-            print(items[1].shape)
-            print(items[2].shape)
-            print(items[3])
             gt_start_frame = crop_to_size(items[0], opt['cropping_resolution']).to(opt['device'])
             gt_end_frame = crop_to_size(items[1], opt['cropping_resolution']).to(opt['device'])
             gt_middle_frames = crop_to_size(items[2][0], opt['cropping_resolution']).to(opt['device'])
@@ -83,13 +79,12 @@ def train_temporal_network(model, dataset, opt):
                 factor*gt_end_frame
                 lerped_gt = lerped_frames.append(dataset.unscale(lerped_gt))
             lerped_gt = torch.cat(lerped_frames, dim=0)
-            print(lerped_gt.shape)
             reference_writer.add_scalar('MSE', loss_function(lerped_gt, gt_middle_frames).item(), iters)
             writer.add_scalar('MSE', loss.item(), iters) 
             writer.add_image("Predicted next frame",pred_frame_cm_image, iters)
             writer.add_image("GT next frame",gt_middle_frame_cm_image, iters)
 
-            print_to_log_and_console("%i/%i: MSE=%.02f" %
+            print_to_log_and_console("%i/%i: MSE=%.06f" %
             (iters, opt['epochs']*len(dataset), loss.item()), 
             os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
 
@@ -98,7 +93,6 @@ def train_temporal_network(model, dataset, opt):
         opt['epoch_number'] = epoch+1
         if(epoch % opt['save_every'] == 0):
             save_model(model, opt)
-
 
     return model
 
@@ -202,7 +196,6 @@ class Temporal_Generator(nn.Module):
             pred_frames.append(lerped_gt + 0.5*(pred_frames_forward[i] + pred_frames_backward[i]))
         
         pred_frames = torch.cat(pred_frames, dim=0)
-        print(pred_frames.shape)
         return pred_frames
 
 class DownscaleBlock(nn.Module):
