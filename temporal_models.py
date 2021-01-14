@@ -189,7 +189,7 @@ def VoxelShuffle(t):
     # t has shape [batch, channels, x, y, z]
     # channels should be divisible by 8
     shape = list(t.shape)
-    shape[1] = shape[1] / 8
+    shape[1] = int(shape[1] / 8)
     shape[2] = shape[2] * 2
     shape[3] = shape[3] * 2
     shape[4] = shape[4] * 2
