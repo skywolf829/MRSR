@@ -25,7 +25,7 @@ class Options():
         opt['z_resolution']            = 1024
         opt['num_dims']                = 3
         opt['random_flipping']         = True
-        opt['num_networked_workers']   = 32
+        opt['num_networked_workers']   = 4
 
         # generator info
         opt["num_blocks"]              = 5
@@ -76,7 +76,7 @@ class Options():
         opt["discriminator_steps"]     = 1
         opt["epochs"]                  = 2500
         opt["minibatch"]               = 1        # Minibatch for training
-        opt["num_workers"]             = 16
+        opt["num_workers"]             = 4
         opt["learning_rate"]           = 0.0001    # Learning rate for GAN
         opt["beta_1"]                  = 0.5
         opt["beta_2"]                  = 0.999
