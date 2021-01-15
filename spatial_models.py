@@ -745,7 +745,7 @@ def train_single_scale(generators, discriminators, opt, dataset):
     
     print(str(len(generators)) + ": " + str(opt["resolutions"][len(generators)]))
 
-    dataset.set_subsample_dist(int(2**(opt['n']-len(generators)+1)))
+    dataset.set_subsample_dist(int(2**(opt['n']-len(generators)-1)))
     dataloader = torch.utils.data.DataLoader(
         dataset=dataset,
         shuffle=True,
