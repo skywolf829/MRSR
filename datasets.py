@@ -110,13 +110,13 @@ class NetworkDataset(torch.utils.data.Dataset):
         z_end = self.opt['z_resolution']
 
         if((z_end-z_start) / self.subsample_dist > self.opt['cropping_resolution']):
-            z_start = torch.randint(self.opt['z_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, 1)[0]
+            z_start = torch.randint(self.opt['z_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1])[0]
             z_end = min(z_start + self.opt['cropping_resolution']*self.subsample_dist, self.opt['z_resolution'])
         if((y_end-y_start) / self.subsample_dist > self.opt['cropping_resolution']):
-            y_start = torch.randint(self.opt['y_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, 1)[0]
+            y_start = torch.randint(self.opt['y_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1])[0]
             y_end = min(y_start + self.opt['cropping_resolution']*self.subsample_dist, self.opt['y_resolution'])
         if((x_end-x_start) / self.subsample_dist > self.opt['cropping_resolution']):
-            x_start = torch.randint(self.opt['x_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, 1)[0]
+            x_start = torch.randint(self.opt['x_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1])[0]
             x_end = min(x_start + self.opt['cropping_resolution']*self.subsample_dist, self.opt['x_resolution'])
         print(self.subsample_dist)
         print(self.opt['cropping_resolution'])
