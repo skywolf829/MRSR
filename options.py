@@ -18,6 +18,14 @@ class Options():
         opt["cropping_resolution"]     = 128
         opt["train_date_time"]         = None      # The day/time the model was trained (finish time)
         
+        opt['num_dataset_timesteps']   = 4200
+        opt['x_resolution']            = 1024
+        opt['y_resolution']            = 1024
+        opt['z_resolution']            = 1024
+        opt['num_dims']                = 3
+        opt['random_flipping']         = True
+        opt['num_networked_workers']   = 32
+
         # generator info
         opt["num_blocks"]              = 5
         opt["base_num_kernels"]        = 96        # Num of kernels in smallest scale conv layers

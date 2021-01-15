@@ -25,7 +25,7 @@ import copy
 from pytorch_memlab import LineProfiler, MemReporter, profile, profile_every
 import h5py
 
-MVTVSSR_folder_path = os.path.dirname(os.path.abspath(__file__))
+FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 input_folder = os.path.join(FlowSTSR_folder_path, "InputData")
 output_folder = os.path.join(FlowSTSR_folder_path, "Output")
 save_folder = os.path.join(FlowSTSR_folder_path, "SavedModels")
@@ -435,16 +435,25 @@ def init_scales(opt, dataset):
     ns = []
     
     if(opt["spatial_downscale_ratio"] < 1.0):
-        for i in range(len(dataset.resolution)):
-            ns.append(round(math.log(opt["min_dimension_size"] / dataset.resolution[i]) / math.log(opt["spatial_downscale_ratio"])))
+        if(opt['mode'] == "3D"):
+            dims = 3
+            ns.append(round(math.log(opt["min_dimension_size"] / opt['x_resolution']) / math.log(opt["spatial_downscale_ratio"])))
+            ns.append(round(math.log(opt["min_dimension_size"] / opt['y_resolution']) / math.log(opt["spatial_downscale_ratio"])))
+            ns.append(round(math.log(opt["min_dimension_size"] / opt['z_resolution']) / math.log(opt["spatial_downscale_ratio"])))
+            res = [opt['x_resolution'], opt['y_resolution'], opt['z_resolution']]
+        else:
+            dims = 2
+            ns.append(round(math.log(opt["min_dimension_size"] / opt['x_resolution']) / math.log(opt["spatial_downscale_ratio"])))
+            ns.append(round(math.log(opt["min_dimension_size"] / opt['y_resolution']) / math.log(opt["spatial_downscale_ratio"])))
+            res = [opt['x_resolution'], opt['y_resolution']]
 
     opt["n"] = min(ns)
     print("The model will have %i generators" % (opt["n"]))
     for i in range(opt["n"]+1):
         scaling = []
         factor =  opt["spatial_downscale_ratio"]**i
-        for j in range(len(dataset.resolution)):
-            x = int(dataset.resolution[j] * factor)
+        for j in range(dims):
+            x = int(res[j] * factor)
             scaling.append(x)
         opt["resolutions"].insert(0,scaling)
     for i in range(opt['n']):
@@ -452,6 +461,7 @@ def init_scales(opt, dataset):
 
 def init_gen(scale, opt):
     num_kernels = int( 2** ((math.log(opt["base_num_kernels"]) / math.log(2)) + (scale / 4)))
+    num_kernels = 64
 
     generator = Generator(opt["resolutions"][scale+1], num_kernels, opt)
     generator.apply(weights_init)
@@ -460,6 +470,7 @@ def init_gen(scale, opt):
 
 def init_discrim(scale, opt):
     num_kernels = int(2 ** ((math.log(opt["base_num_kernels"]) / math.log(2)) + (scale / 4)))
+    num_kernels = 64
 
     discriminator = Discriminator(opt["resolutions"][scale+1], num_kernels, opt)
     discriminator.apply(weights_init)
@@ -709,12 +720,8 @@ def train_single_scale(generators, discriminators, opt, dataset):
         for param in generators[i].parameters():
             param.requires_grad = False
 
-    #print_to_log_and_console(generator, os.path.join(opt["save_folder"], opt["save_name"]),
-    #    "log.txt")
     print_to_log_and_console("Training on %s" % (opt["device"]), 
         os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
-    #print_to_log_and_console("Kernels this scale: %i" % num_kernels_this_scale, 
-    #    os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
 
 
     generator_optimizer = optim.Adam(generator.parameters(), lr=opt["learning_rate"], 
@@ -736,10 +743,11 @@ def train_single_scale(generators, discriminators, opt, dataset):
     # Get properly sized frame for this generator
     
     print(str(len(generators)) + ": " + str(opt["resolutions"][len(generators)]))
-    
+
+    dataset.set_subsample_dist(int(2**(opt['n']-len(generators)+1)))
     dataloader = torch.utils.data.DataLoader(
         dataset=dataset,
-        shuffle=False,
+        shuffle=True,
         num_workers=opt["num_workers"]
     )
     for epoch in range(opt['epoch_number'], opt["epochs"]):
@@ -750,54 +758,11 @@ def train_single_scale(generators, discriminators, opt, dataset):
             #print("Original data shape: %s" % str(real_hr.shape))
             #print("IO time: %0.06f" % (time.time() - t_io_start))
             t_update_start = time.time()
-            if(len(generators) < opt['n'] - 1):
-                real_hr = downsample(real_hr, opt['resolutions'][len(generators)], opt['downsample_mode'])
-            if(opt['mode'] == '2D' or opt['mode'] == "3Dto2D"):
-                if(real_hr.shape[2] > opt['cropping_resolution']):
-                    rand_crop_x_start = torch.randint(real_hr.shape[2] - opt['cropping_resolution'], [1])[0]
-                    rand_crop_x_end = rand_crop_x_start + opt['cropping_resolution']
-                else:
-                    rand_crop_x_start = 0
-                    rand_crop_x_end = real_hr.shape[2]
-                if(real_hr.shape[3] > opt['cropping_resolution']):
-                    rand_crop_y_start = torch.randint(real_hr.shape[3] - opt['cropping_resolution'], [1])[0]
-                    rand_crop_y_end = rand_crop_y_start + opt['cropping_resolution']
-                else:
-                    rand_crop_y_start = 0
-                    rand_crop_y_end = real_hr.shape[3]
-                real_hr = real_hr[:,:,rand_crop_x_start:rand_crop_x_end,rand_crop_y_start:rand_crop_y_end]
-                
-            else:
-                if(real_hr.shape[2] > opt['cropping_resolution']):
-                    rand_crop_x_start = torch.randint(real_hr.shape[2] - opt['cropping_resolution'], [1])[0]
-                    rand_crop_x_end = rand_crop_x_start + opt['cropping_resolution']
-                else:
-                    rand_crop_x_start = 0
-                    rand_crop_x_end = real_hr.shape[2]
-                if(real_hr.shape[3] > opt['cropping_resolution']):    
-                    rand_crop_y_start = torch.randint(real_hr.shape[3] - opt['cropping_resolution'], [1])[0]
-                    rand_crop_y_end = rand_crop_y_start + opt['cropping_resolution']
-                else:
-                    rand_crop_y_start = 0
-                    rand_crop_y_end = real_hr.shape[3]
-                if(real_hr.shape[4] > opt['cropping_resolution']):
-                    rand_crop_z_start = torch.randint(real_hr.shape[4] - opt['cropping_resolution'], [1])[0]
-                    rand_crop_z_end = rand_crop_z_start + opt['cropping_resolution']
-                else:
-                    rand_crop_z_start = 0
-                    rand_crop_z_end = real_hr.shape[4]    
-                real_hr = real_hr[:,:,rand_crop_x_start:rand_crop_x_end,rand_crop_y_start:rand_crop_y_end,rand_crop_z_start:rand_crop_z_end]
             
-            #print("Adjusted HR shape: %s" % str(real_hr.shape))
             real_hr = real_hr.to(opt["device"])
-            real_lr = F.interpolate(real_hr, scale_factor=opt['spatial_downscale_ratio'],mode=opt['downsample_mode'],align_corners=False)
-            #print("LR shapeafter interp downscale: %s" % str(real_lr.shape))
-            real_lr = F.interpolate(real_lr, scale_factor=1/opt['spatial_downscale_ratio'],mode=opt['upsample_mode'],align_corners=False)
-            #print("LR shape after interp upscale: %s" % str(real_lr.shape))
+            real_lr = F.interpolate(real_hr, scale_factor=opt['spatial_downscale_ratio'],mode="nearest",align_corners=True)
+            real_lr = F.interpolate(real_lr, scale_factor=1/opt['spatial_downscale_ratio'],mode=opt['upsample_mode'],align_corners=True)
             
-            real_hr = dataset.scale(real_hr)
-            real_lr = dataset.scale(real_lr)
-
             D_loss = 0
             G_loss = 0        
             gradient_loss = 0
@@ -857,7 +822,7 @@ def train_single_scale(generators, discriminators, opt, dataset):
                     G_loss = output.mean().item()
 
                 if(opt['alpha_1'] > 0.0):
-                    rec_loss = loss(dataset.unscale(fake), dataset.unscale(real_hr)) * opt["alpha_1"]
+                    rec_loss = loss(fake, real_hr) * opt["alpha_1"]
                     rec_loss.backward(retain_graph=True)
                     gen_err_total += rec_loss.item()
                     rec_loss = rec_loss.detach()
@@ -865,10 +830,10 @@ def train_single_scale(generators, discriminators, opt, dataset):
                 if(opt['alpha_3'] > 0.0):
                     if(opt["physical_constraints"] == "soft"):
                         if(opt['mode'] == "2D" or opt['mode'] == '3Dto2D'):
-                            g_map = TAD(dataset.unscale(fake), opt["device"])            
+                            g_map = TAD(fake, opt["device"])            
                             g = g_map.mean()
                         elif(opt['mode'] == "3D"):
-                            g_map = TAD3D_CD(dataset.unscale(fake), opt["device"])
+                            g_map = TAD3D_CD(fake, opt["device"])
                             g = g_map.mean()
                         phys_loss = opt["alpha_3"] * g 
                         phys_loss.backward(retain_graph=True)
@@ -877,10 +842,10 @@ def train_single_scale(generators, discriminators, opt, dataset):
                 if(opt['alpha_4'] > 0.0):   
                     #print("About to calculate loss")                 
                     cs = torch.nn.CosineSimilarity(dim=1).to(opt['device'])
-                    mags = torch.abs(torch.norm(dataset.unscale(fake), dim=1) \
-                    - torch.norm(dataset.unscale(real_hr), dim=1))
-                    angles = torch.abs(cs(dataset.unscale(fake), 
-                    dataset.unscale(real_hr)) - 1) / 2
+                    mags = torch.abs(torch.norm(fake, dim=1) \
+                    - torch.norm(real_hr, dim=1))
+                    angles = torch.abs(cs(fake, 
+                    real_hr) - 1) / 2
                     r_loss = opt['alpha_4'] * (mags.mean() + angles.mean()) / 2
                     #print("calculated loss, about to backward")
                     r_loss.backward(retain_graph=True)
@@ -893,14 +858,14 @@ def train_single_scale(generators, discriminators, opt, dataset):
                     for ax1 in range(real_hr.shape[1]):
                         for ax2 in range(len(real_hr.shape[2:])):
                             if(opt["mode"] == '2D' or opt['mode'] == '3Dto2D'):
-                                r_deriv = spatial_derivative2D(dataset.unscale(real_hr)[:,ax1:ax1+1], 
+                                r_deriv = spatial_derivative2D(real_hr[:,ax1:ax1+1], 
                                 ax2, opt['device'])
-                                rec_deriv = spatial_derivative2D(dataset.unscale(fake)[:,ax1:ax1+1], 
+                                rec_deriv = spatial_derivative2D(fake[:,ax1:ax1+1], 
                                 ax2, opt['device'])
                             elif(opt['mode'] == '3D'):
-                                r_deriv = spatial_derivative3D_CD(dataset.unscale(real_hr)[:,ax1:ax1+1],
+                                r_deriv = spatial_derivative3D_CD(real_hr[:,ax1:ax1+1],
                                 ax2, opt['device'])
-                                rec_deriv = spatial_derivative3D_CD(dataset.unscale(fake)[:,ax1:ax1+1], 
+                                rec_deriv = spatial_derivative3D_CD(fake[:,ax1:ax1+1], 
                                 ax2, opt['device'])
                             real_gradient.append(r_deriv)
                             rec_gradient.append(rec_deriv)
@@ -914,14 +879,14 @@ def train_single_scale(generators, discriminators, opt, dataset):
                 if(opt["alpha_6"] > 0):
                     if(opt['mode'] == '3D'):
                         if(opt['adaptive_streamlines']):
-                            path_loss = adaptive_streamline_loss3D(dataset.unscale(real_hr), 
-                            dataset.unscale(fake), 
+                            path_loss = adaptive_streamline_loss3D(real_hr, 
+                            fake, 
                             torch.abs(mags[0] + angles[0]), int(opt['streamline_res']**3), 
                             3, 1, opt['streamline_length'], opt['device'], 
                             periodic=opt['periodic'])* opt['alpha_6']
                         else:
-                            path_loss = streamline_loss3D(dataset.unscale(real_hr),
-                            dataset.unscale(fake), 
+                            path_loss = streamline_loss3D(real_hr,
+                            fake, 
                             opt['streamline_res'], opt['streamline_res'], opt['streamline_res'], 
                             1, opt['streamline_length'], opt['device'], 
                             periodic=opt['periodic'] and fake.shape == real.shape) * opt['alpha_6']
@@ -1247,6 +1212,138 @@ class SpectralNorm(nn.Module):
     def forward(self, *args):
         self._update_u_v()
         return self.module.forward(*args)
+
+class NetworkDataset(torch.utils.data.Dataset):
+    def __init__(self, opt):
+        import os
+        import numpy as np
+        import zeep
+        import base64
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        import struct
+
+        self.client = zeep.Client('http://turbulence.pha.jhu.edu/service/turbulence.asmx?WSDL')
+
+        self.opt = opt
+        self.channel_mins = []
+        self.channel_maxs = []
+        self.max_mag = None
+        self.num_items = 0
+        self.items = []
+        
+
+        self.subsample_dist = 1
+        self.num_items = opt['num_dataset_timesteps'] 
+
+    def get_frame(x_start, x_end, x_step, 
+        y_start, y_end, y_step, 
+        z_start, z_end, z_step, 
+        sim_name, timestep, field, num_components):
+            result=client.service.GetAnyCutoutWeb(token,sim_name, field, timestep,
+                                                    x_start+1, y_start+1, 
+                                                    z_start+1, x_end, y_end, z_end,
+                                                    x_step, y_step, z_step, 0, "")  # put empty string for the last parameter
+            # transfer base64 format to numpy
+            nx=int((x_end-x_start)/x_step)
+            ny=int((y_end-y_start)/y_step)
+            nz=int((z_end-z_start)/z_step)
+            base64_len=int(nx*ny*nz*num_components)
+            base64_format='<'+str(base64_len)+'f'
+
+            result=struct.unpack(base64_format, result)
+            result=np.array(result).reshape((nz, ny, nx, num_components))
+            return result, int(x_start/x_step), int(x_end/x_step), \
+            int(y_start/x_step), int(y_end/y_step),\
+            int(z_start/z_step), int(z_end/z_step)
+
+    def get_full_frame_parallel(x_start, x_end, x_step,
+    y_start, y_end, y_step, 
+    z_start, z_end, z_step,
+    sim_name, timestep, field, num_components, num_workers):
+        threads= []
+        full = np.zeros((int((z_end-z_start)/z_step), 
+        int((y_end-y_start)/y_step), 
+        int((x_end-x_start)/x_step), num_components), dtype=np.float32)
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            done = 0
+            # "Try to limit the number of points in a single query to 2 million"
+            # 128^3 is just over 2 million, so we choose that as the maximum
+            x_len = 128
+            y_len = 128
+            z_len = 128
+            for k in range(z_start, z_end, z_len):
+                for i in range(x_start, x_end, x_len):
+                    for j in range(y_start, y_end, y_len):
+                        x_stop = min(i+x_len, x_end)
+                        y_stop = min(j+y_len, y_end)
+                        z_stop = min(k+z_len, z_end)
+                        threads.append(executor.submit(get_frame, 
+                        i,x_stop, x_step,
+                        j, y_stop, y_step,
+                        k, z_stop, z_step,
+                        sim_name, timestep, field, num_components))
+            for task in as_completed(threads):
+                r, x1, x2, y1, y2, z1, z2 = task.result()
+                
+                full[z1-z_start:z2-z_start,
+                y1-y_start:y2-y_start,
+                x1-x_start:x2-x_start,:] = r.astype(np.float32)
+                del r
+                done += 1
+        return full
+
+    def set_subsample_dist(self,dist):
+        self.subsample_dist = dist
+
+    def __len__(self):
+        return self.num_items - 100
+
+    def resolution(self):
+        return self.resolution
+
+    def scale(self, data):
+        return data
+
+    def unscale(self, data):
+        return data
+
+    def __getitem__(self, index):
+        
+        x_start = 0
+        x_end = self.opt['x_resolution']
+        y_start = 0
+        y_end = self.opt['y_resolution']
+        z_start = 0
+        z_end = self.opt['z_resolution']
+
+        if((z_end-z_start) / self.subsample_dist > self.opt['cropping_resolution']):
+            z_start = torch.randint(0, self.opt['z_resolution'] - self.opt['cropping_resolution']*self.subsample_dist)[0]
+            z_end = min(z_start + self.opt['cropping_resolution']*self.subsample_dist, self.opt['z_resolution'])
+        if((y_end-y_start) / self.subsample_dist > self.opt['cropping_resolution']):
+            y_start = torch.randint(0, self.opt['y_resolution'] - self.opt['cropping_resolution']*self.subsample_dist)[0]
+            y_end = min(y_start + self.opt['cropping_resolution']*self.subsample_dist, self.opt['y_resolution'])
+        if((x_end-x_start) / self.subsample_dist > self.opt['cropping_resolution']):
+            x_start = torch.randint(0, self.opt['x_resolution'] - self.opt['cropping_resolution']*self.subsample_dist)[0]
+            x_end = min(x_start + self.opt['cropping_resolution']*self.subsample_dist, self.opt['x_resolution'])
+
+        f = get_full_frame_parallel(x_start, x_end, self.subsample_dist,#x
+        y_start, y_end, self.subsample_dist, #y
+        z_start, z_end, self.subsample_dist, #z
+        name, index+100, # skip the first 100 timesteps, duplicates for temporal interpolation
+        "u", 3, self.opt['num_networked_workers'])
+        
+        f = f.astype(np.float32).swapaxes(0,3).swapaxes(3,2).swapaxes(2,1)
+        data = torch.tensor(f)
+
+        if(self.opt['random_flipping']):
+            if(torch.rand(1).item() > 0.5):
+                data = data[:,::-1,:,:]
+            if(torch.rand(1).item() > 0.5):
+                data = data[:,:,::-1,:]
+            if(torch.rand(1).item() > 0.5):
+                data = data[:,:,:,::-1]
+            
+        return data
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, opt):

@@ -91,7 +91,7 @@ if __name__ == '__main__':
             if args[k] is not None:
                 opt[k] = args[k]
          # Determine scales    
-        dataset = Dataset(opt)
+        dataset = NetworkDataset(opt)
         init_scales(opt, dataset)
     else:        
         opt = load_options(os.path.join(save_folder, args["load_from"]))
@@ -101,13 +101,12 @@ if __name__ == '__main__':
             if args[k] is not None:
                 opt[k] = args[k]
         generators, discriminators = load_models(opt,args["device"])
-        dataset = Dataset(opt)
+        dataset = NetworkDataset(opt)
 
     now = datetime.datetime.now()
     start_time = time.time()
     print_to_log_and_console("Started training at " + str(now), 
     os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
-    opt["num_training_examples"] = len(os.listdir(opt["data_folder"]))
 
     # Train each scale 1 by 1
     i = opt['scale_in_training']
