@@ -68,7 +68,7 @@ class Options():
         opt["epochs"]                  = 2500
         opt["minibatch"]               = 1        # Minibatch for training
         opt["num_workers"]             = 16
-        opt["learning_rate"]           = 0.0005    # Learning rate for GAN
+        opt["learning_rate"]           = 0.0001    # Learning rate for GAN
         opt["beta_1"]                  = 0.5
         opt["beta_2"]                  = 0.999
         opt["gamma"]                   = 0.1
