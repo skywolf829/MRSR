@@ -62,7 +62,8 @@ class NetworkDataset(torch.utils.data.Dataset):
         full = np.zeros((int((x_end-x_start)/x_step), 
         int((y_end-y_start)/y_step), 
         int((z_end-z_start)/z_step), num_components), dtype=np.float32)
-        print(full.shape)
+        
+        
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
             done = 0
             # "Try to limit the number of points in a single query to 2 million"
@@ -76,7 +77,6 @@ class NetworkDataset(torch.utils.data.Dataset):
                         x_stop = min(k+x_len, x_end)
                         y_stop = min(i+y_len, y_end)
                         z_stop = min(j+z_len, z_end)
-                        print("adding job")
                         threads.append(executor.submit(self.get_frame, 
                         k, x_stop, x_step,
                         i, y_stop, y_step,
@@ -119,14 +119,15 @@ class NetworkDataset(torch.utils.data.Dataset):
 
         if((z_end-z_start) / self.subsample_dist > self.opt['cropping_resolution']):
             z_start = torch.randint(self.opt['z_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1]).item()
-            z_end = min(z_start + self.opt['cropping_resolution']*self.subsample_dist, self.opt['z_resolution'])
+            z_end = z_start + self.opt['cropping_resolution']*self.subsample_dist
         if((y_end-y_start) / self.subsample_dist > self.opt['cropping_resolution']):
             y_start = torch.randint(self.opt['y_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1]).item()
-            y_end = min(y_start + self.opt['cropping_resolution']*self.subsample_dist, self.opt['y_resolution'])
+            y_end = y_start + self.opt['cropping_resolution']*self.subsample_dist
         if((x_end-x_start) / self.subsample_dist > self.opt['cropping_resolution']):
             x_start = torch.randint(self.opt['x_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1]).item()
-            x_end = min(x_start + self.opt['cropping_resolution']*self.subsample_dist, self.opt['x_resolution'])
+            x_end = x_start + self.opt['cropping_resolution']*self.subsample_dist
         
+        print()
         f = self.get_full_frame_parallel(x_start, x_end, self.subsample_dist,#x
         y_start, y_end, self.subsample_dist, #y
         z_start, z_end, self.subsample_dist, #z
