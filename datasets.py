@@ -69,6 +69,7 @@ class NetworkDataset(torch.utils.data.Dataset):
                         x_stop = min(i+x_len, x_end)
                         y_stop = min(j+y_len, y_end)
                         z_stop = min(k+z_len, z_end)
+                        print("adding job")
                         threads.append(executor.submit(self.get_frame, 
                         i,x_stop, x_step,
                         j, y_stop, y_step,
