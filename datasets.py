@@ -121,7 +121,7 @@ class NetworkDataset(torch.utils.data.Dataset):
         if((x_end-x_start) / self.subsample_dist > self.opt['cropping_resolution']):
             x_start = torch.randint(self.opt['x_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1]).item()
             x_end = x_start + self.opt['cropping_resolution']*self.subsample_dist
-        
+        print("index " + str(index))
         print(x_start)
         print(x_end)
         print(y_start)
