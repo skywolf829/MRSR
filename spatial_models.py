@@ -1293,6 +1293,7 @@ class NetworkDataset(torch.utils.data.Dataset):
                 y1-y_start:y2-y_start,
                 x1-x_start:x2-x_start,:] = r.astype(np.float32)
                 del r
+                print("done")
                 done += 1
         return full
 
