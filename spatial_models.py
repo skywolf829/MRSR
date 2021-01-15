@@ -1235,7 +1235,8 @@ class NetworkDataset(torch.utils.data.Dataset):
         self.subsample_dist = 1
         self.num_items = opt['num_dataset_timesteps'] 
 
-    def get_frame(x_start, x_end, x_step, 
+    def get_frame(self,
+        x_start, x_end, x_step, 
         y_start, y_end, y_step, 
         z_start, z_end, z_step, 
         sim_name, timestep, field, num_components):
@@ -1256,7 +1257,8 @@ class NetworkDataset(torch.utils.data.Dataset):
             int(y_start/x_step), int(y_end/y_step),\
             int(z_start/z_step), int(z_end/z_step)
 
-    def get_full_frame_parallel(x_start, x_end, x_step,
+    def get_full_frame_parallel(self,
+    x_start, x_end, x_step,
     y_start, y_end, y_step, 
     z_start, z_end, z_step,
     sim_name, timestep, field, num_components, num_workers):
@@ -1277,7 +1279,7 @@ class NetworkDataset(torch.utils.data.Dataset):
                         x_stop = min(i+x_len, x_end)
                         y_stop = min(j+y_len, y_end)
                         z_stop = min(k+z_len, z_end)
-                        threads.append(executor.submit(get_frame, 
+                        threads.append(executor.submit(self.get_frame, 
                         i,x_stop, x_step,
                         j, y_stop, y_step,
                         k, z_stop, z_step,
@@ -1326,7 +1328,7 @@ class NetworkDataset(torch.utils.data.Dataset):
             x_start = torch.randint(0, self.opt['x_resolution'] - self.opt['cropping_resolution']*self.subsample_dist)[0]
             x_end = min(x_start + self.opt['cropping_resolution']*self.subsample_dist, self.opt['x_resolution'])
 
-        f = get_full_frame_parallel(x_start, x_end, self.subsample_dist,#x
+        f = self.get_full_frame_parallel(x_start, x_end, self.subsample_dist,#x
         y_start, y_end, self.subsample_dist, #y
         z_start, z_end, self.subsample_dist, #z
         self.opt['dataset_name'], index+100, # skip the first 100 timesteps, duplicates for temporal interpolation
