@@ -118,10 +118,7 @@ class NetworkDataset(torch.utils.data.Dataset):
         if((x_end-x_start) / self.subsample_dist > self.opt['cropping_resolution']):
             x_start = torch.randint(self.opt['x_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1]).item()
             x_end = min(x_start + self.opt['cropping_resolution']*self.subsample_dist, self.opt['x_resolution'])
-        print(self.subsample_dist)
-        print(self.opt['cropping_resolution'])
-        print(x_start)
-        print(x_end)
+        
         f = self.get_full_frame_parallel(x_start, x_end, self.subsample_dist,#x
         y_start, y_end, self.subsample_dist, #y
         z_start, z_end, self.subsample_dist, #z
