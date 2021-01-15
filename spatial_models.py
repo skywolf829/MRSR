@@ -1266,6 +1266,7 @@ class NetworkDataset(torch.utils.data.Dataset):
         full = np.zeros((int((z_end-z_start)/z_step), 
         int((y_end-y_start)/y_step), 
         int((x_end-x_start)/x_step), num_components), dtype=np.float32)
+        from concurrent.futures import ThreadPoolExecutor, as_completed
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
             done = 0
             # "Try to limit the number of points in a single query to 2 million"
