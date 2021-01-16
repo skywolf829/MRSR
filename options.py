@@ -25,9 +25,9 @@ class Options():
         opt['z_resolution']            = 1024
         opt['num_dims']                = 3
         opt['random_flipping']         = True
-        opt['num_networked_workers']   = 32
+        opt['num_networked_workers']   = 16
 
-        opt["num_workers"]             = 8
+        opt["num_workers"]             = 24
 
         # generator info
         opt["num_blocks"]              = 5
