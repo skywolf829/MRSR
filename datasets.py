@@ -90,7 +90,7 @@ class NetworkDataset(torch.utils.data.Dataset):
                 r, x1, x2, y1, y2, z1, z2 = task.result()
                 
                 full[x1-int(x_start/x_step):x2-int(x_start/x_step),
-                y1-int(y_start/y_step):y2-int(y_start/y_step,
+                y1-int(y_start/y_step):y2-int(y_start/y_step),
                 z1-int(z_start/z_step):z2-int(z_start/z_step),:] = r.astype(np.float32)
                 del r
                 print("done")
