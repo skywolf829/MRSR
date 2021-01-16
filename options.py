@@ -63,7 +63,7 @@ class Options():
 
         # GAN training info
         opt["alpha_1"]                 = 0       # Reconstruction loss coefficient
-        opt["alpha_2"]                 = 0        # Adversarial loss coefficient
+        opt["alpha_2"]                 = 0.1        # Adversarial loss coefficient
         opt["alpha_3"]                 = 0        # Soft physical loss coefficient
         opt["alpha_4"]                 = 1        # mag_and_angle loss
         opt["alpha_5"]                 = 0          # first derivative loss coeff
@@ -87,7 +87,7 @@ class Options():
         opt["scale_in_training"]       = 0
         opt["iteration_number"]        = 0
         opt["epoch_number"]            = 0
-        opt["save_every"]              = 1
+        opt["save_every"]              = 500
         opt["save_training_loss"]      = True
 
         return opt
