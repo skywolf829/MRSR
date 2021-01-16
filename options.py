@@ -27,6 +27,8 @@ class Options():
         opt['random_flipping']         = True
         opt['num_networked_workers']   = 32
 
+        opt["num_workers"]             = 8
+
         # generator info
         opt["num_blocks"]              = 5
         opt["base_num_kernels"]        = 96        # Num of kernels in smallest scale conv layers
@@ -76,7 +78,6 @@ class Options():
         opt["discriminator_steps"]     = 1
         opt["epochs"]                  = 2500
         opt["minibatch"]               = 1        # Minibatch for training
-        opt["num_workers"]             = 0
         opt["learning_rate"]           = 0.0001    # Learning rate for GAN
         opt["beta_1"]                  = 0.5
         opt["beta_2"]                  = 0.999
