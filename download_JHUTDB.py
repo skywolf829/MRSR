@@ -38,7 +38,7 @@ sim_name, timestep, field, num_components):
     base64_format='<'+str(base64_len)+'f'
 
     result=struct.unpack(base64_format, result)
-    result=np.array(result).reshape((nz, ny, nx, num_components))
+    result=np.array(result).reshape((nx, ny, nz, num_components))
     return result, int(x_start/x_step), int(x_end/x_step), \
     int(y_start/x_step), int(y_end/y_step),\
     int(z_start/z_step), int(z_end/z_step)
@@ -97,31 +97,31 @@ y_start, y_end, y_step,
 z_start, z_end, z_step,
 sim_name, timestep, field, num_components, num_workers):
     threads= []
-    full = np.zeros((int((z_end-z_start)/z_step), 
+    full = np.zeros((int((x_end-x_start)/x_step), 
     int((y_end-y_start)/y_step), 
-    int((x_end-x_start)/x_step), num_components), dtype=np.float32)
+    int((z_end-z_start)/z_step), num_components), dtype=np.float32)
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
         done = 0
         x_len = 128
         y_len = 128
         z_len = 128
-        for k in range(z_start, z_end, z_len):
-            for i in range(x_start, x_end, x_len):
-                for j in range(y_start, y_end, y_len):
-                    x_stop = min(i+x_len, x_end)
-                    y_stop = min(j+y_len, y_end)
-                    z_stop = min(k+z_len, z_end)
+        for k in range(x_start, x_end, x_len):
+            for i in range(y_start, y_end, y_len):
+                for j in range(z_start, z_end, z_len):
+                    x_stop = min(k+x_len, x_end)
+                    y_stop = min(i+y_len, y_end)
+                    z_stop = min(j+z_len, z_end)
                     threads.append(executor.submit(get_frame, 
-                    i,x_stop, x_step,
-                    j, y_stop, y_step,
-                    k, z_stop, z_step,
+                    k, x_stop, x_step,
+                    i, y_stop, y_step,
+                    j, z_stop, z_step,
                     sim_name, timestep, field, num_components))
         for task in as_completed(threads):
            r, x1, x2, y1, y2, z1, z2 = task.result()
           
-           full[z1-z_start:z2-z_start,
-           y1-y_start:y2-y_start,
-           x1-x_start:x2-x_start,:] = r.astype(np.float32)
+           full[x1-int(x_start/x_step):x2-int(x_start/x_step),
+                y1-int(y_start/y_step):y2-int(y_start/y_step),
+                z1-int(z_start/z_step):z2-int(z_start/z_step),:] = r.astype(np.float32)
            del r
            done += 1
            print("Done: %i/%i" % (done, len(threads)))

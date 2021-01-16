@@ -83,7 +83,7 @@ class NetworkDataset(torch.utils.data.Dataset):
                 y1-int(y_start/y_step):y2-int(y_start/y_step),
                 z1-int(z_start/z_step):z2-int(z_start/z_step),:] = r.astype(np.float32)
                 del r
-                print("done")
+                #print("done")
                 done += 1
         return full
 
