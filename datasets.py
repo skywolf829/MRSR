@@ -30,10 +30,12 @@ class NetworkDataset(torch.utils.data.Dataset):
         z_start, z_end, z_step, 
         sim_name, timestep, field, num_components):
                         
-            result=self.client.service.GetAnyCutoutWeb(self.token,sim_name, field, timestep,
-                                                    x_start+1, y_start+1, 
-                                                    z_start+1, x_end, y_end, z_end,
-                                                    x_step, y_step, z_step, 0, "")  # put empty string for the last parameter
+            result=client.service.GetAnyCutoutWeb(token,sim_name, field, timestep,
+                                            x_start+1, 
+                                            y_start+1, 
+                                            z_start+1, 
+                                            x_end, y_end, z_end,
+                                            x_step, y_step, z_step, 0, "")  # put empty string for the last parameter
             # transfer base64 format to numpy
             nx=int((x_end-x_start)/x_step)
             ny=int((y_end-y_start)/y_step)
@@ -42,10 +44,8 @@ class NetworkDataset(torch.utils.data.Dataset):
             base64_format='<'+str(base64_len)+'f'
 
             result=struct.unpack(base64_format, result)
-            result=np.array(result).reshape((nz, ny, nx, num_components))
-            return result, int(x_start/x_step), int(x_end/x_step), \
-            int(y_start/x_step), int(y_end/y_step),\
-            int(z_start/z_step), int(z_end/z_step)
+            result=np.array(result).reshape((nz, ny, nx, num_components)).swapaxes(0,2)
+            return result, x_start, x_end, y_start, y_end, z_start, z_end
 
     def get_full_frame_parallel(self,
     x_start, x_end, x_step,
@@ -78,13 +78,22 @@ class NetworkDataset(torch.utils.data.Dataset):
                         sim_name, timestep, field, num_components))
             for task in as_completed(threads):
                 r, x1, x2, y1, y2, z1, z2 = task.result()
-                
-                full[x1-int(x_start/x_step):x2-int(x_start/x_step),
-                y1-int(y_start/y_step):y2-int(y_start/y_step),
-                z1-int(z_start/z_step):z2-int(z_start/z_step),:] = r.astype(np.float32)
+                x1 -= x_start
+                x2 -= x_start
+                y1 -= y_start
+                y2 -= y_start
+                z1 -= z_start
+                z2 -= z_start
+                x1 = int(x1 / x_step)
+                x2 = int(x2 / x_step)
+                y1 = int(y1 / y_step)
+                y2 = int(y2 / y_step)
+                z1 = int(z1 / z_step)
+                z2 = int(z2 / z_step)
+                full[x1:x2,y1:y2,z1:z2,:] = r.astype(np.float32)
                 del r
-                #print("done")
                 done += 1
+                print("Done: %i/%i" % (done, len(threads)))
         return full
 
     def set_subsample_dist(self,dist):
