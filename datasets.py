@@ -29,7 +29,7 @@ class NetworkDataset(torch.utils.data.Dataset):
         y_start, y_end, y_step, 
         z_start, z_end, z_step, 
         sim_name, timestep, field, num_components):
-            '''
+            
             print(x_start)
             print(x_end)
             print(y_start)
@@ -39,7 +39,7 @@ class NetworkDataset(torch.utils.data.Dataset):
             print(x_step)
             print(y_step)
             print(z_step)
-            '''
+            
             result=self.client.service.GetAnyCutoutWeb(self.token,sim_name, field, timestep,
                                                     x_start+1, y_start+1, 
                                                     z_start+1, x_end, y_end, z_end,
@@ -89,9 +89,9 @@ class NetworkDataset(torch.utils.data.Dataset):
             for task in as_completed(threads):
                 r, x1, x2, y1, y2, z1, z2 = task.result()
                 
-                full[z1-z_start:z2-z_start,
-                y1-y_start:y2-y_start,
-                x1-x_start:x2-x_start,:] = r.astype(np.float32)
+                full[x1-int(x_start/x_step):x2-int(x_start/x_step),
+                y1-int(y_start/y_step):y2-int(y_start/y_step,
+                z1-int(z_start/z_step):z2-int(z_start/z_step),:] = r.astype(np.float32)
                 del r
                 print("done")
                 done += 1
