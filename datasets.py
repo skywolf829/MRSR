@@ -30,12 +30,13 @@ class NetworkDataset(torch.utils.data.Dataset):
         z_start, z_end, z_step, 
         sim_name, timestep, field, num_components):
                         
-            result=client.service.GetAnyCutoutWeb(token,sim_name, field, timestep,
-                                            x_start+1, 
-                                            y_start+1, 
-                                            z_start+1, 
-                                            x_end, y_end, z_end,
-                                            x_step, y_step, z_step, 0, "")  # put empty string for the last parameter
+            result=self.client.service.GetAnyCutoutWeb(self.token,
+                sim_name, field, timestep,
+                x_start+1, 
+                y_start+1, 
+                z_start+1, 
+                x_end, y_end, z_end,
+                x_step, y_step, z_step, 0, "")  # put empty string for the last parameter
             # transfer base64 format to numpy
             nx=int((x_end-x_start)/x_step)
             ny=int((y_end-y_start)/y_step)
