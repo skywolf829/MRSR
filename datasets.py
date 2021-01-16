@@ -12,8 +12,7 @@ class NetworkDataset(torch.utils.data.Dataset):
     def __init__(self, opt):
         
         self.client = zeep.Client('http://turbulence.pha.jhu.edu/service/turbulence.asmx?WSDL')
-
-        self.token="edu.osu.buckeyemail.wurster.18-92fb557b" #replace with your own token
+        self.token="edu.osu.buckeyemail.wurster.18-92fb557b"
         self.opt = opt
         self.channel_mins = []
         self.channel_maxs = []
@@ -121,12 +120,20 @@ class NetworkDataset(torch.utils.data.Dataset):
         if((x_end-x_start) / self.subsample_dist > self.opt['cropping_resolution']):
             x_start = torch.randint(self.opt['x_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1]).item()
             x_end = x_start + self.opt['cropping_resolution']*self.subsample_dist
+
+        '''    
         f = self.get_full_frame_parallel(x_start, x_end, self.subsample_dist,#x
         y_start, y_end, self.subsample_dist, #y
         z_start, z_end, self.subsample_dist, #z
         self.opt['dataset_name'], index+100, # skip the first 100 timesteps, duplicates for temporal interpolation
         "u", 3, self.opt['num_networked_workers'])
-        
+        '''
+        f = self.get_frame(x_start, x_end, self.subsample_dist, 
+        y_start, y_end, self.subsample_dist, 
+        z_start, z_end, self.subsample_dist, 
+        self.opt['dataset_name'], index+100, "u", 3)
+
+
         f = f.astype(np.float32).swapaxes(0,3).swapaxes(3,2).swapaxes(2,1)
         data = torch.tensor(f)
 
