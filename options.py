@@ -74,8 +74,8 @@ class Options():
         opt['streamline_length']       = 50
 
         opt['periodic']                = True
-        opt["generator_steps"]         = 1
-        opt["discriminator_steps"]     = 1
+        opt["generator_steps"]         = 3
+        opt["discriminator_steps"]     = 3
         opt["epochs"]                  = 2500
         opt["minibatch"]               = 1        # Minibatch for training
         opt["learning_rate"]           = 0.0001    # Learning rate for GAN
