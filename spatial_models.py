@@ -461,8 +461,7 @@ def init_scales(opt, dataset):
         print("Scale %i: %s -> %s" % (opt["n"] - 1 - i, str(opt["resolutions"][i]), str(opt["resolutions"][i+1])))
 
 def init_gen(scale, opt):
-    num_kernels = int( 2** ((math.log(opt["base_num_kernels"]) / math.log(2)) + (scale / 4)))
-    num_kernels = 64
+    num_kernels = opt['base_num_kernels']
 
     generator = Generator(opt["resolutions"][scale+1], num_kernels, opt)
     generator.apply(weights_init)
@@ -470,8 +469,7 @@ def init_gen(scale, opt):
     return generator, num_kernels
 
 def init_discrim(scale, opt):
-    num_kernels = int(2 ** ((math.log(opt["base_num_kernels"]) / math.log(2)) + (scale / 4)))
-    num_kernels = 64
+    num_kernels = opt['base_num_kernels']
 
     discriminator = Discriminator(opt["resolutions"][scale+1], num_kernels, opt)
     discriminator.apply(weights_init)
