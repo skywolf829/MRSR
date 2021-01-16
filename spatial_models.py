@@ -761,7 +761,7 @@ def train_single_scale(generators, discriminators, opt, dataset):
             t_update_start = time.time()
             
             real_hr = real_hr.to(opt["device"])
-            real_lr = F.interpolate(real_hr, scale_factor=opt['spatial_downscale_ratio'],mode="nearest",align_corners=False)
+            real_lr = F.interpolate(real_hr, scale_factor=opt['spatial_downscale_ratio'],mode="nearest")
             real_lr = F.interpolate(real_lr, scale_factor=1/opt['spatial_downscale_ratio'],mode=opt['upsample_mode'],align_corners=True)
             
             D_loss = 0
