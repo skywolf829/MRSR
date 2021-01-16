@@ -30,6 +30,7 @@ class NetworkDataset(torch.utils.data.Dataset):
         z_start, z_end, z_step, 
         sim_name, timestep, field, num_components):
                         
+            self.client = zeep.Client('http://turbulence.pha.jhu.edu/service/turbulence.asmx?WSDL')
             result=self.client.service.GetAnyCutoutWeb(self.token,
                 sim_name, field, timestep,
                 x_start+1, 
