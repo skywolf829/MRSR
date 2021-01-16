@@ -29,7 +29,7 @@ class NetworkDataset(torch.utils.data.Dataset):
         y_start, y_end, y_step, 
         z_start, z_end, z_step, 
         sim_name, timestep, field, num_components):
-        
+            '''
             print(x_start)
             print(x_end)
             print(y_start)
@@ -39,7 +39,7 @@ class NetworkDataset(torch.utils.data.Dataset):
             print(x_step)
             print(y_step)
             print(z_step)
-
+            '''
             result=self.client.service.GetAnyCutoutWeb(self.token,sim_name, field, timestep,
                                                     x_start+1, y_start+1, 
                                                     z_start+1, x_end, y_end, z_end,
