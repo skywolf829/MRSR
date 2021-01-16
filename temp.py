@@ -20,9 +20,9 @@ result=client.service.GetAnyCutoutWeb(token,"isotropic1024coarse", "u", 100,
 nx=int(100)
 ny=int(100)
 nz=int(100)
-base64_len=int(nx*ny*nz*num_components)
+base64_len=int(nx*ny*nz*3)
 base64_format='<'+str(base64_len)+'f'
 
 result=struct.unpack(base64_format, result)
-result=np.array(result).reshape((nz, ny, nx, num_components))
+result=np.array(result).reshape((nz, ny, nx, 3))
 print(result.shape)
