@@ -76,7 +76,7 @@ class Options():
         opt["discriminator_steps"]     = 1
         opt["epochs"]                  = 2500
         opt["minibatch"]               = 1        # Minibatch for training
-        opt["num_workers"]             = 1
+        opt["num_workers"]             = 0
         opt["learning_rate"]           = 0.0001    # Learning rate for GAN
         opt["beta_1"]                  = 0.5
         opt["beta_2"]                  = 0.999
