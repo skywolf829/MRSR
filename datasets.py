@@ -39,7 +39,7 @@ class NetworkDataset(torch.utils.data.Dataset):
             print(x_step)
             print(y_step)
             print(z_step)
-            
+
             result=self.client.service.GetAnyCutoutWeb(self.token,sim_name, field, timestep,
                                                     x_start+1, y_start+1, 
                                                     z_start+1, x_end, y_end, z_end,
@@ -138,7 +138,7 @@ class NetworkDataset(torch.utils.data.Dataset):
         self.opt['dataset_name'], index+100, # skip the first 100 timesteps, duplicates for temporal interpolation
         "u", 3, self.opt['num_networked_workers'])
         '''
-        f = self.get_frame(x_start, x_end, self.subsample_dist, 
+        f, _, _, _, _, _, _ = self.get_frame(x_start, x_end, self.subsample_dist, 
         y_start, y_end, self.subsample_dist, 
         z_start, z_end, self.subsample_dist, 
         self.opt['dataset_name'], index+100, "u", 3)
