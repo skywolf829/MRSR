@@ -149,11 +149,11 @@ class NetworkDataset(torch.utils.data.Dataset):
 
         if(self.opt['random_flipping']):
             if(torch.rand(1).item() > 0.5):
-                data = data[:,::-1,:,:]
+                data = torch.flip(data,1)
             if(torch.rand(1).item() > 0.5):
-                data = data[:,:,::-1,:]
+                data = torch.flip(data,2)
             if(torch.rand(1).item() > 0.5):
-                data = data[:,:,:,::-1]
+                data = torch.flip(data,3)
             
         return data
 
