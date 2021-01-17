@@ -15,7 +15,7 @@ class Options():
         opt["num_channels"]            = 3
         opt["spatial_downscale_ratio"] = 0.5       # Spatial downscale ratio between levels
         opt["min_dimension_size"]      = 128        # Smallest a dimension can go to upscale from
-        opt["cropping_resolution"]     = 104
+        opt["cropping_resolution"]     = 108
         opt["train_date_time"]         = None      # The day/time the model was trained (finish time)
         
         opt['dataset_name']            = "isotropic1024coarse"
