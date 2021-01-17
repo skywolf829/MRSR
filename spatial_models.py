@@ -950,10 +950,10 @@ def train_single_scale(generators, discriminators, opt, dataset):
             #print("Update time: %0.06f" % (time.time() - t_update_start))
             t_io_start = time.time()
         
-        if(volumes_seen % opt['save_every'] == 0):
-            opt["iteration_number"] = batch_num
-            opt["epoch_number"] = epoch
-            save_models(generators + [generator], discriminators + [discriminator], opt)
+            if(volumes_seen % opt['save_every'] == 0):
+                opt["iteration_number"] = batch_num
+                opt["epoch_number"] = epoch
+                save_models(generators + [generator], discriminators + [discriminator], opt)
         
 
     generator = reset_grads(generator, False)
