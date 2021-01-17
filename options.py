@@ -31,7 +31,7 @@ class Options():
 
         # generator info
         opt["num_blocks"]              = 5
-        opt["base_num_kernels"]        = 48        # Num of kernels in smallest scale conv layers
+        opt["base_num_kernels"]        = 96        # Num of kernels in smallest scale conv layers
         opt["pre_padding"]             = False         # Padding on conv layers in the GAN
         opt["kernel_size"]             = 3
         opt["stride"]                  = 1
@@ -58,7 +58,7 @@ class Options():
         opt["save_discriminators"]     = True
         opt["physical_constraints"]    = "none"
         opt["patch_size"]              = 128
-        opt["training_patch_size"]     = 128
+        opt["training_patch_size"]     = 96
         opt["regularization"]          = "GP" #Either TV (total variation) or GP (gradient penalty) or SN 
 
         # GAN training info
