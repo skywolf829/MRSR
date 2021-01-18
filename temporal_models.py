@@ -32,8 +32,9 @@ output_folder = os.path.join(FlowSTSR_folder_path, "Output")
 save_folder = os.path.join(FlowSTSR_folder_path, "SavedModels")
 
 
-def train_temporal_network(model, dataset, opt):
+def train_temporal_network(model, discriminator, dataset, opt):
     model = model.to(opt['device'])
+    discriminator = discriminator.to(opt['device'])
 
     print_to_log_and_console("Training on %s" % (opt["device"]), 
         os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
@@ -41,6 +42,11 @@ def train_temporal_network(model, dataset, opt):
     generator_optimizer = optim.Adam(model.parameters(), lr=opt["learning_rate"], 
     betas=(opt["beta_1"],opt["beta_2"]))
     generator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=generator_optimizer,
+    milestones=[8000-opt['iteration_number']],gamma=opt['gamma'])
+
+    discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=opt["learning_rate"]*4, 
+    betas=(opt["beta_1"],opt["beta_2"]))
+    discriminator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=discriminator_optimizer,
     milestones=[8000-opt['iteration_number']],gamma=opt['gamma'])
 
     writer = SummaryWriter(os.path.join('tensorboard',opt['save_name']))
@@ -64,15 +70,29 @@ def train_temporal_network(model, dataset, opt):
             gt_end_frame = dataset.scale(gt_end_frame)
             
             pred_frames = dataset.unscale(model(gt_start_frame, gt_end_frame, timesteps))
-            loss = loss_function(pred_frames, gt_middle_frames)
-            loss.backward()
-            
-            generator_optimizer.step()
+
+            for i in range(opt['discriminator_steps']):
+                discriminator.zero_grad()
+                discrim_loss = 0.5*torch.log(1-discriminator(pred_frames.detach())) + \
+                0.5*torch.log(discriminator(gt_middle_frames))
+                discrim_loss.backward()
+                discriminator_optimizer.step()
+
+            for i in range(opt['generator_steps']:)
+                generator.zero_grad()
+                loss = loss_function(pred_frames, gt_middle_frames)
+                loss.backward()
+                gen_loss = torch.log(discriminator(pred_frames))
+                gen_loss.backward()
+                generator_optimizer.step()
+
             generator_scheduler.step()  
+            discriminator_scheduler.step()
 
             pred_frame_cm_image = toImg(pred_frames[0].detach().cpu().numpy())
             gt_middle_frame_cm_image = toImg(gt_middle_frames[0].detach().cpu().numpy())
-            
+            err_frame_image = toImg(torch.abs((pred_frames[0].detach() - gt_middle_frames[0].detach())).cpu().numpy())
+
             lerped_frames = []
             for i in range(timesteps[1]-timesteps[0]-1):
                 factor = (i+1)/(timesteps[1]-timesteps[0])
@@ -82,8 +102,11 @@ def train_temporal_network(model, dataset, opt):
             lerped_gt = torch.cat(lerped_frames, dim=0)
             reference_writer.add_scalar('MSE', loss_function(lerped_gt, gt_middle_frames).item(), iters)
             writer.add_scalar('MSE', loss.item(), iters) 
+            writer.add_scalar('D_loss', discrim_loss.item(), iters) 
+            writer.add_scalar('G_loss', gen_loss.item(), iters) 
             writer.add_image("Predicted next frame",pred_frame_cm_image, iters)
             writer.add_image("GT next frame",gt_middle_frame_cm_image, iters)
+            writer.add_image("Abs difference",err_frame_image, iters)
 
             print_to_log_and_console("%i/%i: MSE=%.06f" %
             (iters, opt['epochs']*len(dataset), loss.item()), 

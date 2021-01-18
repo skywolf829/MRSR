@@ -39,7 +39,7 @@ class Options():
         opt['separate_chans']          = False
         
         opt['num_lstm_layers']         = 3
-        opt['training_seq_length']     = 4
+        opt['training_seq_length']     = 3
         opt['temporal_direction']     = "forward"
 
 
@@ -79,7 +79,7 @@ class Options():
         opt["epochs"]                  = 2500
         opt["minibatch"]               = 1        # Minibatch for training
         opt["learning_rate"]           = 0.0001    # Learning rate for GAN
-        opt["beta_1"]                  = 0.5
+        opt["beta_1"]                  = 0.0
         opt["beta_2"]                  = 0.999
         opt["gamma"]                   = 0.1
 

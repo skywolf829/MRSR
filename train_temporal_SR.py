@@ -94,6 +94,8 @@ if __name__ == '__main__':
         dataset = Dataset(opt)
         generator = Temporal_Generator(opt)
         generator.apply(weights_init)
+        discriminator = Temporal_Discriminator(opt)
+        discriminator.apply(weights_init)
 
     else:        
         opt = load_options(os.path.join(save_folder, args["load_from"]))
@@ -103,7 +105,8 @@ if __name__ == '__main__':
             if args[k] is not None:
                 opt[k] = args[k]
         generator = Temporal_Generator(opt)
-        generator = load_model(generator,opt,args["device"])
+        discriminator = Temporal_Discriminator(opt)
+        generator, discriminator = load_models(generator,discriminator,opt,args["device"])
         dataset = Dataset(opt)
 
     now = datetime.datetime.now()
@@ -120,12 +123,12 @@ if __name__ == '__main__':
 
 
     #with profiler.profile(profile_memory=True, use_cuda=True, record_shapes=True) as prof:
-    generator = train_temporal_network(generator, dataset, opt)
+    generator = train_temporal_network(generator, discriminator, dataset, opt)
     #reporter = MemReporter()
     #reporter.report()
     #discriminator.to("cpu")
 
-    save_model(generator, opt)
+    save_models(generator, discriminator, opt)
         
     time_passed = (time.time() - start_time) / 60
     print_to_log_and_console("%s - Finished training  in %f minutes" % (str(datetime.datetime.now()), time_passed),
