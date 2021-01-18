@@ -55,7 +55,7 @@ sim_name, timestep, field, num_components, num_workers):
         done = 0
         x_len = 128
         y_len = 128
-        z_len = 128
+        z_len = 64
         for k in range(x_start, x_end, x_len):
             for i in range(y_start, y_end, y_len):
                 for j in range(z_start, z_end, z_len):
