@@ -87,7 +87,7 @@ class Options():
         opt["scale_in_training"]       = 0
         opt["iteration_number"]        = 0
         opt["epoch_number"]            = 0
-        opt["save_every"]              = 500
+        opt["save_every"]              = 100
         opt["save_training_loss"]      = True
 
         return opt
