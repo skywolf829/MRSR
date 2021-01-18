@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import os
 import imageio
 import argparse
@@ -9,7 +10,6 @@ import base64
 import time
 import h5py
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from __future__ import absolute_import, division, print_function
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
