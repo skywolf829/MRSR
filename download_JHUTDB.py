@@ -87,7 +87,7 @@ sim_name, timestep, field, num_components, num_workers):
            print("Done: %i/%i" % (done, len(threads)))
     return full
 
-save_dir = "/InputData/iso1024"
+save_dir = "./InputData/iso1024"
 #name = "channel"
 name = "isotropic1024coarse"
 #name="mixing"
