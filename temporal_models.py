@@ -53,7 +53,7 @@ def train_temporal_network(model, discriminator, dataset, opt):
     reference_writer = SummaryWriter(os.path.join('tensorboard', "LERP"))
     dataloader = torch.utils.data.DataLoader(
         dataset=dataset,
-        shuffle=False,
+        shuffle=True,
         num_workers=opt["num_workers"]
     )
 
@@ -248,7 +248,7 @@ class Temporal_Generator_UNET(nn.Module):
     def __init__ (self, opt):
         super(Temporal_Generator_UNET, self).__init__()
         self.opt = opt
-        self.down1 = UNet_Downscaling_Module(opt['num_channels'], 64)
+        self.down1 = UNet_Downscaling_Module(opt['num_channels']*2, 64)
         self.down2 = UNet_Downscaling_Module(64, 128)
         self.down3 = UNet_Downscaling_Module(128, 256)
 
@@ -280,6 +280,7 @@ class Temporal_Generator_UNET(nn.Module):
         x_through = self.up4(torch.cat([x_down1, x_through], dim=1))
 
         x_through = self.final_conv(x_through)
+
         return x_through
         
 
