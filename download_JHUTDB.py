@@ -107,7 +107,7 @@ for i in range(startts, endts, ts_skip):
     print(f.shape)
     f = f.astype(np.float32).swapaxes(0,3).swapaxes(3,2).swapaxes(2,1)
     f_h5 = h5py.File(str(i-1)+'.h5', 'w')
-    f_h5.create_dataset("data", data=f)
+    f_h5.create_dataset("data", data=f, compression="gzip")
     f_h5.close()
     count += 1
 print("finished")

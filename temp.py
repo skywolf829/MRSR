@@ -9,20 +9,30 @@ import base64
 import time
 import h5py
 from concurrent.futures import ThreadPoolExecutor, as_completed
-client = zeep.Client('http://turbulence.pha.jhu.edu/service/turbulence.asmx?WSDL')
-token="edu.osu.buckeyemail.wurster.18-92fb557b" #replace with your own token
-
-result=client.service.GetAnyCutoutWeb(token,"isotropic1024coarse", "u", 100,
-                                            1, 1, 
-                                            1, 100, 100, 100,
-                                            1, 1, 1, 0, "")  # put empty string for the last parameter
-# transfer base64 format to numpy
-nx=int(100)
-ny=int(100)
-nz=int(100)
-base64_len=int(nx*ny*nz*3)
-base64_format='<'+str(base64_len)+'f'
-
-result=struct.unpack(base64_format, result)
-result=np.array(result).reshape((nz, ny, nx, 3))
-print(result.shape)
+from __future__ import absolute_import, division, print_function
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+import torch.distributed as dist
+import numpy as np
+import time
+import math
+import random
+import datetime
+import os
+from utility_functions import *
+from options import *
+import matplotlib.pyplot as plt
+from torch.optim.optimizer import Optimizer, required
+from torch.autograd import Variable
+from torch import Tensor
+from torch.nn import Parameter
+from matplotlib.pyplot import cm
+from math import pi
+from skimage.transform.pyramids import pyramid_reduce
+from torch.utils.tensorboard import SummaryWriter
+import copy
+from pytorch_memlab import LineProfiler, MemReporter, profile, profile_every
+import h5py
+from datasets import NetworkDataset
