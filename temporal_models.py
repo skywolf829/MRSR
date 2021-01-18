@@ -116,11 +116,11 @@ def train_temporal_network(model, discriminator, dataset, opt):
 
         opt['epoch_number'] = epoch+1
         if(epoch % opt['save_every'] == 0):
-            save_model(model, opt)
+            save_models(model, discriminator, opt)
 
     return model
 
-def save_model(model, opt):
+def save_models(model, discriminator, opt):
     folder = create_folder(opt["save_folder"], opt["save_name"])
     path_to_save = os.path.join(opt["save_folder"], folder)
     print_to_log_and_console("Saving model to %s" % (path_to_save), 
@@ -128,12 +128,12 @@ def save_model(model, opt):
 
     if(opt["save_generators"]):
         torch.save(model.state_dict(), os.path.join(path_to_save, "temporal_generator"))
+    if(opt['save_discriminators']):
+        torch.save(discriminator.state_dict(), os.path.join(path_to_save, "temporal_discriminator"))
 
     save_options(opt, path_to_save)
 
-def load_model(model, opt, device):
-    generators = []
-    discriminators = []
+def load_models(model, discriminator, opt, device):
     load_folder = os.path.join(opt["save_folder"], opt["save_name"])
 
     if not os.path.exists(load_folder):
@@ -143,7 +143,9 @@ def load_model(model, opt, device):
 
     model.load_state_dict(torch.load(os.path.join(
         load_folder, "temporal_generator"), map_location=device))
-    return model
+    discriminator.load_state_dict(torch.load(os.path.join(
+        load_folder, "temporal_discriminator"), map_location=device))
+    return model, discriminator
 
 def weights_init(m):
     if isinstance(m, nn.Conv3d):
