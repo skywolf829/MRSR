@@ -103,7 +103,7 @@ for i in range(startts, endts, ts_skip):
     0, 1024, 1, #z
     name, i, 
     "u", 3, 
-    4)
+    16)
     print(f.shape)
     f = f.astype(np.float32).swapaxes(0,3).swapaxes(3,2).swapaxes(2,1)
     f_h5 = h5py.File(os.path.join(save_dir, str(i-1)+'.h5'), 'w')
