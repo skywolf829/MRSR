@@ -244,6 +244,73 @@ class Temporal_Generator(nn.Module):
         pred_frames = torch.cat(pred_frames, dim=0)
         return pred_frames
 
+class Temporal_Generator_UNET(nn.Module):
+    def __init__ (self, opt):
+        super(Temporal_Generator_UNET, self).__init__()
+        self.opt = opt
+        self.down1 = UNet_Downscaling_Module(opt['num_channels'], 64)
+        self.down2 = UNet_Downscaling_Module(64, 128)
+        self.down3 = UNet_Downscaling_Module(128, 256)
+
+        self.up1 = DoubleConv(256, 512)
+        self.up2 = DoubleConv(512+256, 256)
+        self.up3 = DoubleConv(256+128, 128)
+        self.up4 = DoubleConv(128+64, 64)
+
+        self.finalconv = nn.Conv3d(64, opt['num_channels'], 
+        kernel_size=3, stride=1, padding=1)
+
+    def forward(self, x):
+        x_down1, x_through = self.down1(x)
+        x_down2, x_through = self.down2(x_through)
+        x_down3, x_through = self.down3(x_through)
+
+        x_through = self.up1(x_through)
+
+        x_through = F.interpolate(x_through, scale_factor=2, 
+        mode=opt['upscaling_mode'], align_corners=True)
+        x_through = self.up2(torch.cat([x_down3, x_through], dim=1))
+
+        x_through = F.interpolate(x_through, scale_factor=2, 
+        mode=opt['upscaling_mode'], align_corners=True)
+        x_through = self.up3(torch.cat([x_down2, x_through], dim=1))
+
+        x_through = F.interpolate(x_through, scale_factor=2, 
+        mode=opt['upscaling_mode'], align_corners=True)
+        x_through = self.up4(torch.cat([x_down1, x_through], dim=1))
+
+        x_through = self.final_conv(x_through)
+        return x_through
+        
+
+
+class DoubleConv(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super().__init__()
+        self.conv = nn.Sequential(
+            nn.Conv3d(in_channels, out_channels, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm3d(out_channels),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv3d(out_channels, out_channels, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm3d(out_channels),
+            nn.LeakyReLU(0.2, inplace=True)
+        )
+    def forward(self, x):
+        return self.conv(x)
+
+class UNet_Downscaling_Module(nn.Module):
+
+    def __init__(self, in_channels, out_channels):
+        super().__init__()
+        
+        self.conv = DoubleConv(in_channels, out_channels)
+        self.maxpool = nn.MaxPool3d(2)
+
+    def forward(self, x):
+        x1 = self.conv(x)
+        x2 = self.maxpool(x2)
+        return x1, x2
+
 class DownscaleBlock(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size, padding):
         super(DownscaleBlock, self).__init__()
