@@ -94,13 +94,13 @@ name = "isotropic1024coarse"
 t0 = time.time()
 count = 0
 startts = 1
-endts = 2
-ts_skip = 1
+endts = 4000
+ts_skip = 10
 for i in range(startts, endts, ts_skip):
     print("TS %i/%i" % (i, endts))
-    f = get_full_frame_parallel(0, 1024, 8,#x
-    0, 1024, 8, #y
-    0, 1024, 8, #z
+    f = get_full_frame_parallel(0, 1024, 1,#x
+    0, 1024, 1, #y
+    0, 1024, 1, #z
     name, i, 
     "u", 3, 
     64)
