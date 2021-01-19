@@ -1,38 +1,22 @@
-from __future__ import absolute_import, division, print_function
-import os
 import imageio
-import argparse
-from typing import Union, Tuple
 import numpy as np
-import zeep
-import struct
-import base64
-import time
-import h5py
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-import torch.distributed as dist
-import numpy as np
-import time
-import math
-import random
-import datetime
-import os
-from utility_functions import *
-from options import *
-import matplotlib.pyplot as plt
-from torch.optim.optimizer import Optimizer, required
-from torch.autograd import Variable
-from torch import Tensor
-from torch.nn import Parameter
-from matplotlib.pyplot import cm
-from math import pi
-from skimage.transform.pyramids import pyramid_reduce
-from torch.utils.tensorboard import SummaryWriter
-import copy
-from pytorch_memlab import LineProfiler, MemReporter, profile, profile_every
-import h5py
-from datasets import NetworkDataset
+import torch.functional as F
+
+
+def downsample_area(img, x_start, x_end, y_start, y_end, skip):
+    
+    for x in range(x_start, x_end, skip):
+        for y in range(y_start, y_end, skip):
+            img[x:x+skip,y:y+skip,:] = img[x,y,:]
+    return img
+
+def quadrant_downsample_PSNR_check(img, )
+
+snick = imageio.imread("snickers.jpg")
+
+
+snick_a = downsample_area(snick, 0, 512, 0, 512, 8)
+snick_b = downsample_area(snick_a, 512, 1024, 0, 1024, 4)
+imageio.imwrite("snickers_a.jpg", snick_a)
+imageio.imwrite("snickers_b.jpg", snick_b)
