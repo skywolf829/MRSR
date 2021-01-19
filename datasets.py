@@ -136,7 +136,7 @@ class NetworkDataset(torch.utils.data.Dataset):
         f = self.get_full_frame_parallel(x_start, x_end, self.subsample_dist,#x
         y_start, y_end, self.subsample_dist, #y
         z_start, z_end, self.subsample_dist, #z
-        self.opt['dataset_name'], index+100, # skip the first 100 timesteps, duplicates for temporal interpolation
+        self.opt['dataset_name'], index*self.opt["ts_skip"], # skip the first 100 timesteps, duplicates for temporal interpolation
         "u", 3, self.opt['num_networked_workers'])
         '''
         f, _, _, _, _, _, _ = self.get_frame(x_start, x_end, self.subsample_dist, 

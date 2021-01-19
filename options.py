@@ -19,10 +19,11 @@ class Options():
         opt["train_date_time"]         = None      # The day/time the model was trained (finish time)
         
         opt['dataset_name']            = "isotropic1024coarse"
-        opt['num_dataset_timesteps']   = 4200
+        opt['num_dataset_timesteps']   = 100
         opt['x_resolution']            = 1024
         opt['y_resolution']            = 1024
         opt['z_resolution']            = 1024
+        opt['ts_skip']                = 10
         opt['num_dims']                = 3
         opt['random_flipping']         = True
         opt['num_networked_workers']   = 4
