@@ -158,7 +158,7 @@ class NetworkDataset(torch.utils.data.Dataset):
             
         return data
 
-class Dataset(torch.utils.data.Dataset):
+class LocalDataset(torch.utils.data.Dataset):
     def __init__(self, opt):
         
         self.opt = opt
@@ -167,8 +167,11 @@ class Dataset(torch.utils.data.Dataset):
         self.max_mag = None
         self.num_items = 0
         self.items = []
+        self.item_names = []
+        self.subsample_dist = 1
         print("Initializing dataset")
         for filename in os.listdir(self.opt['data_folder']):
+            self.item_names.append(filename)
 
             if(opt['load_data_at_start'] or (self.num_items > 0 and \
             (opt['scaling_mode'] == "magnitude" or opt['scaling_mode'] == "channel"))):
@@ -267,14 +270,36 @@ class Dataset(torch.utils.data.Dataset):
                     ends.append([y_stop, x_stop])
         return starts, ends
 
+    def set_subsample_dist(self,dist):
+        self.subsample_dist = dist
+        
     def __getitem__(self, index):
         if(self.opt['load_data_at_start']):
             data = self.items[index]
         else:
-            print("trying to load " + str(index) + ".h5")
-            f = h5py.File(os.path.join(self.opt['data_folder'], str(index)+".h5"), 'r')
+
+            print("trying to load " + str(self.file_names[index]) + ".h5")
+            f = h5py.File(os.path.join(self.opt['data_folder'], str(self.file_names[index])+".h5"), 'r')
+            x_start = 0
+            x_end = self.opt['x_resolution']
+            y_start = 0
+            y_end = self.opt['y_resolution']
+            z_start = 0
+            z_end = self.opt['z_resolution']
+
+            if((z_end-z_start) / self.subsample_dist > self.opt['cropping_resolution']):
+                z_start = torch.randint(self.opt['z_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1]).item()
+                z_end = z_start + self.opt['cropping_resolution']*self.subsample_dist
+            if((y_end-y_start) / self.subsample_dist > self.opt['cropping_resolution']):
+                y_start = torch.randint(self.opt['y_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1]).item()
+                y_end = y_start + self.opt['cropping_resolution']*self.subsample_dist
+            if((x_end-x_start) / self.subsample_dist > self.opt['cropping_resolution']):
+                x_start = torch.randint(self.opt['x_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1]).item()
+                x_end = x_start + self.opt['cropping_resolution']*self.subsample_dist
+
             print("converting " + str(index) + ".h5 to tensor")
-            data =  torch.tensor(f.get('data'))
+            data =  torch.tensor(f['data'][:,x_start:x_end:self.subsample_dist,
+                y_start:y_end:self.subsample_dist,z_start:z_end:self.subsample_dist])
             f.close()
             print("converted " + str(index) + ".h5 to tensor")
 
@@ -294,5 +319,12 @@ class Dataset(torch.utils.data.Dataset):
 
         #data = np2torch(data, "cpu")
         #print("returning " + str(index) + " data")
-        
+        if(self.opt['random_flipping']):
+            if(torch.rand(1).item() > 0.5):
+                data = torch.flip(data,[1])
+            if(torch.rand(1).item() > 0.5):
+                data = torch.flip(data,[2])
+            if(torch.rand(1).item() > 0.5):
+                data = torch.flip(data,[3])
+
         return data

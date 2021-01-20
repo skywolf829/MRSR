@@ -2,9 +2,9 @@ import imageio
 import numpy as np
 import torch
 import torch.nn.functional as F
-from skimage.metrics import structural_similarity as ssim
 import json
 from json import JSONEncoder
+from utility_functions import *
 
 class NumpyArrayEncoder(JSONEncoder):
     def default(self, obj):
@@ -154,7 +154,7 @@ def upscale_from_quadtree(quadtree,full_img,device="cuda"):
         quadtree['y_start']:quadtree['y_start']+data.shape[1],:] = data
     return full_img
 
-def conditional_downsample_quadtree(img,GT_image,max_MSE=3.0,min_ssim=0.9,min_PSNR=30,
+def conditional_downsample_quadtree(img,GT_image,criterion,max_MSE=3.0,min_ssim=0.9,min_PSNR=30,
 max_chunk_size=32,max_stride=8,device="cuda"):
     # Assume starting with a quadtree(img) that is a leaf node
     quadtrees_to_check = [img]
@@ -202,34 +202,25 @@ max_chunk_size=32,max_stride=8,device="cuda"):
                     new_img = upscale_from_quadtree_start(img,device=device)
 
                     #print("This downscaled subtree gives MSE %0.03f, SSIM %0.02f" % (m,s))
-                    '''
-                    if(s > min_ssim):
-                        #print("This SSIM is acceptable, added to list to check later")
-                        quadtrees_to_check.append(t['children'][i])
-                    else:
-                        #print("SSIM too low, reverting dowscaling")
+                    
+                    if(not criterion(GT_image, new_img)):
+                        #print("Criteria not met")
                         t['children'][i]['data'] = child_original_data
                         t['children'][i]['stride'] = int(t['children'][i]['stride'] / 2)
-                        quadtrees_to_check.append(t['children'][i])
-                    '''
-                    '''
-                    m = MSE(new_img, GT_image)
-                    if(m > max_MSE):
-                        #print("MSE too high, reverting dowscaling")
-                        t['children'][i]['data'] = child_original_data
-                        t['children'][i]['stride'] =  int(t['children'][i]['stride'] / 2)
-                    quadtrees_to_check.append(t['children'][i])
-                    '''
-                    p = PSNR(new_img, GT_image)
-                    if(p < min_PSNR):
-                        #print("PSNR too low, reverting dowscaling")
-                        t['children'][i]['data'] = child_original_data
-                        t['children'][i]['stride'] =  int(t['children'][i]['stride'] / 2)
-
+            
                     quadtrees_to_check.append(t['children'][i])
                     
     print("Trees checked: %i" % trees_checked)
     return img            
+
+def ssim_criterion(GT_image, img, min_ssim=0.6):
+    return ssim(img.permute(2, 0, 1).unsqueeze(0), GT_image.permute(2, 0, 1).unsqueeze(0)) > min_ssim
+
+def psnr_criterion(GT_image, img, min_PSNR=80):
+    return PSNR(img, GT_image) > min_PSNR
+
+def mse_criterion(GT_image, img, max_mse=200):
+    return MSE(img, GT_image) < max_mse
 
 device="cuda"
 snick_gt = torch.from_numpy(imageio.imread("snickers.jpg").astype(np.float32)).to(device)
@@ -247,7 +238,7 @@ f.write(j)
 f.close()
 import time
 start_time = time.time()
-snick = conditional_downsample_quadtree(snick,snick_gt,max_MSE=3.0,min_ssim=0.9,min_PSNR=60,
+snick = conditional_downsample_quadtree(snick,snick_gt,ssim_criterion,max_MSE=3.0,min_ssim=0.6,min_PSNR=60,
 max_chunk_size=32,max_stride=8,device="cuda")
 end_time = time.time()
 
