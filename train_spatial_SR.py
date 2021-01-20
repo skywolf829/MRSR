@@ -91,7 +91,7 @@ if __name__ == '__main__':
             if args[k] is not None:
                 opt[k] = args[k]
          # Determine scales    
-        dataset = NetworkDataset(opt)
+        dataset = LocalDataset(opt)
         init_scales(opt, dataset)
     else:        
         opt = load_options(os.path.join(save_folder, args["load_from"]))
@@ -101,7 +101,7 @@ if __name__ == '__main__':
             if args[k] is not None:
                 opt[k] = args[k]
         generators, discriminators = load_models(opt,args["device"])
-        dataset = NetworkDataset(opt)
+        dataset = LocalDataset(opt)
 
     now = datetime.datetime.now()
     start_time = time.time()
