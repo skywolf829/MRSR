@@ -114,7 +114,7 @@ def upscale_from_quadtree_start(quadtree,max_stride=8,device="cuda"):
                 for i in range(len(curr_tree['children'])):
                     trees.append(curr_tree['children'][i])
 
-        imageio.imwrite(str(curr_stride)+"pre_upsample.jpg", full_img.cpu().numpy())
+        #imageio.imwrite(str(curr_stride)+"pre_upsample.jpg", full_img.cpu().numpy())
         if(curr_stride > 1):
             # 2. Upsample
             full_img = full_img.permute(2,0,1).unsqueeze(0)
@@ -123,7 +123,7 @@ def upscale_from_quadtree_start(quadtree,max_stride=8,device="cuda"):
             imageio.imwrite(str(curr_stride)+"post_upsample.jpg", full_img.cpu().numpy())
         curr_stride = int(curr_stride / 2)
                 
-    imageio.imwrite(str(curr_stride)+".jpg", full_img.cpu().numpy())
+    #imageio.imwrite(str(curr_stride)+".jpg", full_img.cpu().numpy())
     return full_img
 
 def conditional_downsample_quadtree(img,GT_image,criterion,criterion_value,
