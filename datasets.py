@@ -7,6 +7,7 @@ import base64
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import struct
 import torch
+import h5py
 
 class NetworkDataset(torch.utils.data.Dataset):
     def __init__(self, opt):
