@@ -282,8 +282,8 @@ class LocalDataset(torch.utils.data.Dataset):
             data = self.items[index]
         else:
 
-            print("trying to load " + str(self.file_names[index]) + ".h5")
-            f = h5py.File(os.path.join(self.opt['data_folder'], str(self.file_names[index])+".h5"), 'r')
+            print("trying to load " + str(self.item_names[index]) + ".h5")
+            f = h5py.File(os.path.join(self.opt['data_folder'], str(self.item_names[index])+".h5"), 'r')
             x_start = 0
             x_end = self.opt['x_resolution']
             y_start = 0
