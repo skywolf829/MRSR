@@ -6,7 +6,7 @@ class Options():
         opt = {}
         # Input info
         opt["mode"]                    = "3D"      # What SinGAN to use - 2D or 3D
-        opt["data_folder"]             = "InputData/iso512"
+        opt["data_folder"]             = "InputData/iso1024"
         opt['scaling_mode']            = "channel" # magnitude, channel, learned, none
         opt['load_data_at_start']      = False
         opt['single_shot']            =  False
