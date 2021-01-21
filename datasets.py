@@ -180,7 +180,10 @@ class LocalDataset(torch.utils.data.Dataset):
                 d = torch.tensor(f.get('data'))
                 f.close()
 
-            if(self.num_items == 0):                             
+            if(self.num_items == 0):           
+                f = h5py.File(os.path.join(self.opt['data_folder'], filename), 'r')
+                d = torch.tensor(f.get('data'))
+                f.close()                  
                 self.num_channels = d.shape[0]
                 self.resolution = d.shape[1:]
                 if(self.opt['mode'] == "3Dto2D"):
