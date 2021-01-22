@@ -283,7 +283,7 @@ class LocalDataset(torch.utils.data.Dataset):
         else:
 
             print("trying to load " + str(self.item_names[index]) + ".h5")
-            f = h5py.File(os.path.join(self.opt['data_folder'], str(self.item_names[index])+".h5"), 'r')
+            f = h5py.File(os.path.join(self.opt['data_folder'], self.item_names[index]), 'r')
             x_start = 0
             x_end = self.opt['x_resolution']
             y_start = 0
@@ -301,11 +301,11 @@ class LocalDataset(torch.utils.data.Dataset):
                 x_start = torch.randint(self.opt['x_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1]).item()
                 x_end = x_start + self.opt['cropping_resolution']*self.subsample_dist
 
-            print("converting " + str(index) + ".h5 to tensor")
+            print("converting " + self.item_names[index] + " to tensor")
             data =  torch.tensor(f['data'][:,x_start:x_end:self.subsample_dist,
                 y_start:y_end:self.subsample_dist,z_start:z_end:self.subsample_dist])
             f.close()
-            print("converted " + str(index) + ".h5 to tensor")
+            print("converted " + self.item_names[index] + ".h5 to tensor")
 
         '''
         if(self.opt['scaling_mode'] == "channel"):
