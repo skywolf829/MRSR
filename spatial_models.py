@@ -780,7 +780,7 @@ def train_single_scale(generators, discriminators, opt, dataset):
 
                     # Train with real downscaled to this scale
                     output_real = discriminator(real_hr)
-                    discrim_error_real = -output_real.mean()
+                    discrim_error_real = -output_real.mean() * opt['alpha_2']
                     D_loss += discrim_error_real.mean().item()
                     discrim_error_real.backward(retain_graph=True)
 
@@ -815,7 +815,7 @@ def train_single_scale(generators, discriminators, opt, dataset):
                 fake = generator(real_lr)
                 if(opt["alpha_2"] > 0.0):                    
                     output = discriminator(fake)
-                    generator_error = -output.mean()# * opt["alpha_2"]
+                    generator_error = -output.mean() * opt["alpha_2"]
                     generator_error.backward(retain_graph=True)
                     gen_err_total += generator_error.mean().item()
                     G_loss = output.mean().item()
