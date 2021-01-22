@@ -24,7 +24,7 @@ from torch.utils.tensorboard import SummaryWriter
 import copy
 from pytorch_memlab import LineProfiler, MemReporter, profile, profile_every
 import h5py
-from torn.nn.utils import spectral_norm
+from torch.nn.utils import spectral_norm
 
 FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 input_folder = os.path.join(FlowSTSR_folder_path, "InputData")
