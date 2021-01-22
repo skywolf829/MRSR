@@ -5,20 +5,7 @@ import torch.nn.functional as F
 import json
 from json import JSONEncoder, JSONDecoder
 from utility_functions import *
-
-class NumpyArrayEncoder(JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        elif isinstance(obj, torch.Tensor):
-            return obj.cpu().numpy().tolist()
-        return NumpyArrayEncoder.default(self, obj)
-
-class TorchArrayDecoder(JSONDecoder):
-    def default(self, obj, device="cuda"):
-        if isinstance(obj, list):
-            return torch.from_numpy(np.array(obs)).to(device)
-        return TorchArrayDecoder.default(self, obj)
+import time
 
 def MSE(x, GT):
     return ((x-GT)**2).mean()
@@ -92,6 +79,31 @@ def upscale_from_quadtree_debug(quadtree,max_stride=8,device="cuda"):
 
     return full_img
 
+def upscale_from_quadtree_with_seams(quadtree,device="cuda"):
+    full_img = torch.zeros([int(quadtree['full_shape'][0]),
+    int(quadtree['full_shape'][1]), quadtree['full_shape'][2]]).to(device)
+    
+    # 1. Fill in known data
+    trees = [quadtree]
+    while(len(trees) > 0):
+        curr_tree = trees.pop(0)
+        if(curr_tree['data'] is not None):
+
+            img_part = F.interpolate(curr_tree['data'].permute(2, 0, 1).unsqueeze(0), 
+            scale_factor=curr_tree['stride'], mode='bilinear', align_corners=True)[0].permute(1, 2, 0)
+
+            full_img[
+                int(curr_tree['x_start']):int(curr_tree['x_start'])+img_part.shape[0],
+                int(curr_tree['y_start']):int(curr_tree['y_start'])+img_part.shape[1],
+                :
+            ] = img_part
+        elif(len(curr_tree['children']) > 0):
+            for i in range(len(curr_tree['children'])):
+                trees.append(curr_tree['children'][i])
+
+    #imageio.imwrite(str(curr_stride)+".jpg", full_img.cpu().numpy())
+    return full_img
+
 def upscale_from_quadtree_start(quadtree,max_stride=8,device="cuda"):
     full_img = torch.zeros([int(quadtree['full_shape'][0]/max_stride),
     int(quadtree['full_shape'][1]/max_stride), quadtree['full_shape'][2]]).to(device)
@@ -120,7 +132,7 @@ def upscale_from_quadtree_start(quadtree,max_stride=8,device="cuda"):
             full_img = full_img.permute(2,0,1).unsqueeze(0)
             full_img = F.interpolate(full_img, scale_factor=2, mode='bilinear', align_corners=True)
             full_img = full_img[0].permute(1,2,0)
-            imageio.imwrite(str(curr_stride)+"post_upsample.jpg", full_img.cpu().numpy())
+            #imageio.imwrite(str(curr_stride)+"post_upsample.jpg", full_img.cpu().numpy())
         curr_stride = int(curr_stride / 2)
                 
     #imageio.imwrite(str(curr_stride)+".jpg", full_img.cpu().numpy())
@@ -191,35 +203,40 @@ def mse_criterion(GT_image, img, max_mse=200):
 
 
 
-
+max_stride = 32
+min_chunk = 16
+criterion = psnr_criterion
+criterion_value = 80
 device="cuda"
 
-snick_gt = torch.from_numpy(imageio.imread("snickers.jpg").astype(np.float32)).to(device)
-snick = {
-    "full_shape": snick_gt.shape, 
-    "data": snick_gt,
+img_gt = torch.from_numpy(imageio.imread("snickers.jpg").astype(np.float32)).to(device)
+img = {
+    "full_shape": img_gt.shape, 
+    "data": img_gt,
     "stride": 1,
     "x_start": 0,
     "y_start": 0,
     "children": []
     }
-torch.save(snick, 'snick.torch')
-'''
-import time
+torch.save(img, 'img_full.torch')
+
 start_time = time.time()
-snick = conditional_downsample_quadtree(snick,snick_gt,psnr_criterion,80,
-min_chunk_size=32,max_stride=8,device="cuda")
+img_quadtree = conditional_downsample_quadtree(img,img_gt,criterion,criterion_value,
+min_chunk_size=min_chunk,max_stride=max_stride,device="cuda")
 end_time = time.time()
 
 
 print("Conditional downsample took % 0.02f seconds" % (end_time - start_time))
-torch.save(snick, "snick_ds.torch")
-'''
-snick = torch.load("snick_ds.torch")
-snick_upscaled = upscale_from_quadtree_start(snick)
+torch.save(img_quadtree, "img_quadtree.torch")
 
-snick_upsampled = upsample_from_quadtree_start(snick)
-debug = upscale_from_quadtree_debug(snick)
-imageio.imwrite("upscaled_snick.jpg", snick_upscaled.cpu().numpy())
-imageio.imwrite("upsampled_snick.jpg", snick_upsampled.cpu().numpy())
-imageio.imwrite("upsampled_snick_debug.jpg", debug.cpu().numpy())
+img = torch.load("img_quadtree.torch")
+
+img_upscaled = upscale_from_quadtree_start(img,max_stride=max_stride,device=device)
+img_upsampled = upsample_from_quadtree_start(img,device=device)
+img_upscaled_seams = upscale_from_quadtree_with_seams(img,device=device)
+debug = upscale_from_quadtree_debug(img,max_stride=max_stride,device=device)
+
+imageio.imwrite("img_upscaled.jpg", img_upscaled.cpu().numpy())
+imageio.imwrite("img_upsampled.jpg", img_upsampled.cpu().numpy())
+imageio.imwrite("img_upsampled_debug.jpg", debug.cpu().numpy())
+imageio.imwrite("img_upsampled_seams.jpg", img_upscaled_seams.cpu().numpy())

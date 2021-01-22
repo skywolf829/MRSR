@@ -78,7 +78,7 @@ def train_temporal_network(model, discriminator, dataset, opt):
                 discrim_loss.backward()
                 discriminator_optimizer.step()
 
-            for i in range(opt['generator_steps']:)
+            for i in range(opt['generator_steps']):
                 generator.zero_grad()
                 loss = loss_function(pred_frames, gt_middle_frames)
                 loss.backward()
