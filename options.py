@@ -15,7 +15,7 @@ class Options():
         opt["num_channels"]            = 3
         opt["spatial_downscale_ratio"] = 0.5       # Spatial downscale ratio between levels
         opt["min_dimension_size"]      = 128        # Smallest a dimension can go to upscale from
-        opt["cropping_resolution"]     = 108
+        opt["cropping_resolution"]     = 128
         opt["train_date_time"]         = None      # The day/time the model was trained (finish time)
         
         opt['dataset_name']            = "isotropic1024coarse"
@@ -23,12 +23,12 @@ class Options():
         opt['x_resolution']            = 1024
         opt['y_resolution']            = 1024
         opt['z_resolution']            = 1024
-        opt['ts_skip']                = 10
+        opt['ts_skip']                 = 10
         opt['num_dims']                = 3
         opt['random_flipping']         = True
         opt['num_networked_workers']   = 4
 
-        opt["num_workers"]             = 20
+        opt["num_workers"]             = 40
 
         # generator info
         opt["num_blocks"]              = 5
@@ -77,9 +77,9 @@ class Options():
         opt['periodic']                = True
         opt["generator_steps"]         = 3
         opt["discriminator_steps"]     = 3
-        opt["epochs"]                  = 25
+        opt["epochs"]                  = 20
         opt["minibatch"]               = 1        # Minibatch for training
-        opt["learning_rate"]           = 0.0001    # Learning rate for GAN
+        opt["learning_rate"]           = 0.001    # Learning rate for GAN
         opt["beta_1"]                  = 0.0
         opt["beta_2"]                  = 0.999
         opt["gamma"]                   = 0.1
