@@ -10,6 +10,7 @@ import argparse
 import time
 import datetime
 from pytorch_memlab import LineProfiler, MemReporter, profile
+from datasets import LocalTemporalDataset
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train on an input that is 2D')
@@ -91,7 +92,7 @@ if __name__ == '__main__':
             if args[k] is not None:
                 opt[k] = args[k]
                 
-        dataset = Dataset(opt)
+        dataset = LocalTemporalDataset(opt)
         generator = Temporal_Generator(opt)
         generator.apply(weights_init)
         discriminator = Temporal_Discriminator(opt)
@@ -107,7 +108,7 @@ if __name__ == '__main__':
         generator = Temporal_Generator(opt)
         discriminator = Temporal_Discriminator(opt)
         generator, discriminator = load_models(generator,discriminator,opt,args["device"])
-        dataset = Dataset(opt)
+        dataset = LocalTemporalDataset(opt)
 
     now = datetime.datetime.now()
     start_time = time.time()
