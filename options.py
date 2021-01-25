@@ -38,7 +38,8 @@ class Options():
         opt["stride"]                  = 1
         opt['conv_groups']             = 1
         opt['separate_chans']          = False
-        
+        opt['B']                      = 0.2
+
         opt['num_lstm_layers']         = 3
         opt['training_seq_length']     = 3
         opt['temporal_direction']     = "forward"
@@ -64,7 +65,7 @@ class Options():
 
         # GAN training info
         opt["alpha_1"]                 = 0       # Reconstruction loss coefficient
-        opt["alpha_2"]                 = 0.1        # Adversarial loss coefficient
+        opt["alpha_2"]                 = 0.01        # Adversarial loss coefficient
         opt["alpha_3"]                 = 0        # Soft physical loss coefficient
         opt["alpha_4"]                 = 1        # mag_and_angle loss
         opt["alpha_5"]                 = 0          # first derivative loss coeff

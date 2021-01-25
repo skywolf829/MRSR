@@ -963,85 +963,68 @@ def train_single_scale(generators, discriminators, opt, dataset):
 
     return generator, discriminator
 
+
+class DenseBlock(nn.Module):
+    def __init__(self, kernels, growth_channel, opt):
+        super(DenseBlock, self).__init__()
+
+        self.c1 = nn.Conv3d(kernels, growth_channel, kernel_size=opt['kernel_size'],
+        stride=opt['stride'],padding=opt['padding'])
+        self.c2 = nn.Conv3d(kernels+growth_channel*1, growth_channel, kernel_size=opt['kernel_size'],
+        stride=opt['stride'],padding=opt['padding'])
+        self.c3 = nn.Conv3d(kernels+growth_channel*2, growth_channel, kernel_size=opt['kernel_size'],
+        stride=opt['stride'],padding=opt['padding'])
+        self.c4 = nn.Conv3d(kernels+growth_channel*3, growth_channel, kernel_size=opt['kernel_size'],
+        stride=opt['stride'],padding=opt['padding'])
+        self.lrelu = nn.LeakyReLU(0.2,inplace=True)
+        self.final_conv = nn.Conv3d(kernels+growth_channel*4, kernels, kernel_size=opt['kernel_size'],
+        stride=opt['stride'],padding=opt['padding'])
+
+    def forward(x):
+        c1_out = self.lrelu(self.c1(x))
+        c2_out = self.lrelu(self.c2(torch.cat([x, c1_out], 1)))
+        c3_out = self.lrelu(self.c3(torch.cat([x, c1_out, c2_out], 1)))
+        c4_out = self.lrelu(self.c4(torch.cat([x, c1_out, c2_out, c3_out], 1)))
+        final_out = self.final_conv(torch.cat([x, c1_out, c2_out, c3_out, c4_out], 1))
+        return final_out
+
+
+class RRDB(nn.Module):
+    def __init__ (self,opt):
+        super(RRDB, self).__init__()
+        self.db1 = DenseBlock(opt['base_num_kernels'], int(opt['base_num_kernels']/4), opt)
+        self.db2 = DenseBlock(opt['base_num_kernels'], int(opt['base_num_kernels']/4), opt)
+        self.db3 = DenseBlock(opt['base_num_kernels'], int(opt['base_num_kernels']/4), opt)       
+        self.B = opt['B']
+
+    def forward(x):
+        out = self.db1(x) * self.B + x
+        out = self.db2(x) * self.B + out
+        out = self.db3(x) * self.B + out
+        out = out * self.B + x
+
 class Generator(nn.Module):
     def __init__ (self, resolution, num_kernels, opt):
         super(Generator, self).__init__()
         self.resolution = resolution
         self.opt = opt
 
-        if(opt['physical_constraints'] == "hard" and (opt['mode'] == "2D" or opt['mode'] =="3Dto2D")):
-            output_chans = 1
-        else:
-            output_chans = opt['num_channels']
-
-        if(opt['pre_padding']):
-            pad_amount = int(kernel_size/2)
-            self.layer_padding = 0
-        else:
-            pad_amount = 0
-            self.layer_padding = 1
-
-        if(opt['mode'] == "2D" or opt['mode'] == "3Dto2D"):
-            conv_layer = nn.Conv2d
-            batchnorm_layer = nn.BatchNorm2d
-            self.required_padding = [pad_amount, pad_amount, pad_amount, pad_amount]
-            self.upscale_method = "bicubic"
-        elif(opt['mode'] == "3D"):
-            conv_layer = nn.Conv3d
-            batchnorm_layer = nn.BatchNorm3d
-            self.required_padding = [pad_amount, pad_amount, pad_amount, 
-            pad_amount, pad_amount, pad_amount]
-            self.upscale_method = "trilinear"
-
-        if(self.opt['scaling_mode'] == "learned"):            
-            shp = [1, self.opt['num_channels']]
-            for i in range(len(self.resolution)):
-                shp.append(1)
-            self.learned_scaling_weights = torch.nn.Parameter(torch.ones(shp))
-            self.learned_scaling_bias = torch.nn.Parameter(torch.ones(shp) * 0.001)
-            
-
-        if(not opt['separate_chans']):
-            self.model = self.create_model(opt['num_blocks'], opt['num_channels'], output_chans,
-            num_kernels, opt['kernel_size'], opt['stride'], 1,
-            conv_layer, batchnorm_layer).to(opt['device'])
-        else:
-            self.model = self.create_model(opt['num_blocks'], opt['num_channels'], output_chans, 
-            num_kernels, opt['kernel_size'], opt['stride'], opt['num_channels'],
-            conv_layer, batchnorm_layer).to(opt['device'])
-
-    def create_model(self, num_blocks, num_channels, output_chans,
-    num_kernels, kernel_size, stride, groups, conv_layer, batchnorm_layer):
-        modules = []
+        self.c1 = nn.Conv3d(opt['num_channels'], opt['base_num_kernels'],
+        stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
+        self.blocks = []
+        for i in range(opt['num_blocks']):
+            self.blocks.append(RRDB(opt))
         
-        for i in range(num_blocks):
-            # The head goes from numChannels channels to numKernels
-            if i == 0:
-                modules.append(nn.Sequential(
-                    conv_layer(num_channels, num_kernels*groups, kernel_size=kernel_size, 
-                    stride=stride, padding=self.layer_padding, groups=groups),
-                    batchnorm_layer(num_kernels*groups),
-                    nn.LeakyReLU(0.2, inplace=True)
-                ))
-            # The tail will go from kernel_size to num_channels before tanh [-1,1]
-            elif i == num_blocks-1:  
-                tail = nn.Sequential(
-                    conv_layer(num_kernels*groups, output_chans, kernel_size=kernel_size, 
-                    stride=stride, padding=self.layer_padding, groups=groups),
-                    nn.Tanh()
-                )              
-                modules.append(tail)
-            # Other layers will have 32 channels for the 32 kernels
-            else:
-                modules.append(nn.Sequential(
-                    conv_layer(num_kernels*groups, num_kernels*groups, kernel_size=kernel_size,
-                    stride=stride, padding=self.layer_padding, groups=groups),
-                    batchnorm_layer(num_kernels*groups),
-                    nn.LeakyReLU(0.2, inplace=True)
-                ))
-        m = nn.Sequential(*modules)
-        return m
-        
+        self.c2 = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels'],
+        stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
+        self.c3 = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels'],
+        stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
+        self.c4 = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels'],
+        stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
+        self.final_conv = nn.Conv3d(opt['base_num_kernels'], opt['num_channels'],
+        stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
+        self.lrelu = nn.LeakyReLU(0.2, inplace=True)
+
     def get_input_shape(self):
         shape = []
         shape.append(1)
@@ -1062,36 +1045,37 @@ class Generator(nn.Module):
     def receptive_field(self):
         return (self.opt['kernel_size']-1)*self.opt['num_blocks']
 
-    def forward(self, data):
+    def forward(self, x):
+        x = self.c1(x)
+        out = self.blocks[0](x)
+        for i in range(1, len(self.blocks)):
+            out = self.blocks[i](out)
+        out = self.c2(out)
+        out = x + out
+
+        if(self.opt['upsampling_mode'] is not "shuffle"):
+            out = F.interpolate(out, scale_factor=2.0, mode=self.opt['upscaling_mode'], align_corners=True)
+        elif(self.opt['upsampling_mode'] == "shuffle"):
+            out = VoxelShuffle(out)
         
-        if(self.opt['scaling_mode'] == "learned"):
-            data = data * self.learned_scaling_weights.expand(data.shape)
-            data = data + self.learned_scaling_bias.expand(data.shape)
-                
-        if(self.opt['pre_padding']):
-            data = F.pad(data, self.required_padding)
+        out = self.lrelu(self.c3(out))
+        out = self.lrelu(self.c4(out))
+        out = self.final_conv(out)
+        return out
 
 
-        output = self.model(data)        
-
-
-        if(self.opt['physical_constraints'] == "hard" and self.opt['mode'] == '3D'):
-            output = curl3D(output, self.opt['device'])
-            return output
-        elif(self.opt['physical_constraints'] == "hard" and (self.opt['mode'] == '2D' or self.opt['mode'] == '3Dto2D')):
-            output = curl2D(output, self.opt['device'])
-            gradx = spatial_derivative2D(output[:,0:1], 0, self.opt['device'])
-            grady = spatial_derivative2D(output[:,1:2], 1, self.opt['device'])
-            output = torch.cat([-grady, gradx], axis=1)
-            return output
-        elif(self.opt['scaling_mode'] == "learned"):
-            output = data + output
-            output = output - self.learned_scaling_bias.expand(output.shape)
-            output = output / self.learned_scaling_weights.expand(output.shape)
-            return output
-        else:
-            return output + data
-
+def VoxelShuffle(t):
+    # t has shape [batch, channels, x, y, z]
+    # channels should be divisible by 8
+    
+    input_view = t.contiguous().view(
+        1, 2, 2, 2, int(t.shape[1]/8), t.shape[2], t.shape[3], t.shape[4]
+    )
+    shuffle_out = input_view.permute(0, 4, 5, 1, 6, 2, 7, 3).contiguous()
+    out = shuffle_out.view(
+        1, int(t.shape[1]/8), 2*t.shape[2], 2*t.shape[3], 2*t.shape[4]
+    )
+    return out
 class Discriminator(nn.Module):
     def __init__ (self, resolution, num_kernels, opt):
         super(Discriminator, self).__init__()
