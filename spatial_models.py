@@ -783,10 +783,12 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
             
             real_hr = real_hr.to(opt["device"])
             if opt['downsample_mode'] is "nearest":
-                real_lr = F.interpolate(real_hr, scale_factor=opt['spatial_downscale_ratio'],mode="nearest")
+                real_lr = real_hr[:,:,::2,::2,::2].clone()
             elif opt['downsample_mode'] is "average_pooling":
                 real_lr = AvgPool3D(real_hr)
-            
+            else:
+                real_lr = F.interpolate(real_hr, 
+                scale_factor=opt['spatial_downscale_ratio'],mode=opt['dowscaling_mode'])
             D_loss = 0
             G_loss = 0        
             gradient_loss = 0
