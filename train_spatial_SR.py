@@ -118,8 +118,8 @@ if __name__ == '__main__':
         os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
 
         if(opt['train_distributed']):
-            os.environ['MASTER_ADDR'] = '10.57.23.164'              #
-            os.environ['MASTER_PORT'] = '8888' 
+            os.environ['MASTER_ADDR'] = '127.0.0.1'              
+            os.environ['MASTER_PORT'] = '29500' 
             mp.spawn(train_single_scale,
                 args=(generators, discriminators,opt,dataset),
                 nprocs=opt['gpus_per_node'],

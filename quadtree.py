@@ -207,7 +207,7 @@ min_chunk_size=32,max_stride=8,device="cuda"):
         # Check if we can downsample this leaf node
         t['stride'] = int(t['stride']*2)
         original_data = t['data'].clone()
-        downsampled_data = AvgPool2D(original_data.clone())
+        downsampled_data = AvgPool2D(original_data.clone().permute(2, 0, 1).unsqueeze(0))[0].permute(1, 2, 0)
         t['data'] = downsampled_data
         new_img = upscale_from_quadtree_start(img,device=device)
         
@@ -257,10 +257,10 @@ def mse_criterion(GT_image, img, max_mse=200):
 
 
 
-max_stride = 32
-min_chunk = 16
+max_stride = 8
+min_chunk = 32
 criterion = psnr_criterion
-criterion_value = 80
+criterion_value = 120
 device="cuda"
 
 img_gt = torch.from_numpy(imageio.imread("snickers.jpg").astype(np.float32)).to(device)
@@ -274,6 +274,9 @@ img = {
     }
 torch.save(img, 'img_full.torch')
 
+
+##############################################
+img = torch.load("img_full.torch")
 start_time = time.time()
 img_quadtree = conditional_downsample_quadtree(img,img_gt,criterion,criterion_value,
 min_chunk_size=min_chunk,max_stride=max_stride,device="cuda")
@@ -281,6 +284,18 @@ end_time = time.time()
 print("Conditional downsample took % 0.02f seconds" % (end_time - start_time))
 torch.save(img_quadtree, "img_downsample_quadtree.torch")
 
+img_upscaled = upscale_from_quadtree_start(img_quadtree,max_stride=max_stride,device=device)
+img_upsampled = upsample_from_quadtree_start(img_quadtree,device=device)
+img_upscaled_seams = upscale_from_quadtree_with_seams(img_quadtree,device=device)
+debug = upscale_from_quadtree_debug(img_quadtree,max_stride=max_stride,device=device)
+
+imageio.imwrite("img_downsample_upscaled.jpg", img_upscaled.cpu().numpy())
+imageio.imwrite("img_downsample_upsampled.jpg", img_upsampled.cpu().numpy())
+imageio.imwrite("img_downsample_upsampled_debug.jpg", debug.cpu().numpy())
+imageio.imwrite("img_downsample_upsampled_seams.jpg", img_upscaled_seams.cpu().numpy())
+
+################################################
+img = torch.load("img_full.torch")
 start_time = time.time()
 img_quadtree = conditional_pooling_quadtree(img,img_gt,criterion,criterion_value,
 min_chunk_size=min_chunk,max_stride=max_stride,device="cuda")
@@ -288,18 +303,16 @@ end_time = time.time()
 print("Conditional pooling took % 0.02f seconds" % (end_time - start_time))
 torch.save(img_quadtree, "img_pooling_quadtree.torch")
 
+img_upscaled = upscale_from_quadtree_start(img_quadtree,max_stride=max_stride,device=device)
+img_upsampled = upsample_from_quadtree_start(img_quadtree,device=device)
+img_upscaled_seams = upscale_from_quadtree_with_seams(img_quadtree,device=device)
+debug = upscale_from_quadtree_debug(img_quadtree,max_stride=max_stride,device=device)
+
+imageio.imwrite("img_pooling_upscaled.jpg", img_upscaled.cpu().numpy())
+imageio.imwrite("img_pooling_upsampled.jpg", img_upsampled.cpu().numpy())
+imageio.imwrite("img_pooling_upsampled_debug.jpg", debug.cpu().numpy())
+imageio.imwrite("img_pooling_upsampled_seams.jpg", img_upscaled_seams.cpu().numpy())
 
 
 
 
-img = torch.load("img_quadtree.torch")
-
-img_upscaled = upscale_from_quadtree_start(img,max_stride=max_stride,device=device)
-img_upsampled = upsample_from_quadtree_start(img,device=device)
-img_upscaled_seams = upscale_from_quadtree_with_seams(img,device=device)
-debug = upscale_from_quadtree_debug(img,max_stride=max_stride,device=device)
-
-imageio.imwrite("img_upscaled.jpg", img_upscaled.cpu().numpy())
-imageio.imwrite("img_upsampled.jpg", img_upsampled.cpu().numpy())
-imageio.imwrite("img_upsampled_debug.jpg", debug.cpu().numpy())
-imageio.imwrite("img_upsampled_seams.jpg", img_upscaled_seams.cpu().numpy())
