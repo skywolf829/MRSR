@@ -499,10 +499,9 @@ class LocalDataset(torch.utils.data.Dataset):
                     z_start:z_end])
                 f.close()
                 
-                fact = 1
-                while(fact < self.subsample_dist):
-                    data = AvgPool3D(data)
-                    fact *= 2
+                if(self.subsample_dist > 1):
+                    data = AvgPool3D(data, self.subsample_dist)
+                    
             elif(self.opt['downsample_mode'] == "subsampling"):
                 data =  torch.tensor(f['data'][:,x_start:x_end:self.subsample_dist,
                     y_start:y_end:self.subsample_dist,
