@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
 import numpy as np
 import time
 import math
@@ -25,6 +26,7 @@ import copy
 from pytorch_memlab import LineProfiler, MemReporter, profile, profile_every
 import h5py
 from datasets import NetworkDataset, LocalDataset
+
 
 FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 input_folder = os.path.join(FlowSTSR_folder_path, "InputData")
@@ -695,8 +697,16 @@ def train_single_scale_wrapper(generators, discriminators, opt):
     print(prof.display())
     return g, d
 
-def train_single_scale(generators, discriminators, opt, dataset):
-    
+def train_single_scale(rank, device, generators, discriminators, opt, dataset):
+    torch.cuda.set_device(rank)
+    opt['device'] = rank
+    if(opt['train_distributed']):
+        dist.init_process_group(                                   
+            backend='nccl',                                         
+            init_method='env://',                                   
+            world_size=opt['num_nodes'] * opt['gpus_per_node'],                              
+            rank=rank                                               
+        )  
     start_t = time.time()
 
     torch.manual_seed(0)
@@ -712,12 +722,9 @@ def train_single_scale(generators, discriminators, opt, dataset):
         discriminator = discriminators[-1].to(opt['device'])
         discriminators.pop(len(discriminators)-1)
 
-    # Move all models to this GPU and make them distributed
-    for i in range(len(generators)):
-        generators[i].to(opt["device"])
-        generators[i].eval()
-        for param in generators[i].parameters():
-            param.requires_grad = False
+    if(opt['train_distributed']):
+        generator = DDP(generator, device_ids=[rank])
+        discriminator = DDP(discriminator, device_ids=[rank])
 
     print_to_log_and_console("Training on %s" % (opt["device"]), 
         os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
@@ -726,14 +733,15 @@ def train_single_scale(generators, discriminators, opt, dataset):
     generator_optimizer = optim.Adam(generator.parameters(), lr=opt["learning_rate"], 
     betas=(opt["beta_1"],opt["beta_2"]))
     generator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=generator_optimizer,
-    milestones=[8000-opt['iteration_number']],gamma=opt['gamma'])
+    milestones=[0.8*len(dataset)*opt['epochs']-opt['iteration_number']],gamma=opt['gamma'])
 
     discriminator_optimizer = optim.Adam(filter(lambda p: p.requires_grad, discriminator.parameters()), 
     lr=opt["learning_rate"], betas=(opt["beta_1"],opt["beta_2"]))
     discriminator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=discriminator_optimizer,
-    milestones=[8000-opt['iteration_number']],gamma=opt['gamma'])
- 
-    writer = SummaryWriter(os.path.join('tensorboard',opt['save_name']))
+    milestones=[0.8*len(dataset)*opt['epochs']-opt['iteration_number']],gamma=opt['gamma'])
+    
+    if(opt['device'] == 0):
+        writer = SummaryWriter(os.path.join('tensorboard',opt['save_name']))
 
     start_time = time.time()
     next_save = 0
@@ -744,11 +752,26 @@ def train_single_scale(generators, discriminators, opt, dataset):
     print(str(len(generators)) + ": " + str(opt["resolutions"][len(generators)]))
 
     dataset.set_subsample_dist(int(2**(opt['n']-len(generators)-1)))
-    dataloader = torch.utils.data.DataLoader(
-        dataset=dataset,
-        shuffle=True,
-        num_workers=opt["num_workers"]
-    )
+    if(opt['train_distributed']):
+        train_sampler = torch.utils.data.distributed.DistributedSampler(dataset, 
+        num_replicas=opt['num_nodes']*opt['gpus_per_node'],rank=rank)
+        dataloader = torch.utils.data.DataLoader(
+            dataset=dataset,
+            shuffle=False,
+            num_workers=opt["num_workers"],
+            pin_memory=True,
+            sampler=train_sampler
+        )
+    else:
+        dataloader = torch.utils.data.DataLoader(
+            dataset=dataset,
+            shuffle=True,
+            num_workers=opt["num_workers"],
+            pin_memory=True
+        )
+    
+
+
     for epoch in range(opt['epoch_number'], opt["epochs"]):
         t_io_start = time.time()
         t_update_start = time.time()
@@ -759,8 +782,10 @@ def train_single_scale(generators, discriminators, opt, dataset):
             t_update_start = time.time()
             
             real_hr = real_hr.to(opt["device"])
-            real_lr = F.interpolate(real_hr, scale_factor=opt['spatial_downscale_ratio'],mode="nearest")
-            real_lr = F.interpolate(real_lr, scale_factor=1/opt['spatial_downscale_ratio'],mode=opt['upsample_mode'],align_corners=True)
+            if opt['downsample_mode'] is "nearest":
+                real_lr = F.interpolate(real_hr, scale_factor=opt['spatial_downscale_ratio'],mode="nearest")
+            elif opt['downsample_mode'] is "average_pooling":
+                real_lr = AvgPool3D(real_hr)
             
             D_loss = 0
             G_loss = 0        
@@ -901,61 +926,60 @@ def train_single_scale(generators, discriminators, opt, dataset):
                 generator_optimizer.step()
             volumes_seen += 1
 
-            if(volumes_seen % 50 == 0):
-                rec_numpy = fake.detach().cpu().numpy()[0]
-                rec_cm = toImg(rec_numpy)
-                rec_cm -= rec_cm.min()
-                rec_cm *= (1/rec_cm.max())
+            if(opt['device'] == 0):
+                if(volumes_seen % 50 == 0):
+                    rec_numpy = fake.detach().cpu().numpy()[0]
+                    rec_cm = toImg(rec_numpy)
+                    rec_cm -= rec_cm.min()
+                    rec_cm *= (1/rec_cm.max())
 
-                writer.add_image("reconstructed/%i"%len(generators), 
-                rec_cm.clip(0,1), volumes_seen)
+                    writer.add_image("reconstructed/%i"%len(generators), 
+                    rec_cm.clip(0,1), volumes_seen)
 
-                real_numpy = real_hr.detach().cpu().numpy()[0]
-                real_cm = toImg(real_numpy)
-                real_cm -= real_cm.min()
-                real_cm *= (1/real_cm.max())
-                writer.add_image("real/%i"%len(generators), 
-                real_cm.clip(0,1), volumes_seen)
+                    real_numpy = real_hr.detach().cpu().numpy()[0]
+                    real_cm = toImg(real_numpy)
+                    real_cm -= real_cm.min()
+                    real_cm *= (1/real_cm.max())
+                    writer.add_image("real/%i"%len(generators), 
+                    real_cm.clip(0,1), volumes_seen)
 
-                if(opt["alpha_3"] > 0.0):
-                    g_cm = toImg(g_map.detach().cpu().numpy()[0])
-                    writer.add_image("Divergence/%i"%len(generators), 
-                    g_cm, volumes_seen)
+                    if(opt["alpha_3"] > 0.0):
+                        g_cm = toImg(g_map.detach().cpu().numpy()[0])
+                        writer.add_image("Divergence/%i"%len(generators), 
+                        g_cm, volumes_seen)
 
-                if(opt["alpha_4"] > 0.0):
-                    angles_cm = toImg(angles.detach().cpu().numpy())
-                    writer.add_image("angle/%i"%len(generators), 
-                    angles_cm , volumes_seen)
+                    if(opt["alpha_4"] > 0.0):
+                        angles_cm = toImg(angles.detach().cpu().numpy())
+                        writer.add_image("angle/%i"%len(generators), 
+                        angles_cm , volumes_seen)
 
-                    mags_cm = toImg(mags.detach().cpu().numpy())
-                    writer.add_image("mag/%i"%len(generators), 
-                    mags_cm, volumes_seen)
+                        mags_cm = toImg(mags.detach().cpu().numpy())
+                        writer.add_image("mag/%i"%len(generators), 
+                        mags_cm, volumes_seen)
 
-            print_to_log_and_console("%i/%i: Dloss=%.02f Gloss=%.02f L1=%.04f AMD=%.02f AAD=%.02f" %
-            (volumes_seen, opt['epochs']*len(dataset), D_loss, G_loss, rec_loss, mags.mean(), angles.mean()), 
-            os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
+                print_to_log_and_console("%i/%i: Dloss=%.02f Gloss=%.02f L1=%.04f AMD=%.02f AAD=%.02f" %
+                (volumes_seen, opt['epochs']*len(dataset), D_loss, G_loss, rec_loss, mags.mean(), angles.mean()), 
+                os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
 
-            writer.add_scalar('D_loss_scale/%i'%len(generators), D_loss, volumes_seen) 
-            writer.add_scalar('G_loss_scale/%i'%len(generators), G_loss, volumes_seen) 
-            writer.add_scalar('L1/%i'%len(generators), rec_loss, volumes_seen)
-            writer.add_scalar('Gradient_loss/%i'%len(generators), gradient_loss / (opt['alpha_5']+1e-6), volumes_seen)
-            writer.add_scalar('TAD/%i'%len(generators), phys_loss / (opt["alpha_3"]+1e-6), volumes_seen)
-            writer.add_scalar('path_loss/%i'%len(generators), path_loss / (opt['alpha_6']+1e-6), volumes_seen)
-            writer.add_scalar('Mag_loss_scale/%i'%len(generators), mags.mean(), volumes_seen) 
-            writer.add_scalar('Angle_loss_scale/%i'%len(generators), angles.mean(), volumes_seen) 
+                writer.add_scalar('D_loss_scale/%i'%len(generators), D_loss, volumes_seen) 
+                writer.add_scalar('G_loss_scale/%i'%len(generators), G_loss, volumes_seen) 
+                writer.add_scalar('L1/%i'%len(generators), rec_loss, volumes_seen)
+                writer.add_scalar('Gradient_loss/%i'%len(generators), gradient_loss / (opt['alpha_5']+1e-6), volumes_seen)
+                writer.add_scalar('TAD/%i'%len(generators), phys_loss / (opt["alpha_3"]+1e-6), volumes_seen)
+                writer.add_scalar('path_loss/%i'%len(generators), path_loss / (opt['alpha_6']+1e-6), volumes_seen)
+                writer.add_scalar('Mag_loss_scale/%i'%len(generators), mags.mean(), volumes_seen) 
+                writer.add_scalar('Angle_loss_scale/%i'%len(generators), angles.mean(), volumes_seen) 
+                
+                if(volumes_seen % opt['save_every'] == 0):
+                    opt["iteration_number"] = batch_num
+                    opt["epoch_number"] = epoch
+                    save_models(generators + [generator], discriminators + [discriminator], opt)
 
             discriminator_scheduler.step()
             generator_scheduler.step()  
             
-            #print("Update time: %0.06f" % (time.time() - t_update_start))
             t_io_start = time.time()
         
-            if(volumes_seen % opt['save_every'] == 0):
-                opt["iteration_number"] = batch_num
-                opt["epoch_number"] = epoch
-                save_models(generators + [generator], discriminators + [discriminator], opt)
-        
-
     generator = reset_grads(generator, False)
     generator.eval()
     discriminator = reset_grads(discriminator, False)

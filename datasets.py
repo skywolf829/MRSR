@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import struct
 import torch
 import h5py
+from utility_functions import AvgPool3D
 
 class NetworkDataset(torch.utils.data.Dataset):
     def __init__(self, opt):
@@ -301,13 +302,23 @@ class LocalTemporalDataset(torch.utils.data.Dataset):
                 x_start = torch.randint(self.opt['x_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1]).item()
                 x_end = x_start + self.opt['cropping_resolution']*self.subsample_dist
 
+
+            
+            
+            
+
             #print("converting " + self.item_names[index] + " to tensor")
             all_frames = []
             for i in range(self.opt['training_seq_length']):
                 f = h5py.File(os.path.join(self.opt['data_folder'], self.item_names[index]), 'r')
-                data =  torch.tensor(f['data'][:,x_start:x_end:self.subsample_dist,
-                    y_start:y_end:self.subsample_dist,z_start:z_end:self.subsample_dist])
+                data =  torch.tensor(f['data'][:,x_start:x_end,
+                    y_start:y_end,
+                    z_start:z_end])
                 f.close()
+                fact = 1
+                while(fact < self.subsample_dist):
+                    data = AvgPool3D(data)
+                    fact *= 2
                 all_frames.append(data)
             data = torch.stack(all_frames, dim=0)
             #print("converted " + self.item_names[index] + ".h5 to tensor")
@@ -481,9 +492,15 @@ class LocalDataset(torch.utils.data.Dataset):
                 x_end = x_start + self.opt['cropping_resolution']*self.subsample_dist
 
             #print("converting " + self.item_names[index] + " to tensor")
-            data =  torch.tensor(f['data'][:,x_start:x_end:self.subsample_dist,
-                y_start:y_end:self.subsample_dist,z_start:z_end:self.subsample_dist])
+            data =  torch.tensor(f['data'][:,x_start:x_end,
+                y_start:y_end,
+                z_start:z_end])
             f.close()
+            
+            fact = 1
+            while(fact < self.subsample_dist):
+                data = AvgPool3D(data)
+                fact *= 2
             #print("converted " + self.item_names[index] + ".h5 to tensor")
 
         '''

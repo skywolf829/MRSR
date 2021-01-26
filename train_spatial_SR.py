@@ -116,10 +116,17 @@ if __name__ == '__main__':
 
         print_to_log_and_console(str(datetime.datetime.now()) + " - Beginning training on scale " + str(i),
         os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
-        #with profiler.profile(profile_memory=True, use_cuda=True, record_shapes=True) as prof:
-        generator, discriminator = train_single_scale(generators, discriminators, opt, dataset)
-        #reporter = MemReporter()
-        #reporter.report()
+
+        if(opt['train_distributed']):
+            mp.spawn(train_single_scale,
+                args=(generators, discriminators,opt,dataset),
+                nprocs=opt['gpus_per_node'],
+                join=True)
+        else:
+            generator, discriminator = train_single_scale(opt['device'], generators, 
+            discriminators, opt, dataset)
+
+
         discriminator.to("cpu")
         generators.append(generator)
         discriminators.append(discriminator)

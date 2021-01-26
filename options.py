@@ -50,9 +50,9 @@ class Options():
         opt["downsample_mode"]         = "trilinear"
         opt["upsample_mode"]           = "trilinear"
 
-        opt["train_distributed"]       = False
-        opt["device"]                  = "cuda:0"
-        opt["gpus_per_node"]           = 1
+        opt["train_distributed"]       = True
+        opt["device"]                  = "0"
+        opt["gpus_per_node"]           = 8
         opt["num_nodes"]               = 1
         opt["ranking"]                 = 0
 
@@ -81,7 +81,7 @@ class Options():
         opt["epochs"]                  = 20
         opt["minibatch"]               = 1        # Minibatch for training
         opt["learning_rate"]           = 0.001    # Learning rate for GAN
-        opt["beta_1"]                  = 0.0
+        opt["beta_1"]                  = 0.5
         opt["beta_2"]                  = 0.999
         opt["gamma"]                   = 0.1
 
