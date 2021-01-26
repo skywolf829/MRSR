@@ -9,6 +9,7 @@ import struct
 import torch
 import h5py
 from utility_functions import AvgPool3D
+import torch.nn.functional as F
 
 class NetworkDataset(torch.utils.data.Dataset):
     def __init__(self, opt):
