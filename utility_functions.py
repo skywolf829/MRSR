@@ -806,18 +806,22 @@ def compute_laplacian(input_frame):
     return laplacian
 
 def AvgPool2D(x,size=2):
-    kernel = torch.ones([size, size]).to(x.device)
-    kernel /= kernel.sum()
-    kernel = kernel.view(1, 1, size, size)
-    kernel = kernel.repeat(x.shape[1], 1, 1, 1)
-    return F.conv2d(x, kernel, stride=size, padding=0, groups=x.shape[1])
+    with torch.no_grad():
+        kernel = torch.ones([size, size]).to(x.device)
+        kernel /= kernel.sum()
+        kernel = kernel.view(1, 1, size, size)
+        kernel = kernel.repeat(x.shape[1], 1, 1, 1)
+        out = F.conv2d(x, kernel, stride=size, padding=0, groups=x.shape[1])
+    return out
 
 def AvgPool3D(x,size=2):
-    kernel = torch.ones([size, size, size]).to(x.device)
-    kernel /= kernel.sum()
-    kernel = kernel.view(1, 1, size, size, size)
-    kernel = kernel.repeat(x.shape[1], 1, 1, 1, 1)
-    return F.conv3d(x, kernel, stride=size, padding=0, groups=x.shape[1])
+    with torch.no_grad():
+        kernel = torch.ones([size, size, size]).to(x.device)
+        kernel /= kernel.sum()
+        kernel = kernel.view(1, 1, size, size, size)
+        kernel = kernel.repeat(x.shape[1], 1, 1, 1, 1)
+        out = F.conv3d(x, kernel, stride=size, padding=0, groups=x.shape[1])
+    return out
 
 def create_graph(x, y, title, xlabel, ylabel, colors, labels):    
     import matplotlib.pyplot as plt

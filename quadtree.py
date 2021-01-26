@@ -192,6 +192,60 @@ min_chunk_size=32,max_stride=8,device="cuda"):
     print("Trees checked: %i" % trees_checked)
     return img            
 
+def conditional_pooling_quadtree(img,GT_image,criterion,criterion_value,
+min_chunk_size=32,max_stride=8,device="cuda"):
+    quadtrees_to_check = [img]
+    trees_checked = 0
+    #sequence_of_downsampling = []
+    #sequence_of_downsampling_debug = []
+    #sequence_of_downsampling_debug.append(upscale_from_quadtree_debug(img,max_stride=max_stride,device=device).cpu().numpy())
+    #sequence_of_downsampling.append(upsample_from_quadtree_start(img,device=device).cpu().numpy())
+    while(len(quadtrees_to_check) > 0):
+        trees_checked += 1
+        t = quadtrees_to_check.pop(0)
+
+        # Check if we can downsample this leaf node
+        t['stride'] = int(t['stride']*2)
+        original_data = t['data'].clone()
+        downsampled_data = AvgPool2D(original_data.clone())
+        t['data'] = downsampled_data
+        new_img = upscale_from_quadtree_start(img,device=device)
+        
+        # If criterion not met, reset data and stride, and see
+        # if the node is large enough to split into subnodes
+        # Otherwise, we keep the downsample, and add the node back as a 
+        # leaf node
+        if(not criterion(GT_image, new_img, criterion_value)):
+            t['data'] = original_data
+            t['stride'] = int(t['stride'] / 2)
+            if(t['data'].shape[0]*t['stride'] > min_chunk_size):
+                for x_quad_start in range(0, t['data'].shape[0], int(t['data'].shape[0]/2)):
+                    for y_quad_start in range(0, int(t['data'].shape[1]), int(t['data'].shape[1]/2)):
+                        t_new = {
+                            "full_shape": [int(t['full_shape'][0]/2), int(t['full_shape'][1]/2), t['full_shape'][2]],
+                            "data": t['data'][x_quad_start:x_quad_start+int(t['data'].shape[0]/2),
+                            y_quad_start:y_quad_start+int(t['data'].shape[1]/2),:].clone(),
+                            "stride": int(t['stride']),
+                            "x_start": int(x_quad_start*t['stride'] + t['x_start']),
+                            "y_start": int(y_quad_start*t['stride'] + t['y_start']),
+                            "children": []
+                        }
+                        t['children'].append(t_new)     
+                        quadtrees_to_check.append(t_new)                   
+                t['data'] = None
+                t['stride'] = None
+                t['x_start'] = None
+                t['y_start'] = None
+        else:
+            #sequence_of_downsampling_debug.append(upscale_from_quadtree_debug(img,max_stride=max_stride,device=device).cpu().numpy())
+            #sequence_of_downsampling.append(upsample_from_quadtree_start(img,device=device).cpu().numpy())
+            if(t['stride'] < max_stride):
+                quadtrees_to_check.append(t)
+    #imageio.mimwrite("downsampling_sequence.gif", sequence_of_downsampling, fps=5)
+    #imageio.mimwrite("downsampling_sequence_debug.gif", sequence_of_downsampling_debug, fps=5)
+    print("Trees checked: %i" % trees_checked)
+    return img            
+
 def ssim_criterion(GT_image, img, min_ssim=0.6):
     return ssim(img.permute(2, 0, 1).unsqueeze(0), GT_image.permute(2, 0, 1).unsqueeze(0)) > min_ssim
 
@@ -224,10 +278,19 @@ start_time = time.time()
 img_quadtree = conditional_downsample_quadtree(img,img_gt,criterion,criterion_value,
 min_chunk_size=min_chunk,max_stride=max_stride,device="cuda")
 end_time = time.time()
-
-
 print("Conditional downsample took % 0.02f seconds" % (end_time - start_time))
-torch.save(img_quadtree, "img_quadtree.torch")
+torch.save(img_quadtree, "img_downsample_quadtree.torch")
+
+start_time = time.time()
+img_quadtree = conditional_pooling_quadtree(img,img_gt,criterion,criterion_value,
+min_chunk_size=min_chunk,max_stride=max_stride,device="cuda")
+end_time = time.time()
+print("Conditional pooling took % 0.02f seconds" % (end_time - start_time))
+torch.save(img_quadtree, "img_pooling_quadtree.torch")
+
+
+
+
 
 img = torch.load("img_quadtree.torch")
 
