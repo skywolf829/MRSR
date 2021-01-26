@@ -697,7 +697,7 @@ def train_single_scale_wrapper(generators, discriminators, opt):
     print(prof.display())
     return g, d
 
-def train_single_scale(rank, device, generators, discriminators, opt, dataset):
+def train_single_scale(rank, generators, discriminators, opt, dataset):
     torch.cuda.set_device(rank)
     opt['device'] = rank
     if(opt['train_distributed']):
