@@ -491,18 +491,32 @@ class LocalDataset(torch.utils.data.Dataset):
             if((x_end-x_start) / self.subsample_dist > self.opt['cropping_resolution']):
                 x_start = torch.randint(self.opt['x_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1]).item()
                 x_end = x_start + self.opt['cropping_resolution']*self.subsample_dist
-
-            #print("converting " + self.item_names[index] + " to tensor")
-            data =  torch.tensor(f['data'][:,x_start:x_end,
-                y_start:y_end,
-                z_start:z_end])
-            f.close()
             
-            fact = 1
-            while(fact < self.subsample_dist):
-                data = AvgPool3D(data)
-                fact *= 2
+            if(self.opt['downsample_mode'] == "average_pooling"):
+                #print("converting " + self.item_names[index] + " to tensor")
+                data =  torch.tensor(f['data'][:,x_start:x_end,
+                    y_start:y_end,
+                    z_start:z_end])
+                f.close()
+                
+                fact = 1
+                while(fact < self.subsample_dist):
+                    data = AvgPool3D(data)
+                    fact *= 2
+            elif(self.opt['downsample_mode'] == "subsampling"):
+                data =  torch.tensor(f['data'][:,x_start:x_end:self.subsample_dist,
+                    y_start:y_end:self.subsample_dist,
+                    z_start:z_end:self.subsample_dist])
+                f.close()
+            else:
+                data =  torch.tensor(f['data'][:,x_start:x_end,
+                    y_start:y_end,
+                    z_start:z_end])
+                f.close()
+                data = F.interpolate(data, scaling_factor=float(1/self.subsample_dist), 
+                mode=self.opt['downsample_mode'], align_corners=True)
             #print("converted " + self.item_names[index] + ".h5 to tensor")
+
 
         '''
         if(self.opt['scaling_mode'] == "channel"):
