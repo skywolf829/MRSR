@@ -318,7 +318,7 @@ class LocalTemporalDataset(torch.utils.data.Dataset):
                 f.close()
                 fact = 1
                 while(fact < self.subsample_dist):
-                    data = AvgPool3D(data)
+                    data = AvgPool3D(data.unsqueeze(0))[0]
                     fact *= 2
                 all_frames.append(data)
             data = torch.stack(all_frames, dim=0)
@@ -501,7 +501,7 @@ class LocalDataset(torch.utils.data.Dataset):
                 f.close()
                 
                 if(self.subsample_dist > 1):
-                    data = AvgPool3D(data, self.subsample_dist)
+                    data = AvgPool3D(data.unsqueeze(0), self.subsample_dist)[0]
                     
             elif(self.opt['downsample_mode'] == "subsampling"):
                 data =  torch.tensor(f['data'][:,x_start:x_end:self.subsample_dist,
