@@ -791,7 +791,8 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                     real_lr = AvgPool3D(real_hr)
                 else:
                     real_lr = F.interpolate(real_hr, 
-                    scale_factor=opt['spatial_downscale_ratio'],mode=opt['dowscaling_mode'])
+                    scale_factor=opt['spatial_downscale_ratio'],
+                    mode=opt['downsample_mode'])
             D_loss = 0
             G_loss = 0        
             gradient_loss = 0
