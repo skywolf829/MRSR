@@ -805,12 +805,19 @@ def compute_laplacian(input_frame):
 
     return laplacian
 
-def AvgPool3D(x):
-    kernel = torch.ones([2, 2, 2]).to(x.device)
+def AvgPool2D(x,size=2):
+    kernel = torch.ones([size, size]).to(x.device)
     kernel /= kernel.sum()
-    kernel = kernel.view(1, 1, 2, 2, 2)
-    kernel = kernel.repeat(x.shape[1], x.shape[1], 2, 2, 2)
-    return F.conv3d(x, kernel, stride=2, padding=0)
+    kernel = kernel.view(1, 1, size, size)
+    kernel = kernel.repeat(x.shape[1], 1, 1, 1)
+    return F.conv2d(x, kernel, stride=size, padding=0, groups=x.shape[1])
+
+def AvgPool3D(x,size=2):
+    kernel = torch.ones([size, size, size]).to(x.device)
+    kernel /= kernel.sum()
+    kernel = kernel.view(1, 1, size, size, size)
+    kernel = kernel.repeat(x.shape[1], 1, 1, 1, 1)
+    return F.conv3d(x, kernel, stride=size, padding=0, groups=x.shape[1])
 
 def create_graph(x, y, title, xlabel, ylabel, colors, labels):    
     import matplotlib.pyplot as plt
