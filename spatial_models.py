@@ -1010,7 +1010,7 @@ class DenseBlock(nn.Module):
         self.final_conv = nn.Conv3d(kernels+growth_channel*4, kernels, kernel_size=opt['kernel_size'],
         stride=opt['stride'],padding=opt['padding'])
 
-    def forward(x):
+    def forward(self,x):
         c1_out = self.lrelu(self.c1(x))
         c2_out = self.lrelu(self.c2(torch.cat([x, c1_out], 1)))
         c3_out = self.lrelu(self.c3(torch.cat([x, c1_out, c2_out], 1)))
@@ -1027,7 +1027,7 @@ class RRDB(nn.Module):
         self.db3 = DenseBlock(opt['base_num_kernels'], int(opt['base_num_kernels']/4), opt)       
         self.B = opt['B']
 
-    def forward(x):
+    def forward(self,x):
         out = self.db1(x) * self.B + x
         out = self.db2(x) * self.B + out
         out = self.db3(x) * self.B + out
