@@ -51,7 +51,7 @@ class Options():
         opt["downsample_mode"]         = "average_pooling"
         opt["upsample_mode"]           = "trilinear"
 
-        opt["train_distributed"]       = True
+        opt["train_distributed"]       = False
         opt["device"]                  = "0"
         opt["gpus_per_node"]           = 8
         opt["num_nodes"]               = 1
