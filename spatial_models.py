@@ -783,16 +783,16 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
             #print("IO time: %0.06f" % (time.time() - t_io_start))
             t_update_start = time.time()
             
-            real_hr = real_hr.to(opt["device"])
-            with torch.no_grad():                
-                if opt['downsample_mode'] == "nearest":
-                    real_lr = real_hr[:,:,::2,::2,::2].clone()
-                elif opt['downsample_mode'] == "average_pooling":
+            real_hr = real_hr.to(opt["device"])            
+            if opt['downsample_mode'] == "nearest":
+                real_lr = real_hr[:,:,::2,::2,::2].clone()
+            elif opt['downsample_mode'] == "average_pooling":                    
+                with torch.no_grad():    
                     real_lr = AvgPool3D(real_hr)
-                else:
-                    real_lr = F.interpolate(real_hr, 
-                    scale_factor=opt['spatial_downscale_ratio'],
-                    mode=opt['downsample_mode'])
+            else:
+                real_lr = F.interpolate(real_hr, 
+                scale_factor=opt['spatial_downscale_ratio'],
+                mode=opt['downsample_mode'])
             D_loss = 0
             G_loss = 0        
             gradient_loss = 0
@@ -803,13 +803,11 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
             #print(generator.learned_scaling_weights.data)
             #print(generator.learned_scaling_bias.data)
             # Update discriminator: maximize D(x) + D(G(z))
-            print(discriminator)
             if(opt["alpha_2"] > 0.0):            
                 for j in range(opt["discriminator_steps"]):
                     discriminator.zero_grad()
                     generator.zero_grad()
                     D_loss = 0
-                    print(real_hr.shape)
                     # Train with real downscaled to this scale
                     output_real = discriminator(real_hr)
                     discrim_error_real = -output_real.mean() 
