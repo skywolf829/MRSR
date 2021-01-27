@@ -699,8 +699,7 @@ def train_single_scale_wrapper(generators, discriminators, opt):
 
 def train_single_scale(rank, generators, discriminators, opt, dataset):
     
-    torch.cuda.set_device(rank)
-    opt['device'] = rank
+    opt['device'] = "cuda:"+str(rank)
     print("Training on device %i, initializing process group." % rank)
     if(opt['train_distributed']):
         dist.init_process_group(                                   
@@ -783,8 +782,8 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
             #print("IO time: %0.06f" % (time.time() - t_io_start))
             t_update_start = time.time()
             
-            with torch.no_grad():
-                real_hr = real_hr.to(opt["device"])
+            real_hr = real_hr.to(opt["device"])
+            with torch.no_grad():                
                 if opt['downsample_mode'] == "nearest":
                     real_lr = real_hr[:,:,::2,::2,::2].clone()
                 elif opt['downsample_mode'] == "average_pooling":
