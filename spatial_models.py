@@ -814,25 +814,21 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                     output_real = discriminator(real_hr)
                     discrim_error_real = -output_real.mean() 
                     D_loss += discrim_error_real.mean().item()
-                    discrim_error_real.backward(retain_graph=True)
+                    #discrim_error_real.backward(retain_graph=True)
 
                     fake = generator(real_lr)
                     output_fake = discriminator(fake.detach())
                     discrim_error_fake = output_fake.mean()
-                    discrim_error_fake.backward(retain_graph=True)
                     D_loss += discrim_error_fake.item()
-
+                    #discrim_error_fake.backward(retain_graph=True)
+                    
                     if(opt['regularization'] == "GP"):
                         # Gradient penalty 
                         gradient_penalty = calc_gradient_penalty(discriminator, real_hr, 
                         fake, 1, opt['device'])
-                        gradient_penalty.backward()
-                    elif(opt['regularization'] == "TV"):
-                        # Total variance penalty
-                        TV_penalty_real = torch.abs(-discrim_error_real-1)
-                        TV_penalty_real.backward(retain_graph=True)
-                        TV_penalty_fake = torch.abs(discrim_error_fake+1)
-                        TV_penalty_fake.backward(retain_graph=True)
+                        D_loss += gradient_penalty
+                        #gradient_penalty.backward()
+                    D_loss.backward()
                     discriminator_optimizer.step()
 
             # Update generator: maximize D(G(z))

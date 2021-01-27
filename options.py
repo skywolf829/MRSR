@@ -28,7 +28,7 @@ class Options():
         opt['random_flipping']         = True
         opt['num_networked_workers']   = 4
 
-        opt["num_workers"]             = 2
+        opt["num_workers"]             = 0
 
         # generator info
         opt["num_blocks"]              = 3
