@@ -724,8 +724,8 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
         discriminators.pop(len(discriminators)-1)
 
     if(opt['train_distributed']):
-        generator = DDP(generator, device_ids=[rank])
-        discriminator = DDP(discriminator, device_ids=[rank])
+        generator = DDP(generator, device_ids=[rank], find_unused_parameters=True)
+        discriminator = DDP(discriminator, device_ids=[rank], find_unused_parameters=True)
 
     print_to_log_and_console("Training on %s" % (opt["device"]), 
         os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
@@ -774,6 +774,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
 
 
     for epoch in range(opt['epoch_number'], opt["epochs"]):
+        
         t_io_start = time.time()
         t_update_start = time.time()
         #for iteration in range(len(dataset)):
@@ -1149,7 +1150,6 @@ class Discriminator(nn.Module):
                     nn.LeakyReLU(0.2, inplace=True)
                 ))
         self.model =  nn.Sequential(*modules)
-        self.model = self.model.to(opt['device'])
 
     def receptive_field(self):
         return (self.opt['kernel_size']-1)*self.opt['num_blocks']
