@@ -1009,9 +1009,7 @@ class DenseBlock(nn.Module):
         self.final_conv = nn.Conv3d(kernels+growth_channel*4, kernels, kernel_size=opt['kernel_size'],
         stride=opt['stride'],padding=opt['padding'])
 
-    def forward(self,x):
-        print("x " + str(x.device))
-        print("self " + str(self.device()))
+    def forward(self,x):       
         c1_out = self.lrelu(self.c1(x))
         c2_out = self.lrelu(self.c2(torch.cat([x, c1_out], 1)))
         c3_out = self.lrelu(self.c3(torch.cat([x, c1_out, c2_out], 1)))
@@ -1045,7 +1043,8 @@ class Generator(nn.Module):
         self.blocks = []
         for i in range(opt['num_blocks']):
             self.blocks.append(RRDB(opt))
-        
+        self.blocks =  nn.ModuleList(self.blocks)
+
         self.c2 = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels'],
         stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
         self.c3 = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels'],
@@ -1107,6 +1106,7 @@ def VoxelShuffle(t):
         1, int(t.shape[1]/8), 2*t.shape[2], 2*t.shape[3], 2*t.shape[4]
     )
     return out
+
 class Discriminator(nn.Module):
     def __init__ (self, resolution, num_kernels, opt):
         super(Discriminator, self).__init__()
