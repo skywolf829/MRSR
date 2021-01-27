@@ -61,7 +61,7 @@ class Options():
         opt["save_discriminators"]     = True
         opt["physical_constraints"]    = "none"
         opt["patch_size"]              = 128
-        opt["training_patch_size"]     = 96
+        opt["training_patch_size"]     = 128
         opt["regularization"]          = "GP" #Either TV (total variation) or GP (gradient penalty) or SN 
 
         # GAN training info
@@ -74,7 +74,7 @@ class Options():
 
         opt["adaptive_streamlines"]    = False
         opt['streamline_res']          = 100
-        opt['streamline_length']       = 50
+        opt['streamline_length']       = 20
 
         opt['periodic']                = True
         opt["generator_steps"]         = 3
