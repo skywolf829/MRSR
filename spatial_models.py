@@ -1010,6 +1010,8 @@ class DenseBlock(nn.Module):
         stride=opt['stride'],padding=opt['padding'])
 
     def forward(self,x):
+        print("x " + str(x.device))
+        print("self " + str(self.device))
         c1_out = self.lrelu(self.c1(x))
         c2_out = self.lrelu(self.c2(torch.cat([x, c1_out], 1)))
         c3_out = self.lrelu(self.c3(torch.cat([x, c1_out, c2_out], 1)))
