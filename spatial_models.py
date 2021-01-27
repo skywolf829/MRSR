@@ -1084,9 +1084,9 @@ class Generator(nn.Module):
         out = self.c2(out)
         out = x + out
 
-        if(self.opt['upsampling_mode'] is not "shuffle"):
+        if(self.opt['upsample_mode'] is not "shuffle"):
             out = F.interpolate(out, scale_factor=2.0, mode=self.opt['upscaling_mode'], align_corners=True)
-        elif(self.opt['upsampling_mode'] == "shuffle"):
+        elif(self.opt['upsample_mode'] == "shuffle"):
             out = VoxelShuffle(out)
         
         out = self.lrelu(self.c3(out))
