@@ -1031,6 +1031,7 @@ class RRDB(nn.Module):
         db2_out = self.db2(db1_out) * self.B + db1_out
         db3_out = self.db3(db2_out) * self.B + db2_out
         out = db3_out * self.B + x
+        return out
 
 class Generator(nn.Module):
     def __init__ (self, resolution, num_kernels, opt):
