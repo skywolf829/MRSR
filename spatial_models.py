@@ -699,7 +699,7 @@ def train_single_scale_wrapper(generators, discriminators, opt):
 
 def train_single_scale(rank, generators, discriminators, opt, dataset):
     
-    opt['device'] = "cuda:"+str(rank)
+    opt['device'] = rank
     print("Training on device %i, initializing process group." % rank)
     if(opt['train_distributed']):
         dist.init_process_group(                                   
@@ -736,7 +736,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
     generator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=generator_optimizer,
     milestones=[0.8*len(dataset)*opt['epochs']-opt['iteration_number']],gamma=opt['gamma'])
 
-    discriminator_optimizer = optim.Adam(filter(lambda p: p.requires_grad, discriminator.parameters()), 
+    discriminator_optimizer = optim.Adam(discriminator.parameters(), 
     lr=opt["learning_rate"], betas=(opt["beta_1"],opt["beta_2"]))
     discriminator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=discriminator_optimizer,
     milestones=[0.8*len(dataset)*opt['epochs']-opt['iteration_number']],gamma=opt['gamma'])
@@ -749,8 +749,8 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
     volumes_seen = opt['epoch_number'] * len(dataset)
 
     # Get properly sized frame for this generator
-    
-    print(str(len(generators)) + ": " + str(opt["resolutions"][len(generators)]))
+    if(opt['device'] == 0):
+        print(str(len(generators)) + ": " + str(opt["resolutions"][len(generators)]))
 
     dataset.set_subsample_dist(int(2**(opt['n']-len(generators)-1)))
     if(opt['train_distributed']):
