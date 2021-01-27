@@ -1029,10 +1029,10 @@ class RRDB(nn.Module):
         self.B = opt['B']
 
     def forward(self,x):
-        out = self.db1(x) * self.B + x
-        out = self.db2(x) * self.B + out
-        out = self.db3(x) * self.B + out
-        out = out * self.B + x
+        db1_out = self.db1(x) * self.B + x
+        db2_out = self.db2(db1_out) * self.B + db1_out
+        db3_out = self.db3(db2_out) * self.B + db2_out
+        out = db3_out * self.B + x
 
 class Generator(nn.Module):
     def __init__ (self, resolution, num_kernels, opt):
