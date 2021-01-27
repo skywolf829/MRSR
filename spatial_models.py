@@ -803,12 +803,13 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
             #print(generator.learned_scaling_weights.data)
             #print(generator.learned_scaling_bias.data)
             # Update discriminator: maximize D(x) + D(G(z))
+            print(discriminator)
             if(opt["alpha_2"] > 0.0):            
                 for j in range(opt["discriminator_steps"]):
                     discriminator.zero_grad()
                     generator.zero_grad()
                     D_loss = 0
-
+                    print(real_hr.shape)
                     # Train with real downscaled to this scale
                     output_real = discriminator(real_hr)
                     discrim_error_real = -output_real.mean() 
