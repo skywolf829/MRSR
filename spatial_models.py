@@ -723,9 +723,11 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
         discriminator = discriminators[-1].to(opt['device'])
         discriminators.pop(len(discriminators)-1)
 
+    combined_models = torch.nn.ModuleList([generator, discriminator])
     if(opt['train_distributed']):
-        generator = DDP(generator, device_ids=[rank], find_unused_parameters=True)
-        discriminator = DDP(discriminator, device_ids=[rank], find_unused_parameters=True)
+        combined_models = DDP(combined_models, device_ids=[rank], find_unused_parameters=True)
+    generator = combined_models[0]
+    discriminator = combined_models[1]
 
     print_to_log_and_console("Training on %s" % (opt["device"]), 
         os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
@@ -741,7 +743,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
     discriminator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=discriminator_optimizer,
     milestones=[0.8*len(dataset)*opt['epochs']-opt['iteration_number']],gamma=opt['gamma'])
     
-    if(opt['device'] == 0):
+    if(rank == 0):
         writer = SummaryWriter(os.path.join('tensorboard',opt['save_name']))
 
     start_time = time.time()
@@ -749,7 +751,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
     volumes_seen = opt['epoch_number'] * len(dataset)
 
     # Get properly sized frame for this generator
-    if(opt['device'] == 0):
+    if(rank == 0):
         print(str(len(generators)) + ": " + str(opt["resolutions"][len(generators)]))
 
     dataset.set_subsample_dist(int(2**(opt['n']-len(generators)-1)))

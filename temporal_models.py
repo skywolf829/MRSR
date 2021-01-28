@@ -32,9 +32,25 @@ output_folder = os.path.join(FlowSTSR_folder_path, "Output")
 save_folder = os.path.join(FlowSTSR_folder_path, "SavedModels")
 
 
-def train_temporal_network(model, discriminator, dataset, opt):
+def train_temporal_network(rank, model, discriminator, dataset, opt):
+
+    opt['device'] = rank
+    print("Training on device %i, initializing process group." % rank)
+    if(opt['train_distributed']):
+        dist.init_process_group(                                   
+            backend='nccl',                                         
+            init_method='env://',                                   
+            world_size=opt['num_nodes'] * opt['gpus_per_node'],                              
+            rank=rank                                               
+        )  
+    torch.manual_seed(0)
+
     model = model.to(opt['device'])
     discriminator = discriminator.to(opt['device'])
+
+    if(opt['train_distributed']):
+        generator = DDP(generator, device_ids=[rank], find_unused_parameters=True)
+        discriminator = DDP(discriminator, device_ids=[rank], find_unused_parameters=True)
 
     print_to_log_and_console("Training on %s" % (opt["device"]), 
         os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
@@ -42,20 +58,33 @@ def train_temporal_network(model, discriminator, dataset, opt):
     generator_optimizer = optim.Adam(model.parameters(), lr=opt["learning_rate"], 
     betas=(opt["beta_1"],opt["beta_2"]))
     generator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=generator_optimizer,
-    milestones=[8000-opt['iteration_number']],gamma=opt['gamma'])
+    milestones=[0.8*len(dataset)*opt['epochs']-opt['iteration_number']],gamma=opt['gamma'])
 
     discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=opt["learning_rate"]*4, 
     betas=(opt["beta_1"],opt["beta_2"]))
     discriminator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=discriminator_optimizer,
-    milestones=[8000-opt['iteration_number']],gamma=opt['gamma'])
+    milestones=[0.8*len(dataset)*opt['epochs']-opt['iteration_number']],gamma=opt['gamma'])
 
-    writer = SummaryWriter(os.path.join('tensorboard',opt['save_name']))
-    reference_writer = SummaryWriter(os.path.join('tensorboard', "LERP"))
-    dataloader = torch.utils.data.DataLoader(
-        dataset=dataset,
-        shuffle=True,
-        num_workers=opt["num_workers"]
-    )
+    if(rank == 0):
+        writer = SummaryWriter(os.path.join('tensorboard',opt['save_name']))
+        reference_writer = SummaryWriter(os.path.join('tensorboard', "LERP"))
+    
+    if(opt['train_distributed']):
+        train_sampler = torch.utils.data.distributed.DistributedSampler(dataset, 
+        num_replicas=opt['num_nodes']*opt['gpus_per_node'],rank=rank)
+        dataloader = torch.utils.data.DataLoader(
+            dataset=dataset,
+            shuffle=False,
+            num_workers=opt["num_workers"],
+            pin_memory=True,
+            sampler=train_sampler
+        )
+    else:
+        dataloader = torch.utils.data.DataLoader(
+            dataset=dataset,
+            shuffle=True,
+            num_workers=opt["num_workers"]
+        )
 
     loss_function = nn.MSELoss().to(opt['device'])
     iters = 0
@@ -89,34 +118,37 @@ def train_temporal_network(model, discriminator, dataset, opt):
             generator_scheduler.step()  
             discriminator_scheduler.step()
 
-            pred_frame_cm_image = toImg(pred_frames[0].detach().cpu().numpy())
-            gt_middle_frame_cm_image = toImg(gt_middle_frames[0].detach().cpu().numpy())
-            err_frame_image = toImg(torch.abs((pred_frames[0].detach() - gt_middle_frames[0].detach())).cpu().numpy())
+            if(rank == 0):
+                pred_frame_cm_image = toImg(pred_frames[0].detach().cpu().numpy())
+                gt_middle_frame_cm_image = toImg(gt_middle_frames[0].detach().cpu().numpy())
+                err_frame_image = toImg(torch.abs((pred_frames[0].detach() - gt_middle_frames[0].detach())).cpu().numpy())
 
-            lerped_frames = []
-            for i in range(timesteps[1]-timesteps[0]-1):
-                factor = (i+1)/(timesteps[1]-timesteps[0])
-                lerped_gt = (1-factor)*gt_start_frame + \
-                factor*gt_end_frame
-                lerped_gt = lerped_frames.append(dataset.unscale(lerped_gt))
-            lerped_gt = torch.cat(lerped_frames, dim=0)
-            reference_writer.add_scalar('MSE', loss_function(lerped_gt, gt_middle_frames).item(), iters)
-            writer.add_scalar('MSE', loss.item(), iters) 
-            writer.add_scalar('D_loss', discrim_loss.item(), iters) 
-            writer.add_scalar('G_loss', gen_loss.item(), iters) 
-            writer.add_image("Predicted next frame",pred_frame_cm_image, iters)
-            writer.add_image("GT next frame",gt_middle_frame_cm_image, iters)
-            writer.add_image("Abs difference",err_frame_image, iters)
+                lerped_frames = []
+                for i in range(timesteps[1]-timesteps[0]-1):
+                    factor = (i+1)/(timesteps[1]-timesteps[0])
+                    lerped_gt = (1-factor)*gt_start_frame + \
+                    factor*gt_end_frame
+                    lerped_gt = lerped_frames.append(dataset.unscale(lerped_gt))
+                lerped_gt = torch.cat(lerped_frames, dim=0)
+                reference_writer.add_scalar('MSE', loss_function(lerped_gt, gt_middle_frames).item(), iters)
+                writer.add_scalar('MSE', loss.item(), iters) 
+                writer.add_scalar('D_loss', discrim_loss.item(), iters) 
+                writer.add_scalar('G_loss', gen_loss.item(), iters) 
+                writer.add_image("Predicted next frame",pred_frame_cm_image, iters)
+                writer.add_image("GT next frame",gt_middle_frame_cm_image, iters)
+                writer.add_image("Abs difference",err_frame_image, iters)
 
-            print_to_log_and_console("%i/%i: MSE=%.06f" %
-            (iters, opt['epochs']*len(dataset), loss.item()), 
-            os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
+                print_to_log_and_console("%i/%i: MSE=%.06f" %
+                (iters, opt['epochs']*len(dataset), loss.item()), 
+                os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
 
             iters += 1
+            if(rank == 0 and iters % opt['save_every'] == 0):
+                save_models(model, discriminator, opt)
+                
+        opt['epoch_number'] = epoch+1        
 
-        opt['epoch_number'] = epoch+1
-        if(epoch % opt['save_every'] == 0):
-            save_models(model, discriminator, opt)
+        
 
     return model
 

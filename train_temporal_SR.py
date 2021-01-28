@@ -124,7 +124,15 @@ if __name__ == '__main__':
 
 
     #with profiler.profile(profile_memory=True, use_cuda=True, record_shapes=True) as prof:
-    generator = train_temporal_network(generator, discriminator, dataset, opt)
+    if(opt['train_distributed']):
+        os.environ['MASTER_ADDR'] = '127.0.0.1'              
+        os.environ['MASTER_PORT'] = '29700' 
+        mp.spawn(train_single_scale,
+            args=(generators, discriminators,opt,dataset),
+            nprocs=opt['gpus_per_node'],
+            join=True)
+    else:
+        generator = train_temporal_network(opt['device'], generator, discriminator, dataset, opt)
     #reporter = MemReporter()
     #reporter.report()
     #discriminator.to("cpu")
