@@ -727,7 +727,6 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
         combined_models = DDP(combined_models, device_ids=[rank])
     generator = combined_models.module[0]
     discriminator = combined_models.module[1]
-    print(generator.device())
 
     print_to_log_and_console("Training on %s" % (opt["device"]), 
         os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
