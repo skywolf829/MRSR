@@ -77,12 +77,12 @@ class Options():
         opt['streamline_length']       = 20
 
         opt['periodic']                = True
-        opt["generator_steps"]         = 3
-        opt["discriminator_steps"]     = 3
+        opt["generator_steps"]         = 1
+        opt["discriminator_steps"]     = 1
         opt["epochs"]                  = 20
         opt["minibatch"]               = 1        # Minibatch for training
-        opt["learning_rate"]           = 0.001    # Learning rate for GAN
-        opt["beta_1"]                  = 0.5
+        opt["learning_rate"]           = 0.0001    # Learning rate for GAN
+        opt["beta_1"]                  = 0.9
         opt["beta_2"]                  = 0.999
         opt["gamma"]                   = 0.1
 
