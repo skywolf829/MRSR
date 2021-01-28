@@ -811,20 +811,16 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                     D_loss = 0
                     
                     output_real = discriminator(real_hr)
-                    discrim_error_real = -output_real.mean() 
-                    D_loss += discrim_error_real.mean().item()
+                    D_loss -= output_real.mean()
 
-                    with torch.no_grad():
-                        fake = generator(real_lr)
+                    fake = generator(real_lr)
                     output_fake = discriminator(fake.detach())
-                    discrim_error_fake = output_fake.mean()
-                    D_loss += discrim_error_fake.item()
+                    D_loss += output_fake.mean()
                     
-                    if(opt['regularization'] == "GP"):
-                        # Gradient penalty 
-                        gradient_penalty = calc_gradient_penalty(discriminator, real_hr, 
-                        fake, 1, opt['device'])
-                        D_loss += gradient_penalty
+                    gradient_penalty = calc_gradient_penalty(discriminator, real_hr, 
+                    fake, 1, opt['device'])
+                    D_loss += gradient_penalty
+
                     D_loss.backward(retain_graph=True)
                     discriminator_optimizer.step()
 
@@ -957,7 +953,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                 (volumes_seen, opt['epochs']*len(dataset), D_loss, G_loss, rec_loss, mags.mean(), angles.mean()), 
                 os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
 
-                writer.add_scalar('D_loss_scale/%i'%len(generators), D_loss, volumes_seen) 
+                writer.add_scalar('D_loss_scale/%i'%len(generators), D_loss.item(), volumes_seen) 
                 writer.add_scalar('G_loss_scale/%i'%len(generators), gen_adv_err, volumes_seen) 
                 writer.add_scalar('L1/%i'%len(generators), rec_loss, volumes_seen)
                 writer.add_scalar('Gradient_loss/%i'%len(generators), gradient_loss / (opt['alpha_5']+1e-6), volumes_seen)
