@@ -715,19 +715,19 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
     # Create the new generator and discriminator for this level
     if(len(generators) == opt['scale_in_training']):
         generator, num_kernels_this_scale = init_gen(len(generators), opt)
-        generator = generator.to(opt["device"])
-        discriminator = init_discrim(len(generators), opt).to(opt["device"])
+        discriminator = init_discrim(len(generators), opt)
     else:
-        generator = generators[-1].to(opt['device'])
+        generator = generators[-1]
         generators.pop(len(generators)-1)
-        discriminator = discriminators[-1].to(opt['device'])
+        discriminator = discriminators[-1]
         discriminators.pop(len(discriminators)-1)
 
-    combined_models = torch.nn.ModuleList([generator, discriminator])
+    combined_models = torch.nn.ModuleList([generator, discriminator]).to(rank)
     if(opt['train_distributed']):
-        combined_models = DDP(combined_models, device_ids=[rank], find_unused_parameters=True)
+        combined_models = DDP(combined_models, device_ids=[rank])
     generator = combined_models.module[0]
     discriminator = combined_models.module[1]
+    print(generator.device())
 
     print_to_log_and_console("Training on %s" % (opt["device"]), 
         os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
