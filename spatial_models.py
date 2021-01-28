@@ -837,11 +837,13 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                 phys_loss = 0
                 path_loss = 0
                 loss = nn.L1Loss().to(opt["device"])
+                if(rank == 0):
+                    print(real_lr.shape)
+                    print(fake.shape)
                 fake = generator(real_lr)
-                print(fake.shape)
                 if(opt["alpha_2"] > 0.0):                    
                     output = discriminator(fake)
-                    G_loss += -output.mean() * opt['alpha_2']
+                    G_loss += (-output.mean() * opt['alpha_2'])
                     gen_adv_err = -output.mean().item()
 
                 if(opt['alpha_1'] > 0.0):
@@ -915,6 +917,8 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
 
                     G_loss += path_loss
                     path_loss = path_loss.item()
+                if(rank == 0):
+                    print("Backward and step")
                 G_loss.backward(retain_graph=True)
                 generator_optimizer.step()
             volumes_seen += 1
