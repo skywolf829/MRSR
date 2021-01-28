@@ -726,8 +726,8 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
     combined_models = torch.nn.ModuleList([generator, discriminator])
     if(opt['train_distributed']):
         combined_models = DDP(combined_models, device_ids=[rank], find_unused_parameters=True)
-    generator = combined_models[0]
-    discriminator = combined_models[1]
+    generator = combined_models.module[0]
+    discriminator = combined_models.module[1]
 
     print_to_log_and_console("Training on %s" % (opt["device"]), 
         os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
