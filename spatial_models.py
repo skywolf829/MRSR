@@ -1018,13 +1018,14 @@ class RRDB(nn.Module):
         self.db1 = DenseBlock(opt['base_num_kernels'], int(opt['base_num_kernels']/4), opt)
         self.db2 = DenseBlock(opt['base_num_kernels'], int(opt['base_num_kernels']/4), opt)
         self.db3 = DenseBlock(opt['base_num_kernels'], int(opt['base_num_kernels']/4), opt)       
-        self.B = opt['B']
+        self.B = torch.tensor([opt['B']])
+        self.register_buffer('B_const', self.B)
 
     def forward(self,x):
-        db1_out = self.db1(x) * self.B + x
-        db2_out = self.db2(db1_out) * self.B + db1_out
-        db3_out = self.db3(db2_out) * self.B + db2_out
-        out = db3_out * self.B + x
+        db1_out = self.db1(x) * self.B_const + x
+        db2_out = self.db2(db1_out) * self.B_const + db1_out
+        db3_out = self.db3(db2_out) * self.B_const + db2_out
+        out = db3_out * self.B_const + x
         return out
 
 class Generator(nn.Module):
