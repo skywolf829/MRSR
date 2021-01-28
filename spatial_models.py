@@ -801,8 +801,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
             g = 0
             mags = np.zeros(1)
             angles = np.zeros(1)
-            #print(generator.learned_scaling_weights.data)
-            #print(generator.learned_scaling_bias.data)
+            
             # Update discriminator: maximize D(x) + D(G(z))
             if(opt["alpha_2"] > 0.0):            
                 for j in range(opt["discriminator_steps"]):
@@ -835,7 +834,6 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                 loss = nn.L1Loss().to(opt["device"])
                 
                 fake = generator(real_lr)
-                print("just about at error")
                 if(opt["alpha_2"] > 0.0):               
                     output = discriminator(fake)
                     G_loss += (-output.mean() * opt['alpha_2'])
@@ -912,8 +910,6 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
 
                     G_loss += path_loss
                     path_loss = path_loss.item()
-                if(rank == 0):
-                    print("Backward and step")
                 G_loss.backward(retain_graph=True)
                 generator_optimizer.step()
             volumes_seen += 1
@@ -1065,7 +1061,6 @@ class Generator(nn.Module):
         return (self.opt['kernel_size']-1)*self.opt['num_blocks']
 
     def forward(self, x):
-        print("starting generation")
         x = self.c1(x)
         out = self.blocks[0](x)
         for i in range(1, len(self.blocks)):
@@ -1143,7 +1138,6 @@ class Discriminator(nn.Module):
         return (self.opt['kernel_size']-1)*self.opt['num_blocks']
 
     def forward(self, x):
-        print("discrim forwarding")
         return self.model(x)
 
 def create_batchnorm_layer(batchnorm_layer, num_kernels, use_sn):
