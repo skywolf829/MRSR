@@ -813,7 +813,8 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                     discrim_error_real = -output_real.mean() 
                     D_loss += discrim_error_real.mean().item()
 
-                    fake = generator(real_lr)
+                    with torch.no_grad():
+                        fake = generator(real_lr)
                     output_fake = discriminator(fake.detach())
                     discrim_error_fake = output_fake.mean()
                     D_loss += discrim_error_fake.item()
