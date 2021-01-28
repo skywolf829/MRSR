@@ -1145,6 +1145,7 @@ class Discriminator(nn.Module):
         return (self.opt['kernel_size']-1)*self.opt['num_blocks']
 
     def forward(self, x):
+        print("discrim forwarding")
         return self.model(x)
 
 def create_batchnorm_layer(batchnorm_layer, num_kernels, use_sn):
