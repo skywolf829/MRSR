@@ -32,6 +32,7 @@ class Options():
 
         # generator info
         opt["num_blocks"]              = 3
+        opt['num_discrim_blocks']      = 5
         opt["base_num_kernels"]        = 64        # Num of kernels in smallest scale conv layers
         opt["pre_padding"]             = False         # Padding on conv layers in the GAN
         opt["kernel_size"]             = 3

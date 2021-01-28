@@ -808,24 +808,21 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                     discriminator.zero_grad()
                     generator.zero_grad()
                     D_loss = 0
-                    # Train with real downscaled to this scale
+                    
                     output_real = discriminator(real_hr)
                     discrim_error_real = -output_real.mean() 
                     D_loss += discrim_error_real.mean().item()
-                    #discrim_error_real.backward(retain_graph=True)
 
                     fake = generator(real_lr)
                     output_fake = discriminator(fake.detach())
                     discrim_error_fake = output_fake.mean()
                     D_loss += discrim_error_fake.item()
-                    #discrim_error_fake.backward(retain_graph=True)
                     
                     if(opt['regularization'] == "GP"):
                         # Gradient penalty 
                         gradient_penalty = calc_gradient_penalty(discriminator, real_hr, 
                         fake, 1, opt['device'])
                         D_loss += gradient_penalty
-                        #gradient_penalty.backward()
                     D_loss.backward(retain_graph=True)
                     discriminator_optimizer.step()
 
@@ -838,12 +835,10 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                 phys_loss = 0
                 path_loss = 0
                 loss = nn.L1Loss().to(opt["device"])
-                if(rank == 0):
-                    print(generator)
-                    print(real_lr.shape)
-                    print(fake.shape)
+                
                 fake = generator(real_lr)
-                if(opt["alpha_2"] > 0.0):                    
+                print("just about at error")
+                if(opt["alpha_2"] > 0.0):               
                     output = discriminator(fake)
                     G_loss += (-output.mean() * opt['alpha_2'])
                     gen_adv_err = -output.mean().item()
@@ -1072,6 +1067,7 @@ class Generator(nn.Module):
         return (self.opt['kernel_size']-1)*self.opt['num_blocks']
 
     def forward(self, x):
+        print("starting generation")
         x = self.c1(x)
         out = self.blocks[0](x)
         for i in range(1, len(self.blocks)):
@@ -1119,7 +1115,7 @@ class Discriminator(nn.Module):
             batchnorm_layer = nn.BatchNorm3d
 
         modules = []
-        for i in range(opt['num_blocks']):
+        for i in range(opt['num_discrim_blocks']):
             # The head goes from 3 channels (RGB) to num_kernels
             if i == 0:
                 modules.append(nn.Sequential(
@@ -1129,7 +1125,7 @@ class Discriminator(nn.Module):
                     nn.LeakyReLU(0.2, inplace=True)
                 ))
             # The tail will go from num_kernels to 1 channel for discriminator optimization
-            elif i == opt['num_blocks']-1:  
+            elif i == opt['num_discrim_blocks']-1:  
                 tail = nn.Sequential(
                     create_conv_layer(conv_layer, num_kernels, 1, 
                     opt['kernel_size'], opt['stride'], 0, use_sn)
