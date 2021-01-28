@@ -834,14 +834,13 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                 generator.zero_grad()
                 discriminator.zero_grad()
                 G_loss = 0
-                gen_err_total = 0
                 phys_loss = 0
                 path_loss = 0
                 loss = nn.L1Loss().to(opt["device"])
                 fake = generator(real_lr)
+                print(fake.shape)
                 if(opt["alpha_2"] > 0.0):                    
                     output = discriminator(fake)
-                    generator_error = -output.mean() * opt["alpha_2"]
                     G_loss += -output.mean() * opt['alpha_2']
                     gen_adv_err = -output.mean().item()
 
