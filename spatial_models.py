@@ -829,6 +829,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                     D_loss.backward(retain_graph=True)
                     discriminator_optimizer.step()
 
+
             # Update generator: maximize D(G(z))
             for j in range(opt["generator_steps"]):
                 generator.zero_grad()
@@ -838,6 +839,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                 path_loss = 0
                 loss = nn.L1Loss().to(opt["device"])
                 if(rank == 0):
+                    print(generator)
                     print(real_lr.shape)
                     print(fake.shape)
                 fake = generator(real_lr)
