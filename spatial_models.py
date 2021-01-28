@@ -826,7 +826,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                         fake, 1, opt['device'])
                         D_loss += gradient_penalty
                         #gradient_penalty.backward()
-                    D_loss.backward()
+                    D_loss.backward(retain_graph=True)
                     discriminator_optimizer.step()
 
             # Update generator: maximize D(G(z))
@@ -842,15 +842,13 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                 if(opt["alpha_2"] > 0.0):                    
                     output = discriminator(fake)
                     generator_error = -output.mean() * opt["alpha_2"]
-                    generator_error.backward(retain_graph=True)
-                    gen_err_total += generator_error.mean().item()
-                    G_loss = output.mean().item()
+                    G_loss += -output.mean() * opt['alpha_2']
+                    gen_adv_err = -output.mean().item()
 
                 if(opt['alpha_1'] > 0.0):
                     rec_loss = loss(fake, real_hr) * opt["alpha_1"]
-                    rec_loss.backward(retain_graph=True)
-                    gen_err_total += rec_loss.item()
-                    rec_loss = rec_loss.detach()
+                    G_loss += rec_loss
+                    rec_loss = rec_loss.item()
 
                 if(opt['alpha_3'] > 0.0):
                     if(opt["physical_constraints"] == "soft"):
@@ -861,8 +859,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                             g_map = TAD3D_CD(fake, opt["device"])
                             g = g_map.mean()
                         phys_loss = opt["alpha_3"] * g 
-                        phys_loss.backward(retain_graph=True)
-                        gen_err_total += phys_loss.item()
+                        G_loss += phys_loss
                         phys_loss = phys_loss.item()
                 if(opt['alpha_4'] > 0.0):   
                     #print("About to calculate loss")                 
@@ -872,10 +869,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                     angles = torch.abs(cs(fake, 
                     real_hr) - 1) / 2
                     r_loss = opt['alpha_4'] * (mags.mean() + angles.mean()) / 2
-                    #print("calculated loss, about to backward")
-                    r_loss.backward(retain_graph=True)
-                    #print("backward pass finished")
-                    gen_err_total += r_loss.item()
+                    G_loss += r_loss
 
                 if(opt['alpha_5'] > 0.0):
                     real_gradient = []
@@ -898,8 +892,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                     rec_gradient = torch.cat(rec_gradient, 1)
                     gradient_loss = loss(real_gradient, rec_gradient)
                     gradient_loss_adj = gradient_loss * opt['alpha_5']
-                    gradient_loss_adj.backward(retain_graph=True)
-                    gen_err_total += gradient_loss_adj.item()
+                    G_loss += gradient_loss_adj
 
                 if(opt["alpha_6"] > 0):
                     if(opt['mode'] == '3D'):
@@ -921,9 +914,9 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                         opt['streamline_res'], opt['streamline_res'], 
                         1, opt['streamline_length'], opt['device'], periodic=opt['periodic']) * opt['alpha_6']
 
-                    path_loss.backward(retain_graph=True)
+                    G_loss += path_loss
                     path_loss = path_loss.item()
-                
+                G_loss.backward(retain_graph=True)
                 generator_optimizer.step()
             volumes_seen += 1
 
@@ -963,7 +956,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                 os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
 
                 writer.add_scalar('D_loss_scale/%i'%len(generators), D_loss, volumes_seen) 
-                writer.add_scalar('G_loss_scale/%i'%len(generators), G_loss, volumes_seen) 
+                writer.add_scalar('G_loss_scale/%i'%len(generators), gen_adv_err, volumes_seen) 
                 writer.add_scalar('L1/%i'%len(generators), rec_loss, volumes_seen)
                 writer.add_scalar('Gradient_loss/%i'%len(generators), gradient_loss / (opt['alpha_5']+1e-6), volumes_seen)
                 writer.add_scalar('TAD/%i'%len(generators), phys_loss / (opt["alpha_3"]+1e-6), volumes_seen)
