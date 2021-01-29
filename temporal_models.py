@@ -25,6 +25,8 @@ import copy
 from pytorch_memlab import LineProfiler, MemReporter, profile, profile_every
 import h5py
 from torch.nn.utils import spectral_norm
+from datasets import LocalTemporalDataset
+
 
 FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 input_folder = os.path.join(FlowSTSR_folder_path, "InputData")
@@ -45,12 +47,12 @@ def train_temporal_network(rank, model, discriminator, dataset, opt):
         )  
     torch.manual_seed(0)
 
-    model = model.to(opt['device'])
-    discriminator = discriminator.to(opt['device'])
-
+    combined_models = torch.nn.ModuleList([model, discriminator]).to(rank)
     if(opt['train_distributed']):
-        generator = DDP(generator, device_ids=[rank], find_unused_parameters=True)
-        discriminator = DDP(discriminator, device_ids=[rank], find_unused_parameters=True)
+        combined_models = DDP(combined_models, device_ids=[rank])
+
+    model = combined_models.module[0]
+    discriminator = combined_models.module[1]
 
     print_to_log_and_console("Training on %s" % (opt["device"]), 
         os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
