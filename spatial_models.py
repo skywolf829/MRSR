@@ -1079,7 +1079,7 @@ class Generator(nn.Module):
         out = self.c2(out)
         out = x + out
 
-        if(self.opt['upsample_mode'] is not "shuffle"):
+        if(self.opt['upsample_mode'] != "shuffle"):
             out = F.interpolate(out, scale_factor=2.0, 
             mode=self.opt['upsample_mode'], align_corners=True)
         elif(self.opt['upsample_mode'] == "shuffle"):
