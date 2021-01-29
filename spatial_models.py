@@ -931,6 +931,14 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                     writer.add_image("real/%i"%len(generators), 
                     real_cm.clip(0,1), volumes_seen)
 
+                    trilin_np = F.interpolate(real_lr, scale_factor=2, mode='trilinear', 
+                    align_corners=True).detach().cpu().numpy()[0]
+                    trilin_cm = toImg(trilin_np)
+                    trilin_cm -= trilin_cm.min()
+                    trilin_cm *= (1/trilin_cm.max())
+                    writer.add_image("%s_trilin/%i"%(opt['save_name'], len(generators)), 
+                    trilin_cm.clip(0,1), volumes_seen)
+
                     if(opt["alpha_3"] > 0.0):
                         g_cm = toImg(g_map.detach().cpu().numpy()[0])
                         writer.add_image("Divergence/%i"%len(generators), 
