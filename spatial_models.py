@@ -945,8 +945,11 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                         writer.add_image("mag/%i"%len(generators), 
                         mags_cm, volumes_seen)
 
+                num_total = opt['epochs']*len(dataset)
+                if(opt['train_distributed']):
+                    num_total = int(num_total / (opt['num_nodes'] * opt['gpus_per_node']))
                 print_to_log_and_console("%i/%i: Dloss=%.02f Gloss=%.02f L1=%.04f AMD=%.02f AAD=%.02f" %
-                (volumes_seen, opt['epochs']*len(dataset), D_loss, G_loss, rec_loss, mags.mean(), angles.mean()), 
+                (volumes_seen, num_total, D_loss, G_loss, rec_loss, mags.mean(), angles.mean()), 
                 os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
 
                 writer.add_scalar('D_loss_scale/%i'%len(generators), D_loss.item(), volumes_seen) 
@@ -972,6 +975,8 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
     generator.eval()
     discriminator = reset_grads(discriminator, False)
     discriminator.eval()
+
+    save_models(generators + [generator], discriminators + [discriminator], opt)
 
     return generator, discriminator
 
