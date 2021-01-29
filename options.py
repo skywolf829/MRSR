@@ -15,7 +15,7 @@ class Options():
         opt["num_channels"]            = 3
         opt["spatial_downscale_ratio"] = 0.5       # Spatial downscale ratio between levels
         opt["min_dimension_size"]      = 128        # Smallest a dimension can go to upscale from
-        opt["cropping_resolution"]     = 96
+        opt["cropping_resolution"]     = 128
         opt["train_date_time"]         = None      # The day/time the model was trained (finish time)
         
         opt['dataset_name']            = "isotropic1024coarse"
@@ -33,7 +33,7 @@ class Options():
         # generator info
         opt["num_blocks"]              = 3
         opt['num_discrim_blocks']      = 5
-        opt["base_num_kernels"]        = 64        # Num of kernels in smallest scale conv layers
+        opt["base_num_kernels"]        = 96        # Num of kernels in smallest scale conv layers
         opt["pre_padding"]             = False         # Padding on conv layers in the GAN
         opt["kernel_size"]             = 3
         opt["padding"]                 = 1
