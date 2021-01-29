@@ -126,7 +126,7 @@ if __name__ == '__main__':
     #with profiler.profile(profile_memory=True, use_cuda=True, record_shapes=True) as prof:
     if(opt['train_distributed']):
         os.environ['MASTER_ADDR'] = '127.0.0.1'              
-        os.environ['MASTER_PORT'] = '29700' 
+        os.environ['MASTER_PORT'] = '29500' 
         mp.spawn(train_temporal_network,
             args=(generator, discriminator,opt,dataset),
             nprocs=opt['gpus_per_node'],
