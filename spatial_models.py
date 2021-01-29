@@ -1034,21 +1034,22 @@ class Generator(nn.Module):
         for i in range(opt['num_blocks']):
             self.blocks.append(RRDB(opt))
         self.blocks =  nn.ModuleList(self.blocks)
+        
+        kerns = opt['base_num_kernels']
+        if(opt['upsample_mode'] == "shuffle"):
+            kerns = int(kerns*8)
 
-        self.c2 = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels'],
+        self.c2 = nn.Conv3d(opt['base_num_kernels'], kerns,
         stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
 
         # Upscaling happens between 2 and 3
-        kerns = opt['base_num_kernels']
-        if(opt['upsample_mode'] == "shuffle"):
-            kerns = int(kerns / 8)
-
-        self.c3 = nn.Conv3d(kerns, kerns,
+       
+        self.c3 = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels'],
         stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
-        self.c4 = nn.Conv3d(kerns, kerns,
+        self.c4 = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels'],
         stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
-        self.final_conv = nn.Conv3d(kerns, opt['num_channels'],
-        stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
+        self.final_conv = nn.Conv3d(opt['base_num_kernels'], opt['num_channels'],
+        stride=opt['stride'],padding=4,kernel_size=9)
         self.lrelu = nn.LeakyReLU(0.2, inplace=True)
 
     def get_input_shape(self):
