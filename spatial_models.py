@@ -1043,14 +1043,13 @@ class Generator(nn.Module):
             self.blocks.append(RRDB(opt))
         self.blocks =  nn.ModuleList(self.blocks)
         
-        kerns = opt['base_num_kernels']
-        if(opt['upsample_mode'] == "shuffle"):
-            kerns = int(kerns*8)
-
-        self.c2 = nn.Conv3d(opt['base_num_kernels'], kerns,
+        self.c2 = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels'],
         stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
 
         # Upscaling happens between 2 and 3
+        if(self.opt['upsample_mode'] == "shuffle"):
+            self.c2_vs = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels']*8,
+            stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
        
         self.c3 = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels'],
         stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
@@ -1092,6 +1091,7 @@ class Generator(nn.Module):
             out = F.interpolate(out, scale_factor=2.0, 
             mode=self.opt['upsample_mode'], align_corners=True)
         elif(self.opt['upsample_mode'] == "shuffle"):
+            out = self.c2_vs(out)
             out = VoxelShuffle(out)
         
         out = self.lrelu(self.c3(out))
