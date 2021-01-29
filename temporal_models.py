@@ -149,9 +149,7 @@ def train_temporal_network(rank, model, discriminator, dataset, opt):
                 save_models(model, discriminator, opt)
                 
         opt['epoch_number'] = epoch+1        
-
-        
-
+    save_models(model, discriminator, opt)
     return model
 
 def save_models(model, discriminator, opt):

@@ -127,18 +127,13 @@ if __name__ == '__main__':
     if(opt['train_distributed']):
         os.environ['MASTER_ADDR'] = '127.0.0.1'              
         os.environ['MASTER_PORT'] = '29700' 
-        mp.spawn(train_single_scale,
-            args=(generators, discriminators,opt,dataset),
+        mp.spawn(train_temporal_network,
+            args=(generator, discriminator,opt,dataset),
             nprocs=opt['gpus_per_node'],
             join=True)
     else:
         generator = train_temporal_network(opt['device'], generator, discriminator, dataset, opt)
-    #reporter = MemReporter()
-    #reporter.report()
-    #discriminator.to("cpu")
-
-    save_models(generator, discriminator, opt)
-        
+    
     time_passed = (time.time() - start_time) / 60
     print_to_log_and_console("%s - Finished training  in %f minutes" % (str(datetime.datetime.now()), time_passed),
     os.path.join(opt["save_folder"], opt["save_name"]), "log.txt") 
