@@ -1037,11 +1037,17 @@ class Generator(nn.Module):
 
         self.c2 = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels'],
         stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
-        self.c3 = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels'],
+
+        # Upscaling happens between 2 and 3
+        kerns = opt['base_num_kernels']
+        if(opt['upsample_mode'] == "shuffle"):
+            kerns = int(kerns / 8)
+
+        self.c3 = nn.Conv3d(kerns, kerns,
         stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
-        self.c4 = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels'],
+        self.c4 = nn.Conv3d(kerns, kerns,
         stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
-        self.final_conv = nn.Conv3d(opt['base_num_kernels'], opt['num_channels'],
+        self.final_conv = nn.Conv3d(kerns, opt['num_channels'],
         stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
         self.lrelu = nn.LeakyReLU(0.2, inplace=True)
 

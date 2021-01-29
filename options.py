@@ -50,7 +50,7 @@ class Options():
         opt["n"]                       = 0         # Number of scales in the heirarchy, defined by the input and min_dimension_size
         opt["resolutions"]             = []        # The scales for the GAN
         opt["downsample_mode"]         = "average_pooling"
-        opt["upsample_mode"]           = "trilinear"
+        opt["upsample_mode"]           = "shuffle"
 
         opt["train_distributed"]       = True
         opt["device"]                  = 0
