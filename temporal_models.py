@@ -292,7 +292,7 @@ class Temporal_Generator_UNET(nn.Module):
         self.up3 = DoubleConv(256+128, 128)
         self.up4 = DoubleConv(128+64, 64)
 
-        self.finalconv = nn.Conv3d(64, opt['num_channels'], 
+        self.final_conv = nn.Conv3d(64, opt['num_channels'], 
         kernel_size=3, stride=1, padding=1)
 
     def forward(self, x_start, x_end, timesteps = (0,2)):
