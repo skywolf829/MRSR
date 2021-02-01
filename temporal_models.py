@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
 import numpy as np
 import time
 import math
