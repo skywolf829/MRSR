@@ -132,7 +132,7 @@ if __name__ == '__main__':
             nprocs=opt['gpus_per_node'],
             join=True)
     else:
-        generator = train_temporal_network(opt['device'], generator, discriminator, dataset, opt)
+        generator = train_temporal_network(opt['device'], generator, discriminator, opt, dataset)
     
     time_passed = (time.time() - start_time) / 60
     print_to_log_and_console("%s - Finished training  in %f minutes" % (str(datetime.datetime.now()), time_passed),
