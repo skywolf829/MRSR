@@ -37,7 +37,7 @@ save_folder = os.path.join(FlowSTSR_folder_path, "SavedModels")
 def train_temporal_network(rank, model, discriminator, opt, dataset):
 
     opt['device'] = rank
-    print("Training on device %i, initializing process group." % rank)
+    print("Training on device " + str(rank) + ", initializing process group.")
     if(opt['train_distributed']):
         dist.init_process_group(                                   
             backend='nccl',                                         
