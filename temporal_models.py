@@ -103,7 +103,7 @@ def train_temporal_network(rank, model, discriminator, opt, dataset):
             #gt_end_frame = dataset.scale(gt_end_frame)
             
             pred_frames = model(gt_start_frame, gt_end_frame, timesteps)
-
+            print("returned pred frames " + str(pred_frames))
             for i in range(opt['discriminator_steps']):
                 model.zero_grad()
                 discriminator.zero_grad()
@@ -277,6 +277,7 @@ class Temporal_Generator(nn.Module):
             lerped_gt = (1.0-lerp_factor)*x_start + lerp_factor*x_end
             pred_frames.append(lerped_gt + 0.5*(pred_frames_forward[i] + pred_frames_backward[i]))
         
+        print("pred frames " + str(pred_frames.shape))
         pred_frames = torch.cat(pred_frames, dim=0)
         return pred_frames
 
