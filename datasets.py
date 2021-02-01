@@ -218,9 +218,6 @@ class LocalTemporalDataset(torch.utils.data.Dataset):
     def __len__(self):
         return self.num_items - self.opt['training_seq_length'] + 1
 
-    def resolution(self):
-        return self.resolution
-
     def scale(self, data):
         d = data.clone()
         if(self.opt['scaling_mode'] == "magnitude"):
