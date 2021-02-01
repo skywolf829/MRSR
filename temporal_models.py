@@ -103,7 +103,7 @@ def train_temporal_network(rank, model, discriminator, opt, dataset):
             #gt_end_frame = dataset.scale(gt_end_frame)
             
             pred_frames = model(gt_start_frame, gt_end_frame, timesteps)
-            print("returned pred frames " + str(pred_frames))
+            print("returned pred frames " + str(pred_frames.shape))
             for i in range(opt['discriminator_steps']):
                 model.zero_grad()
                 discriminator.zero_grad()
