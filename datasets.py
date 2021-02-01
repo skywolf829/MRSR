@@ -311,7 +311,7 @@ class LocalTemporalDataset(torch.utils.data.Dataset):
             #print("converting " + self.item_names[index] + " to tensor")
             all_frames = []
             for i in range(self.opt['training_seq_length']):
-                f = h5py.File(os.path.join(self.opt['data_folder'], self.item_names[index]), 'r')
+                f = h5py.File(os.path.join(self.opt['data_folder'], self.item_names[index+i]), 'r')
                 data =  torch.tensor(f['data'][:,x_start:x_end,
                     y_start:y_end,
                     z_start:z_end])
