@@ -100,12 +100,13 @@ def train_temporal_network(rank, model, discriminator, opt, dataset):
             gt_middle_frames = crop_to_size(items[2][0], opt['cropping_resolution']).to(opt['device'])
             timesteps = (int(items[3][0]), int(items[3][1]))
 
-            gt_start_frame = dataset.scale(gt_start_frame)
-            gt_end_frame = dataset.scale(gt_end_frame)
+            #gt_start_frame = dataset.scale(gt_start_frame)
+            #gt_end_frame = dataset.scale(gt_end_frame)
             
-            pred_frames = dataset.unscale(model(gt_start_frame, gt_end_frame, timesteps))
+            pred_frames = model(gt_start_frame, gt_end_frame, timesteps)
 
             for i in range(opt['discriminator_steps']):
+                model.zero_grad()
                 discriminator.zero_grad()
                 discrim_loss = 0.5*torch.log(1-discriminator(pred_frames.detach())) + \
                 0.5*torch.log(discriminator(gt_middle_frames))
@@ -113,7 +114,8 @@ def train_temporal_network(rank, model, discriminator, opt, dataset):
                 discriminator_optimizer.step()
 
             for i in range(opt['generator_steps']):
-                generator.zero_grad()
+                model.zero_grad()
+                discriminator.zero_grad()
                 loss = loss_function(pred_frames, gt_middle_frames)
                 loss.backward()
                 gen_loss = torch.log(discriminator(pred_frames))
