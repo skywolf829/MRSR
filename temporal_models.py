@@ -345,7 +345,7 @@ class UNet_Downscaling_Module(nn.Module):
 
     def forward(self, x):
         x1 = self.conv(x)
-        x2 = self.maxpool(x2)
+        x2 = self.maxpool(x1)
         return x1, x2
 
 class DownscaleBlock(nn.Module):
