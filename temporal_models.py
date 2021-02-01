@@ -26,7 +26,6 @@ import copy
 from pytorch_memlab import LineProfiler, MemReporter, profile, profile_every
 import h5py
 from torch.nn.utils import spectral_norm
-from datasets import LocalTemporalDataset
 
 
 FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
