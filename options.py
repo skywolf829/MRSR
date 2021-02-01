@@ -43,7 +43,7 @@ class Options():
         opt['B']                      = 0.2
 
         opt['num_lstm_layers']         = 3
-        opt['training_seq_length']     = 2
+        opt['training_seq_length']     = 3
         opt['temporal_direction']     = "forward"
 
 

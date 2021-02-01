@@ -95,8 +95,8 @@ def train_temporal_network(rank, model, discriminator, opt, dataset):
     iters = 0
     for epoch in range(opt['epoch_number'], opt["epochs"]):        
         for batch_num, items in enumerate(dataloader):
-            gt_start_frame = crop_to_size(items[0], opt['cropping_resolution']).to(opt['device'])
-            gt_end_frame = crop_to_size(items[1], opt['cropping_resolution']).to(opt['device'])
+            gt_start_frame = crop_to_size(items[0][0], opt['cropping_resolution']).to(opt['device'])
+            gt_end_frame = crop_to_size(items[1][0], opt['cropping_resolution']).to(opt['device'])
             gt_middle_frames = crop_to_size(items[2][0], opt['cropping_resolution']).to(opt['device'])
             timesteps = (int(items[3][0]), int(items[3][1]))
             print(gt_start_frame.shape)
