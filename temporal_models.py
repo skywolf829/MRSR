@@ -112,7 +112,7 @@ def train_temporal_network(rank, model, discriminator, opt, dataset):
                 discriminator.zero_grad()
                 discrim_loss = 0.5*torch.log(1-discriminator(pred_frames.detach())) + \
                 0.5*torch.log(discriminator(gt_middle_frames))
-                discrim_loss.backward()
+                discrim_loss.backward(retain_graph=True)
                 discriminator_optimizer.step()
 
             for i in range(opt['generator_steps']):
@@ -121,7 +121,7 @@ def train_temporal_network(rank, model, discriminator, opt, dataset):
                 loss = loss_function(pred_frames, gt_middle_frames)
                 loss.backward()
                 gen_loss = torch.log(discriminator(pred_frames))
-                gen_loss.backward()
+                gen_loss.backward(retain_graph=True)
                 generator_optimizer.step()
 
             generator_scheduler.step()  
