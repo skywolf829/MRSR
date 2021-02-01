@@ -300,15 +300,15 @@ class Temporal_Generator_UNET(nn.Module):
         x_through = self.up1(x_through)
 
         x_through = F.interpolate(x_through, scale_factor=2, 
-        mode=opt['upscaling_mode'], align_corners=True)
+        mode=self.opt['upsample_mode'], align_corners=True)
         x_through = self.up2(torch.cat([x_down3, x_through], dim=1))
 
         x_through = F.interpolate(x_through, scale_factor=2, 
-        mode=opt['upscaling_mode'], align_corners=True)
+        mode=self.opt['upsample_mode'], align_corners=True)
         x_through = self.up3(torch.cat([x_down2, x_through], dim=1))
 
         x_through = F.interpolate(x_through, scale_factor=2, 
-        mode=opt['upscaling_mode'], align_corners=True)
+        mode=self.opt['upsample_mode'], align_corners=True)
         x_through = self.up4(torch.cat([x_down1, x_through], dim=1))
 
         x_through = self.final_conv(x_through)
