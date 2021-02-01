@@ -295,8 +295,9 @@ class Temporal_Generator_UNET(nn.Module):
         self.finalconv = nn.Conv3d(64, opt['num_channels'], 
         kernel_size=3, stride=1, padding=1)
 
-    def forward(self, x):
-        x_down1, x_through = self.down1(x)
+    def forward(self, x_start, x_end, timesteps = (0,2)):
+        x_concat = torch.cat([x_start, x_end], dim=1)
+        x_down1, x_through = self.down1(x_concat)
         x_down2, x_through = self.down2(x_through)
         x_down3, x_through = self.down3(x_through)
 

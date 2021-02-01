@@ -93,7 +93,10 @@ if __name__ == '__main__':
                 opt[k] = args[k]
                 
         dataset = LocalTemporalDataset(opt)
-        generator = Temporal_Generator(opt)
+        if(opt['temporal_model'] == "TSRTVD"):
+            generator = Temporal_Generator(opt)
+        elif(opt['temporal_model'] == "UNet"):
+            generator = Temporal_Generator_UNET(opt)  
         generator.apply(weights_init)
         discriminator = Temporal_Discriminator(opt)
         discriminator.apply(weights_init)
