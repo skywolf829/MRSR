@@ -67,7 +67,7 @@ class Options():
 
         # GAN training info
         opt["alpha_1"]                 = 0       # Reconstruction loss coefficient
-        opt["alpha_2"]                 = 0.01        # Adversarial loss coefficient
+        opt["alpha_2"]                 = 0.1        # Adversarial loss coefficient
         opt["alpha_3"]                 = 0        # Soft physical loss coefficient
         opt["alpha_4"]                 = 1        # mag_and_angle loss
         opt["alpha_5"]                 = 0          # first derivative loss coeff
@@ -80,10 +80,10 @@ class Options():
         opt['periodic']                = True
         opt["generator_steps"]         = 1
         opt["discriminator_steps"]     = 1
-        opt["epochs"]                  = 200
+        opt["epochs"]                  = 500
         opt["minibatch"]               = 1        # Minibatch for training
         opt["learning_rate"]           = 0.0001    # Learning rate for GAN
-        opt["beta_1"]                  = 0.9
+        opt["beta_1"]                  = 0.5
         opt["beta_2"]                  = 0.999
         opt["gamma"]                   = 0.1
 
