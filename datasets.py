@@ -347,7 +347,7 @@ class LocalTemporalDataset(torch.utils.data.Dataset):
                 data = torch.flip(data,[3])
 
         return (data[0:1], data[self.opt['training_seq_length']-1:self.opt['training_seq_length']], 
-        data[1:self.opt['training_seq_length']-1], (index, index+self.opt['training_seq_length']))
+        data[1:self.opt['training_seq_length']-1], (index, index+self.opt['training_seq_length']-1))
 
 class LocalDataset(torch.utils.data.Dataset):
     def __init__(self, opt):
