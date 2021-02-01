@@ -77,7 +77,7 @@ class Options():
         opt['streamline_res']          = 100
         opt['streamline_length']       = 20
 
-        opt['periodic']                = True
+        opt['periodic']                = False
         opt["generator_steps"]         = 1
         opt["discriminator_steps"]     = 1
         opt["epochs"]                  = 500
