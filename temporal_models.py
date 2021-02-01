@@ -99,9 +99,6 @@ def train_temporal_network(rank, model, discriminator, opt, dataset):
             gt_end_frame = crop_to_size(items[1][0], opt['cropping_resolution']).to(opt['device'])
             gt_middle_frames = crop_to_size(items[2][0], opt['cropping_resolution']).to(opt['device'])
             timesteps = (int(items[3][0]), int(items[3][1]))
-            print(gt_start_frame.shape)
-            print(gt_end_frame.shape)
-            print(gt_middle_frames.shape)
             #gt_start_frame = dataset.scale(gt_start_frame)
             #gt_end_frame = dataset.scale(gt_end_frame)
             
