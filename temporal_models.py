@@ -116,7 +116,7 @@ def train_temporal_network(rank, model, discriminator, opt, dataset):
                 model.zero_grad()
                 discriminator.zero_grad()
                 loss = loss_function(pred_frames, gt_middle_frames)
-                loss.backward()
+                loss.backward(retain_graph=True)
                 gen_loss = torch.log(discriminator(pred_frames))
                 gen_loss.backward(retain_graph=True)
                 generator_optimizer.step()
