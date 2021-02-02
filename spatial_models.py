@@ -745,16 +745,13 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
     discriminator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=discriminator_optimizer,
     milestones=[0.8*len(dataset)*opt['epochs']-opt['iteration_number']],gamma=opt['gamma'])
     
-    if(rank == 0):
+    if((rank == 0 and opt['train_distributed']) or not opt['train_distributed']):
         writer = SummaryWriter(os.path.join('tensorboard',opt['save_name']))
+        print(str(len(generators)) + ": " + str(opt["resolutions"][len(generators)]))
 
     start_time = time.time()
     next_save = 0
     volumes_seen = opt['epoch_number'] * len(dataset)
-
-    # Get properly sized frame for this generator
-    if(rank == 0):
-        print(str(len(generators)) + ": " + str(opt["resolutions"][len(generators)]))
 
     dataset.set_subsample_dist(int(2**(opt['n']-len(generators)-1)))
     if(opt['train_distributed']):
@@ -917,7 +914,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                 generator_optimizer.step()
             volumes_seen += 1
 
-            if(opt['device'] == 0):
+            if((rank == 0 and opt['train_distributed']) or not opt['train_distributed']):
                 if(volumes_seen % 50 == 0):
                     rec_numpy = fake.detach().cpu().numpy()[0]
                     rec_cm = toImg(rec_numpy)

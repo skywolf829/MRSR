@@ -69,7 +69,7 @@ def train_temporal_network(rank, model, discriminator, opt, dataset):
     discriminator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=discriminator_optimizer,
     milestones=[0.8*len(dataset)*opt['epochs']-opt['iteration_number']],gamma=opt['gamma'])
 
-    if(rank == 0):
+    if((rank == 0 and opt['train_distributed']) or not opt['train_distributed']):
         writer = SummaryWriter(os.path.join('tensorboard',opt['save_name']))
         reference_writer = SummaryWriter(os.path.join('tensorboard', "LERP"))
     
@@ -123,7 +123,7 @@ def train_temporal_network(rank, model, discriminator, opt, dataset):
             generator_scheduler.step()  
             discriminator_scheduler.step()
 
-            if(rank == 0):
+            if((rank == 0 and opt['train_distributed']) or not opt['train_distributed']):
                 pred_frame_cm_image = toImg(pred_frames[0].detach().cpu().numpy())
                 gt_middle_frame_cm_image = toImg(gt_middle_frames[0].detach().cpu().numpy())
                 err_frame_image = toImg(torch.abs((pred_frames[0].detach() - gt_middle_frames[0].detach())).cpu().numpy())
@@ -148,7 +148,7 @@ def train_temporal_network(rank, model, discriminator, opt, dataset):
                 os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
 
             iters += 1
-            if(rank == 0 and iters % opt['save_every'] == 0):
+            if(((rank == 0 and opt['train_distributed']) or not opt['train_distributed']) and iters % opt['save_every'] == 0):
                 save_models(model, discriminator, opt)
                 
         opt['epoch_number'] = epoch+1        
