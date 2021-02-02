@@ -72,7 +72,7 @@ class Options():
         opt["alpha_3"]                 = 0        # Soft physical loss coefficient
         opt["alpha_4"]                 = 1        # mag_and_angle loss
         opt["alpha_5"]                 = 0          # first derivative loss coeff
-        opt["alpha_6"]                 = 0  # Lagrangian transport loss
+        opt["alpha_6"]                 = 0         # Lagrangian transport loss
 
         opt["adaptive_streamlines"]    = False
         opt['streamline_res']          = 100
@@ -83,7 +83,8 @@ class Options():
         opt["discriminator_steps"]     = 1
         opt["epochs"]                  = 500
         opt["minibatch"]               = 1        # Minibatch for training
-        opt["learning_rate"]           = 0.0001    # Learning rate for GAN
+        opt["g_lr"]                    = 0.0001    # Learning rate for GAN generator
+        opt["d_lr"]                    = 0.0004    # Learning rate for GAN discriminator
         opt["beta_1"]                  = 0.5
         opt["beta_2"]                  = 0.999
         opt["gamma"]                   = 0.1
