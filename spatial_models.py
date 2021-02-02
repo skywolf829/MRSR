@@ -1059,10 +1059,9 @@ class Generator(nn.Module):
        
         self.c3 = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels'],
         stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
-        self.c4 = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels'],
-        stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
+
         self.final_conv = nn.Conv3d(opt['base_num_kernels'], opt['num_channels'],
-        stride=opt['stride'],padding=4,kernel_size=9)
+        stride=opt['stride'],padding=2,kernel_size=5)
         self.lrelu = nn.LeakyReLU(0.2, inplace=True)
 
     def get_input_shape(self):
@@ -1101,7 +1100,6 @@ class Generator(nn.Module):
             out = VoxelShuffle(out)
         
         out = self.lrelu(self.c3(out))
-        out = self.lrelu(self.c4(out))
         out = self.final_conv(out)
         return out
 
