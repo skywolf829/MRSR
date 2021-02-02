@@ -317,7 +317,7 @@ class Temporal_Generator_UNET(nn.Module):
 
         x_through = self.final_conv(x_through)
 
-        return x_through
+        return x_through + 0.5*x_start + 0.5*x_end
         
 
 
