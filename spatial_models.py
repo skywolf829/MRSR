@@ -700,7 +700,7 @@ def train_single_scale_wrapper(generators, discriminators, opt):
 def train_single_scale(rank, generators, discriminators, opt, dataset):
     
     opt['device'] = rank
-    print("Training on device %i, initializing process group." % rank)
+    print("Training on device " + str(rank) + ", initializing process group.")
     if(opt['train_distributed']):
         dist.init_process_group(                                   
             backend='nccl',                                         
