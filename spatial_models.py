@@ -735,13 +735,13 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
         os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
 
 
-    generator_optimizer = optim.Adam(generator.parameters(), lr=opt["learning_rate"], 
+    generator_optimizer = optim.Adam(generator.parameters(), lr=opt["g_lr"], 
     betas=(opt["beta_1"],opt["beta_2"]))
     generator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=generator_optimizer,
     milestones=[0.8*len(dataset)*opt['epochs']-opt['iteration_number']],gamma=opt['gamma'])
 
     discriminator_optimizer = optim.Adam(discriminator.parameters(), 
-    lr=opt["learning_rate"], betas=(opt["beta_1"],opt["beta_2"]))
+    lr=opt["d_lr"], betas=(opt["beta_1"],opt["beta_2"]))
     discriminator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=discriminator_optimizer,
     milestones=[0.8*len(dataset)*opt['epochs']-opt['iteration_number']],gamma=opt['gamma'])
     

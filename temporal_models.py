@@ -59,12 +59,12 @@ def train_temporal_network(rank, model, discriminator, opt, dataset):
     print_to_log_and_console("Training on %s" % (opt["device"]), 
         os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
     
-    generator_optimizer = optim.Adam(model.parameters(), lr=opt["learning_rate"], 
+    generator_optimizer = optim.Adam(model.parameters(), lr=opt["g_lr"], 
     betas=(opt["beta_1"],opt["beta_2"]))
     generator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=generator_optimizer,
     milestones=[0.8*len(dataset)*opt['epochs']-opt['iteration_number']],gamma=opt['gamma'])
 
-    discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=opt["learning_rate"]*4, 
+    discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=opt["d_lr"], 
     betas=(opt["beta_1"],opt["beta_2"]))
     discriminator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=discriminator_optimizer,
     milestones=[0.8*len(dataset)*opt['epochs']-opt['iteration_number']],gamma=opt['gamma'])
