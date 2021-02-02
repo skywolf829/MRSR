@@ -959,15 +959,21 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                 print_to_log_and_console("%i/%i: Dloss=%.02f Gloss=%.02f L1=%.04f AMD=%.02f AAD=%.02f" %
                 (volumes_seen, num_total, D_loss, G_loss, rec_loss, mags.mean(), angles.mean()), 
                 os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
-
-                writer.add_scalar('D_loss_scale/%i'%len(generators), D_loss.item(), volumes_seen) 
-                writer.add_scalar('G_loss_scale/%i'%len(generators), gen_adv_err, volumes_seen) 
-                writer.add_scalar('L1/%i'%len(generators), rec_loss, volumes_seen)
-                writer.add_scalar('Gradient_loss/%i'%len(generators), gradient_loss / (opt['alpha_5']+1e-6), volumes_seen)
-                writer.add_scalar('TAD/%i'%len(generators), phys_loss / (opt["alpha_3"]+1e-6), volumes_seen)
-                writer.add_scalar('path_loss/%i'%len(generators), path_loss / (opt['alpha_6']+1e-6), volumes_seen)
-                writer.add_scalar('Mag_loss_scale/%i'%len(generators), mags.mean(), volumes_seen) 
-                writer.add_scalar('Angle_loss_scale/%i'%len(generators), angles.mean(), volumes_seen) 
+                
+                if(opt['alpha_1'] > 0):
+                    writer.add_scalar('L1/%i'%len(generators), rec_loss, volumes_seen)
+                if(opt['alpha_2'] > 0):
+                    writer.add_scalar('D_loss_scale/%i'%len(generators), D_loss.item(), volumes_seen)    
+                    writer.add_scalar('G_loss_scale/%i'%len(generators), gen_adv_err, volumes_seen) 
+                if(opt['alpha_3'] > 0):
+                    writer.add_scalar('TAD/%i'%len(generators), phys_loss / (opt["alpha_3"]+1e-6), volumes_seen)
+                if(opt['alpha_4'] > 0):
+                    writer.add_scalar('Mag_loss_scale/%i'%len(generators), mags.mean(), volumes_seen) 
+                    writer.add_scalar('Angle_loss_scale/%i'%len(generators), angles.mean(), volumes_seen) 
+                if(opt['alpha_5'] > 0):
+                    writer.add_scalar('Gradient_loss/%i'%len(generators), gradient_loss / (opt['alpha_5']+1e-6), volumes_seen)
+                if(opt['alpha_6'] > 0):
+                    writer.add_scalar('path_loss/%i'%len(generators), path_loss / (opt['alpha_6']+1e-6), volumes_seen)
                 
                 if(volumes_seen % opt['save_every'] == 0):
                     opt["iteration_number"] = batch_num
