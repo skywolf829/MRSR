@@ -28,7 +28,7 @@ class Options():
         opt['random_flipping']         = True
         opt['num_networked_workers']   = 4
 
-        opt["num_workers"]             = 4
+        opt["num_workers"]             = 2
 
         # generator info
         opt["num_blocks"]              = 3
@@ -53,7 +53,7 @@ class Options():
         opt["downsample_mode"]         = "average_pooling"
         opt["upsample_mode"]           = "trilinear"
 
-        opt["train_distributed"]       = True
+        opt["train_distributed"]       = False
         opt["device"]                  = 0
         opt["gpus_per_node"]           = 8
         opt["num_nodes"]               = 1
