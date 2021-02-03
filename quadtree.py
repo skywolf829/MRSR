@@ -124,7 +124,8 @@ def upscale_from_quadtree_start(quadtree,max_stride=8,device="cuda"):
                     int(curr_tree['y_start']/curr_stride): \
                     int(curr_tree['y_start']/curr_stride)+int((curr_tree['data'].shape[1]*curr_tree['stride'])/curr_stride),
                     :
-                ] = curr_tree['data'][::int(curr_stride/curr_tree['stride']),::int(curr_stride/curr_tree['stride']),:]
+                ] = AvgPool2D(curr_tree['data'].permute(2, 0, 1).unsqueeze(0), 
+                int(curr_stride/curr_tree['stride']))[0].permute(1, 2, 0)
             elif(len(curr_tree['children']) > 0):
                 for i in range(len(curr_tree['children'])):
                     trees.append(curr_tree['children'][i])
