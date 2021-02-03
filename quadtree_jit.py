@@ -6,6 +6,21 @@ import json
 from json import JSONEncoder, JSONDecoder
 from utility_functions import *
 import time
+from typing import Dict, List, Tuple
+
+@torch.jit.script
+class OctreeNode(object):
+    def __init__(self, full_shape : torch.Tensor, data : torch.Tensor, stride : int, x_start : int, y_start : int):
+        self.full_shape : torch.Tensor = full_shape
+        self.data : torch.Tensor = data 
+        self.stride : int = stride
+        self.x_start : int = x_start
+        self.y_start : int = y_start
+        self.children : List[OctreeNode] = []
+
+
+    #def ToDict(self) -> Tuple[torch.tensor, torch.tensor, int, int, int, List[Dict[]]]:
+        
 
 @torch.jit.script
 def MSE(x, GT):
@@ -264,25 +279,18 @@ def mse_criterion(GT_image, img, max_mse : float):
 
 
 max_stride = 8
-min_chunk = 32
+min_chunk = 16
 criterion = psnr_criterion
-criterion_value = 72
+criterion_value = 80
 device="cuda"
 
 img_gt = torch.from_numpy(imageio.imread("TestingData/quadtree_images/Lenna.jpg").astype(np.float32)).to(device)
-img = {
-    "full_shape": img_gt.shape, 
-    "data": img_gt,
-    "stride": 1,
-    "x_start": 0,
-    "y_start": 0,
-    "children": []
-    }
-torch.save(img, './Output/img_full.torch')
+img = OctreeNode(img_gt.shape, img_gt, 1, 0, 0)
+#torch.save(img.ToTorch(), './Output/img_full.torch')
 
 
 ##############################################
-img = torch.load("./Output/img_full.torch")
+#img = torch.load("./Output/img_full.torch")
 start_time = time.time()
 img_quadtree = conditional_downsample_quadtree(img,img_gt,criterion,criterion_value,
 min_chunk_size=min_chunk,max_stride=max_stride,device="cuda")
@@ -294,7 +302,7 @@ img_upscaled = upscale_from_quadtree_start(img_quadtree,max_stride=max_stride,de
 img_upsampled = upsample_from_quadtree_start(img_quadtree,device=device)
 img_upscaled_seams = upscale_from_quadtree_with_seams(img_quadtree,device=device)
 debug = upscale_from_quadtree_debug(img_quadtree,max_stride=max_stride,device=device)
-
+'''
 imageio.imwrite("./Output/img_downsample_upscaled.jpg", img_upscaled.cpu().numpy())
 imageio.imwrite("./Output/img_downsample_upsampled.jpg", img_upsampled.cpu().numpy())
 imageio.imwrite("./Output/img_downsample_upsampled_debug.jpg", debug.cpu().numpy())
@@ -319,6 +327,6 @@ imageio.imwrite("./Output/img_pooling_upsampled.jpg", img_upsampled.cpu().numpy(
 imageio.imwrite("./Output/img_pooling_upsampled_debug.jpg", debug.cpu().numpy())
 imageio.imwrite("./Output/img_pooling_upsampled_seams.jpg", img_upscaled_seams.cpu().numpy())
 
-
+'''
 
 
