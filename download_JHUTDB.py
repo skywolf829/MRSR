@@ -84,30 +84,28 @@ sim_name, timestep, field, num_components, num_workers):
            full[x1:x2,y1:y2,z1:z2,:] = r.astype(np.float32)
            del r
            done += 1
-           print("Done: %i/%i" % (done, len(threads)))
+           #print("Done: %i/%i" % (done, len(threads)))
     return full
 
-save_dir = "./"
+
+save_dir = "./TestingData/iso1024"
 #name = "channel"
-name = "isotropic8192"
+name = "isotropic1024"
 #name="mixing"
 t0 = time.time()
 count = 0
-startts = 1
+startts = 1000
 endts = 2
 ts_skip = 10
 for i in range(startts, endts, ts_skip):
     print("TS %i/%i" % (i, endts))
-    f = get_full_frame_parallel(0, 8192, 1,#x
-    0, 8192, 1, #y
-    4096, 4097, 1, #z
+    f = get_full_frame_parallel(0, 1024, 1,#x
+    0, 1024, 1, #y
+    0, 1024, 1, #z
     name, i, 
     "u", 3, 
-    64)
-    print(f.shape)
-    f = f[:,:,0,:]
-    f = f.astype(np.float32).swapaxes(0,2).swapaxes(1,2)
-    f_h5 = h5py.File(os.path.join(save_dir, 'bigboy.h5'), 'w')
+    64)    
+    f_h5 = h5py.File(os.path.join(save_dir, str(i-1)+ '.h5'), 'w')
     f_h5.create_dataset("data", data=f, compression="gzip")
     f_h5.close()
     count += 1
