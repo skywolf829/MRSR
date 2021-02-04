@@ -95,7 +95,7 @@ name = "isotropic1024"
 t0 = time.time()
 count = 0
 startts = 1000
-endts = 2
+endts = 1101
 ts_skip = 10
 for i in range(startts, endts, ts_skip):
     print("TS %i/%i" % (i, endts))
