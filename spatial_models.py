@@ -738,12 +738,12 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
     generator_optimizer = optim.Adam(generator.parameters(), lr=opt["g_lr"], 
     betas=(opt["beta_1"],opt["beta_2"]))
     generator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=generator_optimizer,
-    milestones=[0.8*len(dataset)*opt['epochs']-opt['iteration_number']],gamma=opt['gamma'])
+    milestones=[0.8*opt['epochs']-opt['epoch_number']],gamma=opt['gamma'])
 
     discriminator_optimizer = optim.Adam(discriminator.parameters(), 
     lr=opt["d_lr"], betas=(opt["beta_1"],opt["beta_2"]))
     discriminator_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=discriminator_optimizer,
-    milestones=[0.8*len(dataset)*opt['epochs']-opt['iteration_number']],gamma=opt['gamma'])
+    milestones=[0.8*opt['epochs']-opt['epoch_number']],gamma=opt['gamma'])
     
     if((rank == 0 and opt['train_distributed']) or not opt['train_distributed']):
         writer = SummaryWriter(os.path.join('tensorboard',opt['save_name']))
@@ -979,11 +979,9 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                     opt["iteration_number"] = batch_num
                     opt["epoch_number"] = epoch
                     save_models(generators + [generator], discriminators + [discriminator], opt)
-
-            discriminator_scheduler.step()
-            generator_scheduler.step()  
-            
             t_io_start = time.time()
+        discriminator_scheduler.step()
+        generator_scheduler.step()
         
     generator = reset_grads(generator, False)
     generator.eval()
