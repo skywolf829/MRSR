@@ -1,0 +1,398 @@
+import imageio
+import numpy as np
+import torch
+import torch.nn.functional as F
+import json
+from json import JSONEncoder, JSONDecoder
+from utility_functions import *
+import time
+from typing import Dict, List, Tuple
+
+@torch.jit.script
+class OctreeNode:
+    def __init__(self, name: str, full_shape : torch.Tensor, data : torch.Tensor, 
+    downscaling_ratio : int, x_start : int, y_start : int):
+        self.name : str = name
+        self.full_shape : torch.Tensor = full_shape
+        self.data : torch.Tensor = data 
+        self.downscaling_ratio : int = downscaling_ratio
+        self.x_start : int = x_start
+        self.y_start : int = y_start
+
+    def __str__(self):
+        return "{ full_shape: " + str(self.full_shape) + ", " + \
+        "data_shape: " + str(self.data.shape) + ", " + \
+        "downscaling_ratio: " + str(self.downscaling_ratio) + ", " + \
+        "x_start: " + str(self.x_start) + ", " + \
+        "y_start: " + str(self.y_start) + "}" 
+    def size(self):
+        return (self.data.element_size() * self.data.numel()) / 1024.0
+
+@torch.jit.script
+class OctreeNodeList:
+    def __init__(self):
+        self.node_list : List[OctreeNode] = []
+    def append(self, n : OctreeNode):
+        self.node_list.append(n)
+    def insert(self, i : int, n: OctreeNode):
+        self.node_list.insert(i, n)
+    def pop(self, i : int) -> OctreeNode:
+        return self.node_list.pop(i)
+    def __len__(self) -> int:
+        return len(self.node_list)
+    def __getitem__(self, key : int) -> OctreeNode:
+        return self.node_list[key]
+    def __str__(self):
+        s : str = "["
+        for i in range(len(self.node_list)):
+            s += str(self.node_list[i])
+            if(i < len(self.node_list)-1):
+                s += ", "
+        s += "]"
+        return s
+    def total_size(self):
+        nbytes = 0.0
+        for i in range(len(self.node_list)):
+            nbytes += self.node_list[i].size()
+        return nbytes 
+
+def ssim_criterion(GT_image, img, min_ssim=0.6) -> float:
+    return ssim(img.permute(2, 0, 1).unsqueeze(0), GT_image.permute(2, 0, 1).unsqueeze(0)) > min_ssim
+
+@torch.jit.script
+def MSE(x, GT) -> float:
+    return ((x-GT)**2).mean()
+
+@torch.jit.script
+def PSNR(x, GT) -> float:
+    max_diff : float = 255.0
+    return 20 * torch.log(torch.tensor(max_diff)) - 10*torch.log(MSE(x, GT))
+
+@torch.jit.script
+def relative_error(x, GT) -> float:
+    max_diff : float = 255.0
+    return torch.abs(GT-x).max() / max_diff
+
+@torch.jit.script
+def psnr_criterion(GT_image, img, min_PSNR : float) -> bool:
+    return PSNR(img, GT_image) > min_PSNR
+
+@torch.jit.script
+def mse_criterion(GT_image, img, max_mse : float) -> bool:
+    return MSE(img, GT_image) < max_mse
+
+@torch.jit.script
+def maximum_relative_error(GT_image, img, max_e : float) -> bool:
+    return relative_error(img, GT_image) < max_e
+
+@torch.jit.script
+def bilinear_upscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
+    img = img.permute(2,0,1).unsqueeze(0)
+    img = F.interpolate(img, scale_factor=float(scale_factor), 
+    align_corners=True, mode='bilinear')
+    img = img[0].permute(1,2,0)
+    return img
+
+@torch.jit.script
+def point_upscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
+    upscaled_img = torch.zeros([int(img.shape[0]*scale_factor), 
+    int(img.shape[1]*scale_factor), 
+    img.shape[2]]).to(img.device)
+    for x in range(img.shape[0]):
+        for y in range(img.shape[1]):
+            upscaled_img[x*scale_factor:(x+1)*scale_factor, 
+            y*scale_factor:(y+1)*scale_factor,:] = img[x,y,:]
+    return upscaled_img
+
+@torch.jit.script
+def bilinear_downscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
+    img = img.permute(2,0,1).unsqueeze(0)
+    img = F.interpolate(img, scale_factor=(1/scale_factor), align_corners=True, mode='bilinear')
+    img = img[0].permute(1,2,0)
+    return img
+
+@torch.jit.script
+def avgpool_downscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
+    img = img.permute(2,0,1).unsqueeze(0)
+    img = AvgPool2D(img, scale_factor)
+    img = img[0].permute(1,2,0)
+    return img
+
+@torch.jit.script
+def subsample_downscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
+    img = img[::2, ::2, :]
+    return img
+
+@torch.jit.script
+def upscale(method: str, img: torch.Tensor, scale_factor: int) -> torch.Tensor:
+    up = torch.zeros([1])
+    if(method == "bilinear"):
+        up = bilinear_upscale(img, scale_factor)
+    elif(method == "point"):
+        up = point_upscale(img, scale_factor)
+    else:
+        print("No support for upscaling method: " + str(method))
+    return up
+
+@torch.jit.script
+def downscale(method: str, img: torch.Tensor, scale_factor: int) -> torch.Tensor:
+    down = torch.zeros([1])
+    if(method == "bilinear"):
+        down = bilinear_downscale(img, scale_factor)
+    elif(method == "subsample"):
+        down = subsample_downscale(img, scale_factor)
+    elif(method == "avgpool"):
+        down = avgpool_downscale(img, scale_factor)
+    else:
+        print("No support for downscaling method: " + str(method))
+    return down
+
+@torch.jit.script
+def criterion_met(method: str, value: float, 
+a: torch.Tensor, b: torch.Tensor) -> bool:
+    passed = False
+    if(method == "psnr"):
+        passed = psnr_criterion(a, b, value)
+    elif(method == "mse"):
+        passed = mse_criterion(a, b, value)
+    elif(method == "mre"):
+        passed = maximum_relative_error(a, b, value)
+    else:
+        print("No support for criterion: " + str(method))
+    return passed
+
+def nodes_to_downscaled_levels(nodes : OctreeNodeList, full_shape : torch.Tensor,
+    max_downscaling_ratio : int, downscaling_technique: str, device : str) \
+        -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
+    GT_data = []
+    masks = []
+    full_img = torch.zeros(full_shape).to(device)
+    mask = torch.zeros(full_shape).to(device)
+    curr_ds_ratio = 1
+    
+    while(curr_ds_ratio <= max_downscaling_ratio):
+        # 1. Fill in known data
+        for i in range(len(nodes)):
+            curr_node = nodes[i]
+            if(curr_node.downscaling_ratio == curr_ds_ratio):
+                full_img[
+                    int(curr_node.x_start/curr_ds_ratio): \
+                    int(curr_node.x_start/curr_ds_ratio)+ \
+                        int((curr_node.data.shape[0]*curr_node.downscaling_ratio)/curr_ds_ratio),
+                    int(curr_node.y_start/curr_ds_ratio): \
+                    int(curr_node.y_start/curr_ds_ratio)+ \
+                        int((curr_node.data.shape[1]*curr_node.downscaling_ratio)/curr_ds_ratio),
+                    :
+                ] = curr_node.data
+                mask[
+                    int(curr_node.x_start/curr_ds_ratio): \
+                    int(curr_node.x_start/curr_ds_ratio)+ \
+                        int((curr_node.data.shape[0]*curr_node.downscaling_ratio)/curr_ds_ratio),
+                    int(curr_node.y_start/curr_ds_ratio): \
+                    int(curr_node.y_start/curr_ds_ratio)+ \
+                        int((curr_node.data.shape[1]*curr_node.downscaling_ratio)/curr_ds_ratio),
+                    :
+                ] = torch.ones(curr_node.data.shape)
+            
+        GT_data.insert(0, full_img.clone())
+        masks.insert(0, mask.clone())
+
+        if(curr_ds_ratio < max_downscaling_ratio):
+            # 2. Downsample
+            full_img = downscale(downscaling_technique, full_img, 2)
+            mask = mask[::2, ::2, :]
+
+        curr_ds_ratio = int(curr_ds_ratio * 2)
+
+    return GT_data, masks
+
+def nodes_to_full_img(nodes: OctreeNodeList, full_shape: torch.Tensor, 
+max_downscaling_ratio : int, upscaling_technique : str, 
+downscaling_technique : str, device : str) -> torch.Tensor:
+    full_imgs, masks = nodes_to_downscaled_levels(nodes, 
+    full_shape, max_downscaling_ratio, downscaling_technique,
+    device)
+    
+    curr_ds_ratio = max_downscaling_ratio
+    full_img = full_imgs[0]
+    i = 0
+    while(curr_ds_ratio > 1):
+        
+        # 1. Upsample
+        full_img = upscale(upscaling_technique, full_img, 2)
+        
+        curr_ds_ratio = int(curr_ds_ratio / 2)
+        i += 1
+
+        # 2. Fill in data
+        full_img[masks[i] > 0] = full_imgs[i][masks[i] > 0]
+
+    return full_img
+
+def nodes_to_full_img_debug(nodes: OctreeNodeList, full_shape: torch.Tensor, 
+max_downscaling_ratio : int, upscaling_technique : str, 
+downscaling_technique : str, device : str) -> Tuple[torch.Tensor, torch.Tensor]:
+    
+    full_img = torch.zeros(full_shape).to(device)
+    cmap : List[torch.Tensor] = [
+        torch.tensor([0, 0, 0], dtype=torch.float, device=device),
+        torch.tensor([37, 15, 77], dtype=torch.float, device=device),
+        torch.tensor([115, 30, 107], dtype=torch.float, device=device),
+        torch.tensor([178, 52, 85], dtype=torch.float, device=device),
+        torch.tensor([233, 112, 37], dtype=torch.float, device=device),
+        torch.tensor([244, 189, 55], dtype=torch.float, device=device),
+        torch.tensor([247, 251, 162], dtype=torch.float, device=device),
+        torch.tensor([255, 255, 255], dtype=torch.float, device=device)
+    ]
+    for i in range(len(nodes)):
+        curr_node = nodes[i]
+        z : int = int(np.log(curr_node.downscaling_ratio) / np.log(2))
+        full_img[
+            int(curr_node.x_start): \
+            int(curr_node.x_start)+ \
+                int((curr_node.data.shape[0]*curr_node.downscaling_ratio)),
+            int(curr_node.y_start): \
+            int(curr_node.y_start)+ \
+                int((curr_node.data.shape[1]*curr_node.downscaling_ratio)),
+            :
+        ] = cmap[-1 - z]
+
+    cmap_img_height : int = 64
+    cmap_img_width : int = 512
+    cmap_img = torch.zeros([cmap_img_width, cmap_img_height, 3], dtype=torch.float, device=device)
+    y_len : int = int(cmap_img_width / len(cmap))
+    for i in range(len(cmap)):
+        y_start : int = i * y_len
+        y_end : int = (i+1) * y_len
+        cmap_img[y_start:y_end, :, :] = cmap[i]
+
+    return full_img, cmap_img
+
+def quadtree_SR_compress(
+    nodes : OctreeNodeList, GT_image : torch.Tensor, 
+    criterion: str, criterion_value : float,
+    upscaling_technique: str, downscaling_technique: str,
+    min_chunk_size : int, max_downscaling_ratio : int, 
+    device : str
+    ) -> OctreeNodeList:
+    node_indices_to_check = [ 0 ]
+    nodes_checked = 0
+    full_shape = nodes[0].full_shape
+
+    while(len(node_indices_to_check) > 0): 
+        nodes_checked += 1
+        i = node_indices_to_check.pop(0)
+        n = nodes[i]
+        #print(node_indices_to_check)
+        #print("Checking " + str(i))
+        #print(n)
+        # Check if we can downsample this node
+        n.downscaling_ratio = int(n.downscaling_ratio * 2)
+        original_data = n.data.clone()
+        downsampled_data = downscale(downscaling_technique,original_data.clone(),2)
+        n.data = downsampled_data
+        
+        new_img = nodes_to_full_img(nodes, full_shape, max_downscaling_ratio, 
+        upscaling_technique, downscaling_technique,
+        device=device)
+        
+        # If criterion not met, reset data and stride, and see
+        # if the node is large enough to split into subnodes
+        # Otherwise, we keep the downsample, and add the node back as a 
+        # leaf node
+        if(not criterion_met(criterion, criterion_value, GT_image, new_img)):
+            n.data = original_data
+            n.downscaling_ratio = int(n.downscaling_ratio / 2)
+
+            if(n.data.shape[0] > min_chunk_size):
+                k = 0
+                while k < len(node_indices_to_check):
+                    if(node_indices_to_check[k] > i):
+                        node_indices_to_check[k] -= 1                
+                    #if(node_indices_to_check[k] == i):
+                    #    node_indices_to_check.pop(k)
+                    #    k -= 1
+                    k += 1
+
+                nodes.pop(i)
+                for x_quad_start in range(0, n.data.shape[0], int(n.data.shape[0]/2)):
+                    for y_quad_start in range(0, n.data.shape[1], int(n.data.shape[1]/2)):
+                        n_quad = OctreeNode("node",
+                            torch.tensor([int(n.full_shape[0]/2), 
+                            int(n.full_shape[1]/2), int(n.full_shape[2])]),
+                            n.data[x_quad_start:x_quad_start+int(n.data.shape[0]/2),
+                            y_quad_start:y_quad_start+int(n.data.shape[1]/2),:].clone(),
+                            n.downscaling_ratio,
+                            int(x_quad_start*n.downscaling_ratio + n.x_start),
+                            int(y_quad_start*n.downscaling_ratio + n.y_start)
+                        )
+                        nodes.append(n_quad)
+                        node_indices_to_check.append(len(nodes)-1)               
+        else:
+            if(n.downscaling_ratio < max_downscaling_ratio and n.data.shape[0] > min_chunk_size):
+                node_indices_to_check.append(i)
+    
+    print("Nodes traversed: " + str(nodes_checked))
+    return nodes            
+
+max_ds_ratio : int = 32
+min_chunk : int = 8
+device: str = "cuda"
+upscaling_technique : str = "bilinear"
+downscaling_technique : str = "avgpool"
+criterion : str = "mre"
+criterion_value : float = 0.1
+
+img_name : str = "mixing"
+img_ext : str = "jpg"
+img_gt : torch.Tensor = torch.from_numpy(imageio.imread(
+    "TestingData/quadtree_images/"+img_name+"."+img_ext).astype(np.float32)).to(device)
+#img_gt = AvgPool2D(img_gt.permute(2, 0, 1).unsqueeze(0), 16)[0].permute(1, 2, 0)
+full_shape : torch.Tensor = img_gt.shape
+root_node = OctreeNode("root", img_gt.shape, img_gt, 1, 0, 0)
+nodes : OctreeNodeList = OctreeNodeList()
+nodes.append(root_node)
+torch.save(nodes, './Output/'+img_name+'.torch')
+
+##############################################
+nodes : OctreeNodeList = torch.load('./Output/'+img_name+'.torch')
+start_time : float = time.time()
+nodes : OctreeNodeList = quadtree_SR_compress(
+    nodes, img_gt, criterion, criterion_value,
+    upscaling_technique, downscaling_technique,
+    min_chunk, max_ds_ratio, device)
+    
+end_time : float = time.time()
+print("Compression took %s seconds" % (str(end_time - start_time)))
+torch.save(nodes, "./Output/"+img_name+"_"+upscaling_technique+ \
+    "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
+        "ds"+str(max_ds_ratio)+"_chunk"+str(min_chunk)+".torch")
+
+
+img_upscaled = nodes_to_full_img(nodes, full_shape, 
+max_ds_ratio, upscaling_technique, 
+downscaling_technique, device)
+
+imageio.imwrite("./Output/"+img_name+"_"+upscaling_technique+ \
+    "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
+        "ds"+str(max_ds_ratio)+"_chunk"+str(min_chunk)+".jpg", 
+        img_upscaled.cpu().numpy().astype(np.uint8))
+
+img_upscaled_debug, cmap = nodes_to_full_img_debug(nodes, full_shape, 
+max_ds_ratio, upscaling_technique, 
+downscaling_technique, device)
+
+imageio.imwrite("./Output/"+img_name+"_"+upscaling_technique+ \
+    "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
+        "ds"+str(max_ds_ratio)+"_chunk"+str(min_chunk)+"_debug.jpg", 
+        img_upscaled_debug.cpu().numpy().astype(np.uint8))
+
+imageio.imwrite("./Output/colormap.jpg", cmap.cpu().numpy().astype(np.uint8))
+
+final_psnr : float = PSNR(img_upscaled, img_gt)
+final_mse : float = MSE(img_upscaled, img_gt)
+final_mre : float = relative_error(img_upscaled, img_gt)
+
+print("Final stats:")
+print("PSNR: %0.02f, MSE: %0.02f, MRE: %0.04f" % (final_psnr, final_mse, final_mre))
+print("Saved data size: %f kb" % nodes.total_size())

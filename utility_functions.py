@@ -805,7 +805,7 @@ def compute_laplacian(input_frame):
 
     return laplacian
 
-def AvgPool2D(x,size=2):
+def AvgPool2D(x : torch.Tensor, size : int):
     with torch.no_grad():
         kernel = torch.ones([size, size]).to(x.device)
         kernel /= kernel.sum()
@@ -814,7 +814,7 @@ def AvgPool2D(x,size=2):
         out = F.conv2d(x, kernel, stride=size, padding=0, groups=x.shape[1])
     return out
 
-def AvgPool3D(x,size=2):
+def AvgPool3D(x : torch.Tensor, size: int):
     with torch.no_grad():
         kernel = torch.ones([size, size, size]).to(x.device)
         kernel /= kernel.sum()

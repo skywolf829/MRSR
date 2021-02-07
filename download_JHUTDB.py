@@ -105,6 +105,7 @@ for i in range(startts, endts, ts_skip):
     name, i, 
     "u", 3, 
     64)    
+    #imageio.imwrite("mixing.jpg", f[:,:,0,:])
     f_h5 = h5py.File(os.path.join(save_dir, str(i-1)+ '.h5'), 'w')
     f_h5.create_dataset("data", data=f, compression="gzip")
     f_h5.close()

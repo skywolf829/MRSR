@@ -51,13 +51,22 @@ def pointwise_upscaling(img):
     return upscaled_img
 
 def upscale_from_quadtree_debug(quadtree,max_stride=8,device="cuda"):
+    cmap = [
+        torch.tensor(np.array([0, 0, 0])),
+        torch.tensor(np.array([37, 15, 77])),
+        torch.tensor(np.array([115, 30, 107])),
+        torch.tensor(np.array([178, 52, 85])),
+        torch.tensor(np.array([233, 112, 37])),
+        torch.tensor(np.array([244, 189, 55])),
+        torch.tensor(np.array([247, 251, 162])),
+        torch.tensor(np.array([255, 255, 255]))
+    ]
     full_img = torch.zeros([int(quadtree['full_shape'][0]/max_stride),
     int(quadtree['full_shape'][1]/max_stride), quadtree['full_shape'][2]]).to(device)
     curr_stride = max_stride
-    z = np.log(max_stride) / np.log(2)
     while(curr_stride > 0):
-        x = np.log(curr_stride) / np.log(2)
-        c = torch.tensor([1.0-(x/z), 1.0-(x/z), 1.0-(x/z)]).to(device)
+        x = int(np.log(curr_stride) / np.log(2))
+        c = cmap[-1-x].to(device)
         # 1. Fill in known data
         trees = [quadtree]
         while(len(trees) > 0):
@@ -107,6 +116,7 @@ def upscale_from_quadtree_with_seams(quadtree,device="cuda"):
     #imageio.imwrite(str(curr_stride)+".jpg", full_img.cpu().numpy())
     return full_img
 
+'''
 def upscale_from_quadtree_start(quadtree,max_stride=8,device="cuda"):
     full_img = torch.zeros([int(quadtree['full_shape'][0]/max_stride),
     int(quadtree['full_shape'][1]/max_stride), quadtree['full_shape'][2]]).to(device)
@@ -141,6 +151,75 @@ def upscale_from_quadtree_start(quadtree,max_stride=8,device="cuda"):
                 
     #imageio.imwrite(str(curr_stride)+".jpg", full_img.cpu().numpy())
     return full_img
+'''
+def upscale_from_quadtree_start(quadtree,max_stride=8,device="cuda"):
+    full_imgs, masks = quadtree_to_img_downscaled(quadtree, max_stride, device)
+    
+    curr_stride = max_stride
+    full_img = full_imgs[0]
+    i = 0
+    while(curr_stride > 1):  
+        # 1. Upsample
+        full_img = full_img.permute(2,0,1).unsqueeze(0)
+        full_img = F.interpolate(full_img, scale_factor=2, mode='bilinear', align_corners=True)
+        full_img = full_img[0].permute(1,2,0)
+        
+        curr_stride = int(curr_stride / 2)
+        i += 1
+
+        # 2. Fill in data
+        full_img[masks[i] > 0] = full_imgs[i][masks[i] > 0]
+
+
+    #imageio.imwrite(str(curr_stride)+".jpg", full_img.cpu().numpy())
+    return full_img
+
+def quadtree_to_img_downscaled(quadtree, stride,device="cuda"):
+    GT_data = []
+    masks = []
+    full_img = torch.zeros(quadtree['full_shape']).to(device)
+    mask = torch.zeros(full_img.shape).to(device)
+    curr_stride = 1
+    
+    while(curr_stride <= stride):
+        # 1. Fill in known data
+        trees = [quadtree]
+        while(len(trees) > 0):
+            curr_tree = trees.pop(0)
+            if(curr_tree['data'] is not None and curr_tree['stride'] == curr_stride):
+                full_img[
+                    int(curr_tree['x_start']/curr_stride): \
+                    int(curr_tree['x_start']/curr_stride)+int((curr_tree['data'].shape[0]*curr_tree['stride'])/curr_stride),
+                    int(curr_tree['y_start']/curr_stride): \
+                    int(curr_tree['y_start']/curr_stride)+int((curr_tree['data'].shape[1]*curr_tree['stride'])/curr_stride),
+                    :
+                ] = curr_tree['data']
+                mask[
+                    int(curr_tree['x_start']/curr_stride): \
+                    int(curr_tree['x_start']/curr_stride)+int((curr_tree['data'].shape[0]*curr_tree['stride'])/curr_stride),
+                    int(curr_tree['y_start']/curr_stride): \
+                    int(curr_tree['y_start']/curr_stride)+int((curr_tree['data'].shape[1]*curr_tree['stride'])/curr_stride),
+                    :
+                ] = torch.ones(curr_tree['data'].shape)
+            elif(len(curr_tree['children']) > 0):
+                for i in range(len(curr_tree['children'])):
+                    trees.append(curr_tree['children'][i])
+        GT_data.insert(0, full_img.clone())
+        masks.insert(0, mask.clone())
+
+        if(curr_stride < stride):
+            # 2. Downsample
+            full_img = full_img.permute(2,0,1).unsqueeze(0)
+            full_img = AvgPool2D(full_img, 2)
+            full_img = full_img[0].permute(1,2,0)
+            mask = mask[::2, ::2, :]
+
+        curr_stride = int(curr_stride * 2)
+
+        
+                
+    #imageio.imwrite(str(curr_stride)+".jpg", full_img.cpu().numpy())
+    return GT_data, masks
 
 def conditional_downsample_quadtree(img,GT_image,criterion,criterion_value,
 min_chunk_size=32,max_stride=8,device="cuda"):
@@ -159,7 +238,7 @@ min_chunk_size=32,max_stride=8,device="cuda"):
         original_data = t['data'].clone()
         downsampled_data = original_data[::2,::2,:].clone()
         t['data'] = downsampled_data
-        new_img = upscale_from_quadtree_start(img,device=device)
+        new_img = upscale_from_quadtree_start(img,max_stride=max_stride,device=device)
         
         # If criterion not met, reset data and stride, and see
         # if the node is large enough to split into subnodes
@@ -168,7 +247,7 @@ min_chunk_size=32,max_stride=8,device="cuda"):
         if(not criterion(GT_image, new_img, criterion_value)):
             t['data'] = original_data
             t['stride'] = int(t['stride'] / 2)
-            if(t['data'].shape[0]*t['stride'] > min_chunk_size):
+            if(t['data'].shape[0] > min_chunk_size):
                 for x_quad_start in range(0, t['data'].shape[0], int(t['data'].shape[0]/2)):
                     for y_quad_start in range(0, int(t['data'].shape[1]), int(t['data'].shape[1]/2)):
                         t_new = {
@@ -211,7 +290,8 @@ min_chunk_size : int, max_stride : int, device : str):
         # Check if we can downsample this leaf node
         t['stride'] = int(t['stride']*2)
         original_data = t['data'].clone()
-        downsampled_data = AvgPool2D(original_data.clone().permute(2, 0, 1).unsqueeze(0))[0].permute(1, 2, 0)
+        downsampled_data = AvgPool2D(original_data.clone().permute(2, 0, 1).unsqueeze(0),
+        2)[0].permute(1, 2, 0)
         t['data'] = downsampled_data
         new_img = upscale_from_quadtree_start(img,device=device)
         
@@ -222,7 +302,7 @@ min_chunk_size : int, max_stride : int, device : str):
         if(not criterion(GT_image, new_img, criterion_value)):
             t['data'] = original_data
             t['stride'] = int(t['stride'] / 2)
-            if(t['data'].shape[0]*t['stride'] > min_chunk_size):
+            if(t['data'].shape[0] > min_chunk_size):
                 for x_quad_start in range(0, t['data'].shape[0], int(t['data'].shape[0]/2)):
                     for y_quad_start in range(0, int(t['data'].shape[1]), int(t['data'].shape[1]/2)):
                         t_new = {
@@ -243,7 +323,7 @@ min_chunk_size : int, max_stride : int, device : str):
         else:
             #sequence_of_downsampling_debug.append(upscale_from_quadtree_debug(img,max_stride=max_stride,device=device).cpu().numpy())
             #sequence_of_downsampling.append(upsample_from_quadtree_start(img,device=device).cpu().numpy())
-            if(t['stride'] < max_stride):
+            if(t['stride'] < max_stride and t['data'].shape[0] > 1):
                 quadtrees_to_check.append(t)
     #imageio.mimwrite("downsampling_sequence.gif", sequence_of_downsampling, fps=5)
     #imageio.mimwrite("downsampling_sequence_debug.gif", sequence_of_downsampling_debug, fps=5)
@@ -264,13 +344,14 @@ def mse_criterion(GT_image, img, max_mse : float):
 
 
 
-max_stride = 8
-min_chunk = 32
+max_stride = 16
+min_chunk = 8
 criterion = psnr_criterion
-criterion_value = 72
+criterion_value = 90
 device="cuda"
 
-img_gt = torch.from_numpy(imageio.imread("TestingData/quadtree_images/Lenna.jpg").astype(np.float32)).to(device)
+img_gt = torch.from_numpy(imageio.imread("TestingData/quadtree_images/mixing.jpg").astype(np.float32)).to(device)
+#img_gt = AvgPool2D(img_gt.permute(2, 0, 1).unsqueeze(0), 16)[0].permute(1, 2, 0)
 img = {
     "full_shape": img_gt.shape, 
     "data": img_gt,
