@@ -10,6 +10,15 @@ import datetime
 from math import log2, log
 from pytorch_memlab import LineProfiler, MemReporter, profile
 import pandas as pd
+from piq import ssim, FID
+
+
+class img_dataset(torch.utils.dataset):
+    def __init__(self, data):
+        self.data = data
+    
+    def __getitem__(self, index):
+        return self.data[index]
 
 def save_obj(obj, name ):
     with open('obj/'+ name + '.pkl', 'wb') as f:
@@ -24,7 +33,7 @@ def mse_func(GT, x, device):
 
 def psnr_func(GT, x, device):
     data_range = GT.max() - GT.min()
-    return (20*log(data_range)-10*log(mse_func(GT, x))).item()
+    return (20.0*log(data_range)-10.0*log(mse_func(GT, x))).item()
 
 def mre_func(GT, x, device):
     data_range = GT.max() - GT.min()
@@ -41,9 +50,39 @@ def energy_spectra_func(GT, x, device):
     print("to be implemented")
 
 def volume_to_imgs(volume, device):
+    imgs = []
+    for i in range(volume.shape[2]):
+        im = volume[0,:,:,:,:].permute(1, 0, 2, 3)
+        im -= volume.min()
+        im *= (255/(volume.max()-volume.min()))#.type(torch.uint8)
+        imgs.append(im)
+    for i in range(volume.shape[3]):
+        im = volume[0,:,:,:,:].permute(2, 0, 1, 3)
+        im -= volume.min()
+        im *= (255/(volume.max()-volume.min()))#.type(torch.uint8)
+        imgs.append(im)
+    for i in range(volume.shape[4]):
+        im = volume[0,:,:,:,:].permute(3, 0, 1, 2)
+        im -= volume.min()
+        im *= (255/(volume.max()-volume.min()))#.type(torch.uint8)
+        imgs.append(im)
+    return torch.cat(imgs, dim=0)
     
 
 def img_psnr_func(GT, x, device):
+    m = ((GT-x)**2).mean()
+    return (20.0*log(255.0)-10.0*log(mse)).item()
+
+def img_ssim_func(GT, x, device):
+    return ssim(x, GT, data_range=1.0).item()
+
+def img_fid_func(GT, x, device):
+    GT_dl = torch.utils.data.DataLoader(img_dataset(GT))
+    x_dl = torch.utils.data.DataLoader(img_dataset(x))
+    fid_metric = FID()
+    GT_feats = fid_metric.compute_feats(GT_dl)
+    x_feats = fid_metric.compute_feats(x_dl)
+    return fid_metric(GT_feats, x_feats)
 
 
 if __name__ == '__main__':
@@ -54,7 +93,7 @@ if __name__ == '__main__':
     parser.add_argument('--SR_factor',default=2,type=int,help='2x, 4x, 8x... what the model supports')
     parser.add_argument('--data_folder',default="isotropic1024",type=str,help='Name of folder with test data in /TestingData')
     parser.add_argument('--model_name',default="SSR",type=str,help='The folder with the model to load')
-    parser.add_argument('--device',default="cuda",type=str,help='Device to use for testing')
+    parser.add_argument('--device',default="cpu",type=str,help='Device to use for testing')
     parser.add_argument('--print',default="True",type=str2bool,help='Print output during testing')
 
     parser.add_argument('--test_mse',default="True",type=str2bool,help='Enables tests for mse')
@@ -94,7 +133,7 @@ if __name__ == '__main__':
 
     d = {
         "mse": [],
-        "psnr" [],
+        "psnr": [],
         "mre": [],
         "mag": [],
         "angle": [],
