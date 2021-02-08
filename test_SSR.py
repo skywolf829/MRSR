@@ -254,7 +254,7 @@ if __name__ == '__main__':
     else:
         all_data = {}
     
-    all_data["output_file_name"] = d
+    all_data[opt['save_name']] = d
 
     save_obj(all_data, results_location)
     
