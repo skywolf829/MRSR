@@ -8,24 +8,22 @@ import argparse
 import time
 import datetime
 from math import log2, log
-from pytorch_memlab import LineProfiler, MemReporter, profile
 import pandas as pd
-from piq import ssim, FID
+import pickle
 
-
-class img_dataset(torch.utils.dataset):
+class img_dataset(torch.utils.data.Dataset):
     def __init__(self, data):
         self.data = data
     
     def __getitem__(self, index):
         return self.data[index]
 
-def save_obj(obj, name ):
-    with open('obj/'+ name + '.pkl', 'wb') as f:
+def save_obj(obj,location):
+    with open(location, 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
-def load_obj(name ):
-    with open('obj/' + name + '.pkl', 'rb') as f:
+def load_obj(location):
+    with open(location, 'rb') as f:
         return pickle.load(f)
 
 def mse_func(GT, x, device):
@@ -33,7 +31,7 @@ def mse_func(GT, x, device):
 
 def psnr_func(GT, x, device):
     data_range = GT.max() - GT.min()
-    return (20.0*log(data_range)-10.0*log(mse_func(GT, x))).item()
+    return (20.0*log(data_range)-10.0*log(mse_func(GT, x, device))).item()
 
 def mre_func(GT, x, device):
     data_range = GT.max() - GT.min()
@@ -44,35 +42,47 @@ def mag_func(GT, x, device):
 
 def angle_func(GT, x, device):
     cs = torch.nn.CosineSimilarity(dim=1).to(device)
-    return (torch.abs(cs(fake,real_hr) - 1) / 2).item()
+    return (torch.abs(cs(GT,x) - 1) / 2).item()
+
+def streamline_func(GT, x, device):
+    vals = []
+    for i in range(100):
+        vals.append(streamline_loss3D(GT, x,
+        100, 100, 100, 
+        1, 5, device, True).item())
+    vals = np.array(vals)
+    return vals.mean(), vals.std()
 
 def energy_spectra_func(GT, x, device):
     print("to be implemented")
+    return 0
 
 def volume_to_imgs(volume, device):
     imgs = []
-    for i in range(volume.shape[2]):
-        im = volume[0,:,:,:,:].permute(1, 0, 2, 3)
-        im -= volume.min()
-        im *= (255/(volume.max()-volume.min()))#.type(torch.uint8)
-        imgs.append(im)
-    for i in range(volume.shape[3]):
-        im = volume[0,:,:,:,:].permute(2, 0, 1, 3)
-        im -= volume.min()
-        im *= (255/(volume.max()-volume.min()))#.type(torch.uint8)
-        imgs.append(im)
-    for i in range(volume.shape[4]):
-        im = volume[0,:,:,:,:].permute(3, 0, 1, 2)
-        im -= volume.min()
-        im *= (255/(volume.max()-volume.min()))#.type(torch.uint8)
-        imgs.append(im)
+
+    im = volume[0,:,:,:,:].permute(1, 0, 2, 3)
+    im -= volume.min()
+    im *= (255/(volume.max()-volume.min()))#.type(torch.uint8)
+    imgs.append(im)
+
+    im = volume[0,:,:,:,:].permute(2, 0, 1, 3)
+    im -= volume.min()
+    im *= (255/(volume.max()-volume.min()))#.type(torch.uint8)
+    imgs.append(im)
+
+    im = volume[0,:,:,:,:].permute(3, 0, 1, 2)
+    im -= volume.min()
+    im *= (255/(volume.max()-volume.min()))#.type(torch.uint8)
+    imgs.append(im)
+
     return torch.cat(imgs, dim=0)
     
 
 def img_psnr_func(GT, x, device):
     m = ((GT-x)**2).mean()
-    return (20.0*log(255.0)-10.0*log(mse)).item()
+    return (20.0*log(255.0)-10.0*log(m)).item()
 
+'''
 def img_ssim_func(GT, x, device):
     return ssim(x, GT, data_range=1.0).item()
 
@@ -83,7 +93,7 @@ def img_fid_func(GT, x, device):
     GT_feats = fid_metric.compute_feats(GT_dl)
     x_feats = fid_metric.compute_feats(x_dl)
     return fid_metric(GT_feats, x_feats)
-
+'''
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
@@ -101,6 +111,7 @@ if __name__ == '__main__':
     parser.add_argument('--test_mre',default="True",type=str2bool,help='Enables tests for maximum relative error')
     parser.add_argument('--test_mag',default="True",type=str2bool,help='Enables tests for average magnitude difference')
     parser.add_argument('--test_angle',default="True",type=str2bool,help='Enables tests for average angle difference')
+    parser.add_argument('--test_streamline',default="True",type=str2bool,help='Enables tests for streamline differences')
 
     parser.add_argument('--test_energy_spectra',default="True",type=str2bool,help='Enables tests for energy spectra')
 
@@ -108,7 +119,7 @@ if __name__ == '__main__':
     parser.add_argument('--test_img_ssim',default="True",type=str2bool,help='Enables tests for image SSIM score')
     parser.add_argument('--test_img_fid',default="True",type=str2bool,help='Enables tests for image FID score')
 
-    parser.add_argument('--output_file_name',default="SSR.csv",type=str,help='Where to write results')
+    parser.add_argument('--output_file_name',default="SSR.pkl",type=str,help='Where to write results')
     
     args = vars(parser.parse_args())
 
@@ -137,7 +148,8 @@ if __name__ == '__main__':
         "mre": [],
         "mag": [],
         "angle": [],
-        "streamline": [],
+        "streamline_average": [],
+        "streamline_std": [],
         "energy_spectra": [],
         "img_psnr": [],
         "img_ssim": [],
@@ -186,9 +198,65 @@ if __name__ == '__main__':
             img_fid_this_frame = None
 
             if(opt['test_mse']):
-                mse_item = ((GT_data - LR_data)**2).mean().item()
+                mse_item = mse_func(GT_data, LR_data, opt['deivce'])
                 if(p):
                     print("MSE: " + str(mse_item))
                 d['mse'].append(mse_item)
-            if(opt['test_psnr']):
 
+            if(opt['test_psnr']):
+                psnr_item = psnr_func(GT_data, LR_data, opt['deivce'])
+                if(p):
+                    print("PSNR: " + str(psnr_item))
+                d['psnr'].append(mse_item)
+
+            if(opt['test_mre']):
+                mre_item = mre_func(GT_data, LR_data, opt['deivce'])
+                if(p):
+                    print("MRE: " + str(mre_item))
+                d['mre'].append(mse_item)
+
+            if(opt['test_mag']):
+                mag_item = mag_func(GT_data, LR_data, opt['deivce'])
+                if(p):
+                    print("Mag: " + str(mag_item))
+                d['mag'].append(mag_item)
+
+            if(opt['test_angle']):
+                angle_item = angle_func(GT_data, LR_data, opt['deivce'])
+                if(p):
+                    print("Angle: " + str(angle_item))
+                d['angle'].append(angle_item)
+
+            if(opt['test_angle']):
+                angle_item = angle_func(GT_data, LR_data, opt['deivce'])
+                if(p):
+                    print("Angle: " + str(angle_item))
+                d['angle'].append(angle_item)
+
+            
+            if(opt['test_streamline']):
+                sl_avg, sl_std = streamline_func(GT_data, LR_data, opt['deivce'])
+                if(p):
+                    print("Streamline average/std: " + str(sl_avg) + "/" + str(sl_std))
+                d['streamline_average'].append(sl_avg)
+                d['streamline_std '].append(sl_std)
+            
+            if(opt['test_img_psnr']):
+                psnr_item = img_psnr_func(GT_data, LR_data, opt['deivce'])
+                if(p):
+                    print("Image PSNR: " + str(psnr_item))
+                d['img_psnr'].append(psnr_item)
+    
+    if(os.path.exists(results_location)):
+        all_data = load_obj(results_location)
+        if(p):
+            print("Found existing results, will append new results")
+    else:
+        all_data = {}
+    
+    all_data["output_file_name"] = d
+
+    save_obj(all_data, results_location)
+    
+    if(p):
+        print("Saved results")
