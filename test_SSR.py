@@ -98,6 +98,58 @@ def img_fid_func(GT, x, device):
     return fid_metric(GT_feats, x_feats)
 '''
 
+def generate_by_patch(generator, input_volume, patch_size, receptive_field, device):
+    with torch.no_grad():
+        final_volume = torch.zeros(
+            [input_volume.shape[0], input_volume.shape[1], input_volume.shape[2]*2, 
+            input_volume.shape[3]*2, input_volume.shape[4]*2]
+            ).to(device)
+        
+        #print("Gen " + str(i))
+        rf = receptive_field
+                    
+        z_done = False
+        z = 0
+        z_stop = min(final_volume.shape[2], z + patch_size)
+        while(not z_done):
+            if(z_stop == final_volume.shape[2]):
+                z_done = True
+            y_done = False
+            y = 0
+            y_stop = min(final_volume.shape[3], y + patch_size)
+            while(not y_done):
+                if(y_stop == final_volume.shape[3]):
+                    y_done = True
+                x_done = False
+                x = 0
+                x_stop = min(final_volume.shape[4], x + patch_size)
+                while(not x_done):                        
+                    if(x_stop == final_volume.shape[4]):
+                        x_done = True
+
+                    result = generator(input_volume[:,:,z:z_stop,y:y_stop,x:x_stop])
+
+                    x_offset = rf if x > 0 else 0
+                    y_offset = rf if y > 0 else 0
+                    z_offset = rf if z > 0 else 0
+
+                    final_volume[:,:,
+                    z+z_offset:z+input_volume.shape[2],
+                    y+y_offset:y+input_volume.shape[3],
+                    x+x_offset:x+input_volume.shape[4]] = result[:,:,z_offset:,y_offset:,x_offset:]
+
+                    x += patch_size - 2*rf
+                    x = min(x, max(0, final_volume.shape[4] - patch_size))
+                    x_stop = min(final_volume.shape[4], x + patch_size)
+                y += patch_size - 2*rf
+                y = min(y, max(0, final_volume.shape[3] - patch_size))
+                y_stop = min(final_volume.shape[3], y + patch_size)
+            z += patch_size - 2*rf
+            z = min(z, max(0, final_volume.shape[2] - patch_size))
+            z_stop = min(final_volume.shape[2], z + patch_size)
+
+    return final_volume
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
 
@@ -185,7 +237,8 @@ if __name__ == '__main__':
                 current_ds = args['scale_factor']
                 while(current_ds > 1):
                     gen_to_use = int(len(generators) - log2(current_ds))
-                    LR_data = generators[gen_to_use](LR_data)
+                    LR_data = generate_by_patch(generators[gen_to_use], LR_data, 96, 10, args['device'])
+                    #LR_data = generators[gen_to_use](LR_data)
                     current_ds = int(current_ds / 2)
             else:
                 LR_data = F.interpolate(LR_data, scale_factor=args['scale_factor'], 
