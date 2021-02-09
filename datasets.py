@@ -359,8 +359,10 @@ class TestingDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):       
         f = h5py.File(os.path.join(self.location, self.item_names[index]), 'r')
         data =  np.array(f['data'])
+        print("h5 to np array")
         f.close()
-        return torch.tensor(data)
+        print("converting to tensor")
+        return torch.tensor(data).unsqueeze(0)
 
 class LocalDataset(torch.utils.data.Dataset):
     def __init__(self, opt):
