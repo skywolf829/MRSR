@@ -110,21 +110,21 @@ def generate_by_patch(generator, input_volume, patch_size, receptive_field, devi
                     
         z_done = False
         z = 0
-        z_stop = min(final_volume.shape[2], z + patch_size)
+        z_stop = min(input_volume.shape[2], z + patch_size)
         while(not z_done):
-            if(z_stop == final_volume.shape[2]):
+            if(z_stop == input_volume.shape[2]):
                 z_done = True
             y_done = False
             y = 0
-            y_stop = min(final_volume.shape[3], y + patch_size)
+            y_stop = min(input_volume.shape[3], y + patch_size)
             while(not y_done):
-                if(y_stop == final_volume.shape[3]):
+                if(y_stop == input_volume.shape[3]):
                     y_done = True
                 x_done = False
                 x = 0
-                x_stop = min(final_volume.shape[4], x + patch_size)
+                x_stop = min(input_volume.shape[4], x + patch_size)
                 while(not x_done):                        
-                    if(x_stop == final_volume.shape[4]):
+                    if(x_stop == input_volume.shape[4]):
                         x_done = True
                     print("%d:%d, %d:%d, %d:%d" % (z, z_stop, y, y_stop, x, x_stop))
                     result = generator(input_volume[:,:,z:z_stop,y:y_stop,x:x_stop])
@@ -134,9 +134,9 @@ def generate_by_patch(generator, input_volume, patch_size, receptive_field, devi
                     z_offset = rf if z > 0 else 0
 
                     final_volume[:,:,
-                    z+z_offset:z+result.shape[2],
-                    y+y_offset:y+result.shape[3],
-                    x+x_offset:x+result.shape[4]] = result[:,:,z_offset:,y_offset:,x_offset:]
+                    2*(z+z_offset):2*(z+result.shape[2]),
+                    2*(y+y_offset):2*(y+result.shape[3]),
+                    2*(x+x_offset):2*(x+result.shape[4])] = result[:,:,z_offset:,y_offset:,x_offset:]
 
                     x += patch_size - 2*rf
                     x = min(x, max(0, final_volume.shape[4] - patch_size))
