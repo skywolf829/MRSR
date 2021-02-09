@@ -358,9 +358,9 @@ class TestingDataset(torch.utils.data.Dataset):
         return len(self.item_names)
     def __getitem__(self, index):       
         f = h5py.File(os.path.join(self.location, self.item_names[index]), 'r')
-        data =  torch.tensor(f['data'])
+        data =  np.array(f['data'])
         f.close()
-        return data
+        return torch.tensor(data)
 
 class LocalDataset(torch.utils.data.Dataset):
     def __init__(self, opt):
