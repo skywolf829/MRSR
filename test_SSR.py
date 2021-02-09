@@ -10,6 +10,7 @@ import datetime
 from math import log2, log
 import pandas as pd
 import pickle
+from datasets import TestingDataset
 
 class img_dataset(torch.utils.data.Dataset):
     def __init__(self, data):
@@ -141,7 +142,7 @@ if __name__ == '__main__':
         generators[i] = generators[i].to(opt['device'])
         generators[i].train(False)
 
-    dataset = LocalDataset(opt)
+    dataset = TestingDataset(opt)
     results_location = os.path.join(output_folder, args['output_file_name'])
 
 

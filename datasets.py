@@ -346,6 +346,21 @@ class LocalTemporalDataset(torch.utils.data.Dataset):
         return (data[0:1], data[self.opt['training_seq_length']-1:self.opt['training_seq_length']], 
         data[1:self.opt['training_seq_length']-1], (index, index+self.opt['training_seq_length']-1))
 
+class TestingDataset(torch.utils.data.Dataset):
+    def __init__(self, location):
+        self.location = location
+        print("Initializing dataset")
+        self.item_names = []
+        for filename in os.listdir(location):
+            self.item_names.append(filename)
+        print("Dataset has " + str(len(self.item_names)) + " items")
+
+    def __getitem__(self, index):       
+        f = h5py.File(os.path.join(self.location, self.item_names[index]), 'r')
+        data =  torch.tensor(f['data'])
+        f.close()
+        return data
+
 class LocalDataset(torch.utils.data.Dataset):
     def __init__(self, opt):
         
