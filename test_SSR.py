@@ -139,15 +139,15 @@ def generate_by_patch(generator, input_volume, patch_size, receptive_field, devi
                     2*x+x_offset:2*x+result.shape[4]] = result[:,:,z_offset:,y_offset:,x_offset:]
 
                     x += patch_size - 2*rf
-                    x = min(x, max(0, final_volume.shape[4] - patch_size))
-                    x_stop = min(final_volume.shape[4], x + patch_size)
+                    x = min(x, max(0, input_volume.shape[4] - patch_size))
+                    x_stop = min(input_volume.shape[4], x + patch_size)
                 y += patch_size - 2*rf
-                y = min(y, max(0, final_volume.shape[3] - patch_size))
-                y_stop = min(final_volume.shape[3], y + patch_size)
+                y = min(y, max(0, input_volume.shape[3] - patch_size))
+                y_stop = min(input_volume.shape[3], y + patch_size)
             imageio.imwrite("frame.png", final_volume[0,:,32,:,:].cpu().numpy().swapaxes(0,2).swapaxes(0,1))
             z += patch_size - 2*rf
-            z = min(z, max(0, final_volume.shape[2] - patch_size))
-            z_stop = min(final_volume.shape[2], z + patch_size)
+            z = min(z, max(0, input_volume.shape[2] - patch_size))
+            z_stop = min(input_volume.shape[2], z + patch_size)
 
     return final_volume
 
