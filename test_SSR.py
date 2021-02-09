@@ -165,7 +165,7 @@ if __name__ == '__main__':
         for i in range(len(dataset)):
             if(p):
                 print("Loading dataset item : " + str(i))
-            GT_data = dataset[i]
+            GT_data = dataset[i].to(opt['device'])
             if(p):
                 print("Finished loading. Downscaling by " + str(args['scale_factor']))
 
