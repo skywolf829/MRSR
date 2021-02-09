@@ -1,6 +1,6 @@
-from spatial_models import *
-from options import *
-from utility_functions import *
+from spatial_models import Generator, load_models
+from options import Options, load_options
+from utility_functions import streamline_loss3D, str2bool
 import numpy as np
 import os
 import imageio
@@ -11,6 +11,7 @@ from math import log2, log
 import pandas as pd
 import pickle
 from datasets import TestingDataset
+import torch
 
 class img_dataset(torch.utils.data.Dataset):
     def __init__(self, data):
