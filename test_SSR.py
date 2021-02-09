@@ -101,7 +101,7 @@ if __name__ == '__main__':
     
     parser.add_argument('--testing_method',default="model",type=str,help='What method to test, model or trilinear')
     parser.add_argument('--SR_factor',default=2,type=int,help='2x, 4x, 8x... what the model supports')
-    parser.add_argument('--data_folder',default="isotropic1024",type=str,help='Name of folder with test data in /TestingData')
+    parser.add_argument('--data_folder',default="iso1024",type=str,help='Name of folder with test data in /TestingData')
     parser.add_argument('--model_name',default="SSR",type=str,help='The folder with the model to load')
     parser.add_argument('--device',default="cpu",type=str,help='Device to use for testing')
     parser.add_argument('--print',default="True",type=str2bool,help='Print output during testing')
