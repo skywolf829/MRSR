@@ -135,7 +135,7 @@ if __name__ == '__main__':
     opt["device"] = args["device"]
     opt['data_folder'] = "TestingData/"+args['data_folder']
     generators, _ = load_models(opt,"cpu")
-    for i in len(generators):
+    for i in range(len(generators)):
         generators[i] = generators[i].to(opt['device'])
         generators[i].train(False)
 
