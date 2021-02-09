@@ -167,9 +167,9 @@ if __name__ == '__main__':
                 print("Loading dataset item : " + str(i))
             GT_data = dataset[i].to(opt['device'])
             if(p):
+                print("Data size: " + str(GT_data.shape))
                 print("Finished loading. Downscaling by " + str(args['scale_factor']))
 
-            print(GT_data.shape)
             
             if(opt['downsample_mode'] == "average_pooling"):
                 LR_data = AvgPool3D(GT_data.clone(), args['scale_factor'])
