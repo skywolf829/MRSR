@@ -144,7 +144,6 @@ def generate_by_patch(generator, input_volume, patch_size, receptive_field, devi
                 y += patch_size - 2*rf
                 y = min(y, max(0, input_volume.shape[3] - patch_size))
                 y_stop = min(input_volume.shape[3], y + patch_size)
-            imageio.imwrite("frame.png", final_volume[0,:,32,:,:].cpu().numpy().swapaxes(0,2).swapaxes(0,1))
             z += patch_size - 2*rf
             z = min(z, max(0, input_volume.shape[2] - patch_size))
             z_stop = min(input_volume.shape[2], z + patch_size)
@@ -227,7 +226,9 @@ if __name__ == '__main__':
 
             
             if(opt['downsample_mode'] == "average_pooling"):
-                LR_data = AvgPool3D(GT_data.clone(), args['scale_factor'])
+                LR_data = AvgPool3D(GT_data[:,0:1,:,:,:], args['scale_factor'])
+                LR_data = torch.cat((LR_data, AvgPool3D(GT_data[:,1:2,:,:,:], args['scale_factor'])), dim=1)
+                LR_data = torch.cat((LR_data, AvgPool3D(GT_data[:,2:3,:,:,:], args['scale_factor'])), dim=1)
             elif(opt['downsample_mode'] == "subsampling"):
                 LR_data = GT_data[:,:,::args['scale_factor'], ::args['scale_factor']].clone()
 
@@ -238,7 +239,7 @@ if __name__ == '__main__':
                 current_ds = args['scale_factor']
                 while(current_ds > 1):
                     gen_to_use = int(len(generators) - log2(current_ds))
-                    LR_data = generate_by_patch(generators[gen_to_use], LR_data, 128, 6, args['device'])
+                    LR_data = generate_by_patch(generators[gen_to_use], LR_data, 64, 6, args['device'])
                     #LR_data = generators[gen_to_use](LR_data)
                     current_ds = int(current_ds / 2)
             else:
