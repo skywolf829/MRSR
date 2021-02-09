@@ -1,6 +1,6 @@
 from spatial_models import Generator, load_models
 from options import Options, load_options
-from utility_functions import streamline_loss3D, str2bool
+from utility_functions import streamline_loss3D, str2bool, AvgPool3D
 import numpy as np
 import os
 import imageio
@@ -12,6 +12,7 @@ import pandas as pd
 import pickle
 from datasets import TestingDataset
 import torch
+import torch.nn.function as F
 
 class img_dataset(torch.utils.data.Dataset):
     def __init__(self, data):
