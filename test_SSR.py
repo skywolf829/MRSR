@@ -12,7 +12,7 @@ import pandas as pd
 import pickle
 from datasets import TestingDataset
 import torch
-import torch.nn.function as F
+import torch.nn.functional as F
 
 class img_dataset(torch.utils.data.Dataset):
     def __init__(self, data):
