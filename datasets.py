@@ -362,7 +362,7 @@ class TestingDataset(torch.utils.data.Dataset):
         print("h5 to np array")
         f.close()
         print("converting to tensor")
-        return torch.tensor(data).unsqueeze(0)
+        return torch.tensor(data).permute(3, 0, 1, 2).unsqueeze(0)
 
 class LocalDataset(torch.utils.data.Dataset):
     def __init__(self, opt):
