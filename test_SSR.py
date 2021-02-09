@@ -132,7 +132,8 @@ if __name__ == '__main__':
     input_folder = os.path.join(FlowSTSR_folder_path, "TestingData", args['data_folder'])
     save_folder = os.path.join(FlowSTSR_folder_path, "SavedModels")
     output_folder = os.path.join(FlowSTSR_folder_path, "Output")
-    
+    if(p):
+        print("Loading options and model")
     opt = load_options(os.path.join(save_folder, args["model_name"]))
     opt['cropping_resolution'] = args['full_resolution']
     opt["device"] = args["device"]
@@ -142,7 +143,7 @@ if __name__ == '__main__':
         generators[i] = generators[i].to(opt['device'])
         generators[i].train(False)
 
-    dataset = TestingDataset(opt)
+    dataset = TestingDataset(opt['data_folder'])
     results_location = os.path.join(output_folder, args['output_file_name'])
 
 
