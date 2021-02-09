@@ -101,6 +101,7 @@ if __name__ == '__main__':
     
     parser.add_argument('--testing_method',default="model",type=str,help='What method to test, model or trilinear')
     parser.add_argument('--SR_factor',default=2,type=int,help='2x, 4x, 8x... what the model supports')
+    parser.add_argument('--full_resolution',default=1024,type=int,help='The full resolution of the frame')
     parser.add_argument('--data_folder',default="iso1024",type=str,help='Name of folder with test data in /TestingData')
     parser.add_argument('--model_name',default="SSR",type=str,help='The folder with the model to load')
     parser.add_argument('--device',default="cpu",type=str,help='Device to use for testing')
@@ -132,6 +133,7 @@ if __name__ == '__main__':
     output_folder = os.path.join(FlowSTSR_folder_path, "Output")
     
     opt = load_options(os.path.join(save_folder, args["model_name"]))
+    opt['cropping_resolution'] = args['full_resolution']
     opt["device"] = args["device"]
     opt['data_folder'] = "TestingData/"+args['data_folder']
     generators, _ = load_models(opt,"cpu")
