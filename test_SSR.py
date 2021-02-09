@@ -106,7 +106,6 @@ def generate_by_patch(generator, input_volume, patch_size, receptive_field, devi
             input_volume.shape[3]*2, input_volume.shape[4]*2]
             ).to(device)
         
-        #print("Gen " + str(i))
         rf = receptive_field
                     
         z_done = False
@@ -233,7 +232,7 @@ if __name__ == '__main__':
                 LR_data = GT_data[:,:,::args['scale_factor'], ::args['scale_factor']].clone()
 
             if(p):
-                print("Finished downscaling. Performing super resolution")
+                print("Finished downscaling to " + str(LR_data.shape) + ". Performing super resolution")
             
             if(args['testing_method'] == "model"):
                 current_ds = args['scale_factor']
