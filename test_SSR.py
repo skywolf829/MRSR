@@ -171,7 +171,7 @@ if __name__ == '__main__':
 
             
             if(opt['downsample_mode'] == "average_pooling"):
-                LR_data = AvgPool3D(GT_data.clone(), opt['scale_factor'])
+                LR_data = AvgPool3D(GT_data.clone(), args['scale_factor'])
             elif(opt['downsample_mode'] == "subsampling"):
                 LR_data = GT_data[:,:,::args['scale_factor'], ::args['scale_factor']].clone()
 
