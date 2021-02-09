@@ -169,6 +169,7 @@ if __name__ == '__main__':
             if(p):
                 print("Finished loading. Downscaling by " + str(args['scale_factor']))
 
+            print(GT_data.shape)
             
             if(opt['downsample_mode'] == "average_pooling"):
                 LR_data = AvgPool3D(GT_data.clone(), args['scale_factor'])
