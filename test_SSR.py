@@ -134,9 +134,9 @@ def generate_by_patch(generator, input_volume, patch_size, receptive_field, devi
                     z_offset = rf if z > 0 else 0
 
                     final_volume[:,:,
-                    2*(z+z_offset):2*(z+result.shape[2]),
-                    2*(y+y_offset):2*(y+result.shape[3]),
-                    2*(x+x_offset):2*(x+result.shape[4])] = result[:,:,z_offset:,y_offset:,x_offset:]
+                    2*z+z_offset:2*z+result.shape[2],
+                    2*y+y_offset:2*y+result.shape[3],
+                    2*x+x_offset:2*x+result.shape[4]] = result[:,:,z_offset:,y_offset:,x_offset:]
 
                     x += patch_size - 2*rf
                     x = min(x, max(0, final_volume.shape[4] - patch_size))
