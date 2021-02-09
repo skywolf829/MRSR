@@ -354,7 +354,8 @@ class TestingDataset(torch.utils.data.Dataset):
         for filename in os.listdir(location):
             self.item_names.append(filename)
         print("Dataset has " + str(len(self.item_names)) + " items")
-
+    def __len__(self):
+        return len(self.item_names)
     def __getitem__(self, index):       
         f = h5py.File(os.path.join(self.location, self.item_names[index]), 'r')
         data =  torch.tensor(f['data'])
