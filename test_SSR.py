@@ -177,7 +177,7 @@ if __name__ == '__main__':
             if(args['testing_method'] == "model"):
                 current_ds = args['scale_factor']
                 while(current_ds > 1):
-                    gen_to_use = len(generators) - log2(current_ds)
+                    gen_to_use = int(len(generators) - log2(current_ds))
                     LR_data = generators[gen_to_use](LR_data)
                     current_ds = int(current_ds / 2)
             else:
