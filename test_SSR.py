@@ -119,6 +119,7 @@ if __name__ == '__main__':
     parser.add_argument('--test_img_ssim',default="True",type=str2bool,help='Enables tests for image SSIM score')
     parser.add_argument('--test_img_fid',default="True",type=str2bool,help='Enables tests for image FID score')
 
+    parser.add_argument('--save_name',default="SSR",type=str,help='Where to write results')
     parser.add_argument('--output_file_name',default="SSR.pkl",type=str,help='Where to write results')
     
     args = vars(parser.parse_args())
@@ -162,25 +163,25 @@ if __name__ == '__main__':
                 print("Loading dataset item : " + str(i))
             GT_data = dataset[i]
             if(p):
-                print("Finished loading. Downscaling by " + str(opt['scale_factor']))
+                print("Finished loading. Downscaling by " + str(args['scale_factor']))
 
             
             if(opt['downsample_mode'] == "average_pooling"):
                 LR_data = AvgPool3D(GT_data.clone(), opt['scale_factor'])
             elif(opt['downsample_mode'] == "subsampling"):
-                LR_data = GT_data[:,:,::opt['scale_factor'], ::opt['scale_factor']].clone()
+                LR_data = GT_data[:,:,::args['scale_factor'], ::args['scale_factor']].clone()
 
             if(p):
                 print("Finished downscaling. Performing super resolution")
             
-            if(opt['testing_method'] == "model"):
-                current_ds = opt['scale_factor']
+            if(args['testing_method'] == "model"):
+                current_ds = args['scale_factor']
                 while(current_ds > 1):
                     gen_to_use = len(generators) - log2(current_ds)
                     LR_data = generators[gen_to_use](LR_data)
                     current_ds = int(current_ds / 2)
             else:
-                LR_data = F.interpolate(LR_data, scale_factor=opt['scale_factor'], 
+                LR_data = F.interpolate(LR_data, scale_factor=args['scale_factor'], 
                 mode="trilinear", align_corners=True)
 
 
@@ -197,52 +198,52 @@ if __name__ == '__main__':
             img_ssim_this_frame = None
             img_fid_this_frame = None
 
-            if(opt['test_mse']):
-                mse_item = mse_func(GT_data, LR_data, opt['deivce'])
+            if(args['test_mse']):
+                mse_item = mse_func(GT_data, LR_data, args['deivce'])
                 if(p):
                     print("MSE: " + str(mse_item))
                 d['mse'].append(mse_item)
 
-            if(opt['test_psnr']):
-                psnr_item = psnr_func(GT_data, LR_data, opt['deivce'])
+            if(args['test_psnr']):
+                psnr_item = psnr_func(GT_data, LR_data, args['deivce'])
                 if(p):
                     print("PSNR: " + str(psnr_item))
                 d['psnr'].append(mse_item)
 
-            if(opt['test_mre']):
-                mre_item = mre_func(GT_data, LR_data, opt['deivce'])
+            if(args['test_mre']):
+                mre_item = mre_func(GT_data, LR_data, args['deivce'])
                 if(p):
                     print("MRE: " + str(mre_item))
                 d['mre'].append(mse_item)
 
-            if(opt['test_mag']):
-                mag_item = mag_func(GT_data, LR_data, opt['deivce'])
+            if(args['test_mag']):
+                mag_item = mag_func(GT_data, LR_data, args['deivce'])
                 if(p):
                     print("Mag: " + str(mag_item))
                 d['mag'].append(mag_item)
 
-            if(opt['test_angle']):
-                angle_item = angle_func(GT_data, LR_data, opt['deivce'])
+            if(args['test_angle']):
+                angle_item = angle_func(GT_data, LR_data, args['deivce'])
                 if(p):
                     print("Angle: " + str(angle_item))
                 d['angle'].append(angle_item)
 
-            if(opt['test_angle']):
-                angle_item = angle_func(GT_data, LR_data, opt['deivce'])
+            if(args['test_angle']):
+                angle_item = angle_func(GT_data, LR_data, args['deivce'])
                 if(p):
                     print("Angle: " + str(angle_item))
                 d['angle'].append(angle_item)
 
             
-            if(opt['test_streamline']):
-                sl_avg, sl_std = streamline_func(GT_data, LR_data, opt['deivce'])
+            if(args['test_streamline']):
+                sl_avg, sl_std = streamline_func(GT_data, LR_data, args['deivce'])
                 if(p):
                     print("Streamline average/std: " + str(sl_avg) + "/" + str(sl_std))
                 d['streamline_average'].append(sl_avg)
                 d['streamline_std '].append(sl_std)
             
-            if(opt['test_img_psnr']):
-                psnr_item = img_psnr_func(GT_data, LR_data, opt['deivce'])
+            if(args['test_img_psnr']):
+                psnr_item = img_psnr_func(GT_data, LR_data, args['deivce'])
                 if(p):
                     print("Image PSNR: " + str(psnr_item))
                 d['img_psnr'].append(psnr_item)
@@ -254,7 +255,7 @@ if __name__ == '__main__':
     else:
         all_data = {}
     
-    all_data[opt['save_name']] = d
+    all_data[args['save_name']] = d
 
     save_obj(all_data, results_location)
     
