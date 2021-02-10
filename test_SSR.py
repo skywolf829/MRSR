@@ -176,7 +176,8 @@ def generate_patch(z,z_stop,y,y_stop,x,x_stop,available_gpus):
         device, generator, input_volume = available_gpus.get_next_available()
         time.sleep(1)
     print("Starting SR on device " + device)
-    result = generator(input_volume[:,:,z:z_stop,y:y_stop,x:x_stop])
+    with torch.no_grad():
+        result = generator(input_volume[:,:,z:z_stop,y:y_stop,x:x_stop])
     return result,z,z_stop,y,y_stop,x,x_stop,device
 
 class SharedList(object):  
