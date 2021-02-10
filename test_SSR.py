@@ -291,7 +291,7 @@ if __name__ == '__main__':
                 psnr_item = psnr_func(GT_data, LR_data, "cpu")
                 if(p):
                     print("PSNR: " + str(psnr_item))
-                d['psnr'].append(mse_item)
+                d['psnr'].append(psnr_item)
 
             if(args['test_mre']):
                 mre_item = mre_func(GT_data, LR_data, "cpu")
