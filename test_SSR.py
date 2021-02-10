@@ -314,11 +314,13 @@ if __name__ == '__main__':
                 d['streamline_average'].append(sl_avg)
                 d['streamline_std'].append(sl_std)
             
+            '''
             if(args['test_img_psnr']):
                 psnr_item = img_psnr_func(GT_data, LR_data, "cpu")
                 if(p):
                     print("Image PSNR: " + str(psnr_item))
                 d['img_psnr'].append(psnr_item)
+            '''
     
     if(os.path.exists(results_location)):
         all_data = load_obj(results_location)
