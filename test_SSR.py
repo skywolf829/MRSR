@@ -277,7 +277,7 @@ def generate_by_patch_parallel(generator, input_volume, patch_size, receptive_fi
                 z_stop = min(input_volume.shape[2], z + patch_size)
 
             for task in as_completed(threads):
-                result,z,z,stop,y,y_stop,x,x_stop,device = task.result()
+                result,z,z_stop,y,y_stop,x,x_stop,device = task.result()
                 result = result.to(devices[0])
                 x_offset = rf if x > 0 else 0
                 y_offset = rf if y > 0 else 0
