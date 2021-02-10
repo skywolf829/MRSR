@@ -751,7 +751,10 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
 
     start_time = time.time()
     next_save = 0
-    volumes_seen = opt['epoch_number'] * len(dataset)
+    if(opt['train_distributed']):
+        volumes_seen = opt['epoch_number'] * int(len(dataset) / opt['gpus_per_node'])
+    else:
+        volumes_seen = opt['epoch_number'] * len(dataset)
 
     dataset.set_subsample_dist(int(2**(opt['n']-len(generators)-1)))
     if(opt['train_distributed']):
