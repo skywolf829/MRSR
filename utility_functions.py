@@ -122,9 +122,14 @@ def bilinear_interpolate(im, x, y):
     wd = (x-x0.type(dtype)) * (y-y0.type(dtype))
     return Ia*wa + Ib*wb + Ic*wc + Id*wd
 
-def trilinear_interpolate(im, x, y, z, periodic=False):
-    dtype = torch.cuda.FloatTensor
-    dtype_long = torch.cuda.LongTensor
+def trilinear_interpolate(im, x, y, z, device, periodic=False):
+
+    if(device == "cpu"):
+        dtype = torch.float
+        dtype_long = torch.long
+    else:
+        dtype = torch.cuda.FloatTensor
+        dtype_long = torch.cuda.LongTensor
 
     x0 = torch.floor(x).type(dtype_long)
     x1 = x0 + 1
