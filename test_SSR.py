@@ -39,7 +39,7 @@ def psnr_func(GT, x, device):
     GT = GT.to(device)
     x = x.to(device)
     data_range = GT.max() - GT.min()
-    return (20.0*log(data_range)-10.0*log(mse_func(GT, x, device))).item()
+    return (20.0*log(data_range)-10.0*log(mse_func(GT, x, device)))
 
 def mre_func(GT, x, device):
     GT = GT.to(device)
