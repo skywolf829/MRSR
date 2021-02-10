@@ -372,16 +372,17 @@ if __name__ == '__main__':
         for i in range(len(dataset)):
             if(p):
                 print("Loading dataset item : " + str(i))
-            
+            start_load_time = time.time()
             if(args['debug']):
                 GT_data = torch.randn([1, 3, 1024, 1024, 1024]).to(args['device'])
             else:
                 GT_data = dataset[i].to(args['device'])
-
+            end_load_time = time.time()
             GT_data.requires_grad_(False)
             if(p):
                 print("Data size: " + str(GT_data.shape))
-                print("Finished loading. Downscaling by " + str(args['scale_factor']))
+                print("Finished loading in " + str(end_load_time-start_load_time) + \
+                    ". Downscaling by " + str(args['scale_factor']))
 
             
             if(opt['downsample_mode'] == "average_pooling"):
