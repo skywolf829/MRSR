@@ -31,24 +31,36 @@ def load_obj(location):
         return pickle.load(f)
 
 def mse_func(GT, x, device):
+    GT = GT.to(device)
+    x = x.to(device)
     return ((GT-x)**2).mean().item()
 
 def psnr_func(GT, x, device):
+    GT = GT.to(device)
+    x = x.to(device)
     data_range = GT.max() - GT.min()
     return (20.0*log(data_range)-10.0*log(mse_func(GT, x, device))).item()
 
 def mre_func(GT, x, device):
+    GT = GT.to(device)
+    x = x.to(device)
     data_range = GT.max() - GT.min()
     return (torch.abs(GT-x).max() / data_range).item()
 
 def mag_func(GT, x, device):
+    GT = GT.to(device)
+    x = x.to(device)
     return torch.abs(torch.norm(GT, dim=1) - torch.norm(x, dim=1)).mean().item()
 
 def angle_func(GT, x, device):
+    GT = GT.to(device)
+    x = x.to(device)
     cs = torch.nn.CosineSimilarity(dim=1).to(device)
     return (torch.abs(cs(GT,x) - 1) / 2).item()
 
 def streamline_func(GT, x, device):
+    GT = GT.to(device)
+    x = x.to(device)
     vals = []
     for i in range(100):
         vals.append(streamline_loss3D(GT, x,
@@ -58,6 +70,8 @@ def streamline_func(GT, x, device):
     return vals.mean(), vals.std()
 
 def energy_spectra_func(GT, x, device):
+    GT = GT.to(device)
+    x = x.to(device)
     print("to be implemented")
     return 0
 
@@ -83,6 +97,8 @@ def volume_to_imgs(volume, device):
     
 
 def img_psnr_func(GT, x, device):
+    GT = GT.to(device)
+    x = x.to(device)
     m = ((GT-x)**2).mean()
     return (20.0*log(255.0)-10.0*log(m)).item()
 
@@ -262,51 +278,51 @@ if __name__ == '__main__':
             img_fid_this_frame = None
 
             if(args['test_mse']):
-                mse_item = mse_func(GT_data, LR_data, args['device'])
+                mse_item = mse_func(GT_data, LR_data, "cpu")
                 if(p):
                     print("MSE: " + str(mse_item))
                 d['mse'].append(mse_item)
 
             if(args['test_psnr']):
-                psnr_item = psnr_func(GT_data, LR_data, args['device'])
+                psnr_item = psnr_func(GT_data, LR_data, "cpu")
                 if(p):
                     print("PSNR: " + str(psnr_item))
                 d['psnr'].append(mse_item)
 
             if(args['test_mre']):
-                mre_item = mre_func(GT_data, LR_data, args['device'])
+                mre_item = mre_func(GT_data, LR_data, "cpu")
                 if(p):
                     print("MRE: " + str(mre_item))
                 d['mre'].append(mse_item)
 
             if(args['test_mag']):
-                mag_item = mag_func(GT_data, LR_data, args['device'])
+                mag_item = mag_func(GT_data, LR_data, "cpu")
                 if(p):
                     print("Mag: " + str(mag_item))
                 d['mag'].append(mag_item)
 
             if(args['test_angle']):
-                angle_item = angle_func(GT_data, LR_data, args['device'])
+                angle_item = angle_func(GT_data, LR_data, "cpu")
                 if(p):
                     print("Angle: " + str(angle_item))
                 d['angle'].append(angle_item)
 
             if(args['test_angle']):
-                angle_item = angle_func(GT_data, LR_data, args['device'])
+                angle_item = angle_func(GT_data, LR_data, "cpu")
                 if(p):
                     print("Angle: " + str(angle_item))
                 d['angle'].append(angle_item)
 
             
             if(args['test_streamline']):
-                sl_avg, sl_std = streamline_func(GT_data, LR_data, args['device'])
+                sl_avg, sl_std = streamline_func(GT_data, LR_data, "cpu")
                 if(p):
                     print("Streamline average/std: " + str(sl_avg) + "/" + str(sl_std))
                 d['streamline_average'].append(sl_avg)
                 d['streamline_std '].append(sl_std)
             
             if(args['test_img_psnr']):
-                psnr_item = img_psnr_func(GT_data, LR_data, args['device'])
+                psnr_item = img_psnr_func(GT_data, LR_data, "cpu")
                 if(p):
                     print("Image PSNR: " + str(psnr_item))
                 d['img_psnr'].append(psnr_item)
