@@ -792,7 +792,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                 real_lr = real_hr[:,:,::2,::2,::2].clone()
             elif opt['downsample_mode'] == "average_pooling":                    
                 with torch.no_grad():    
-                    real_lr = AvgPool3D(real_hr)
+                    real_lr = AvgPool3D(real_hr, 2)
             else:
                 real_lr = F.interpolate(real_hr, 
                 scale_factor=opt['spatial_downscale_ratio'],
