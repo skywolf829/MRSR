@@ -229,7 +229,7 @@ time_length, ts_per_sec, device, periodic=False):
     for i in range(0, time_length * ts_per_sec):
         particles_over_time.append(particles.clone())
         start_t = time.time()
-        flow = trilinear_interpolate(VF, particles[:,0], particles[:,1], particles[:,2])
+        flow = trilinear_interpolate(VF, particles[:,0], particles[:,1], particles[:,2], device)
         particles[:] += flow[:, :].permute(1,0) * (1 / ts_per_sec)
         if(periodic):
             particles[:] += torch.tensor(list(VF.shape[2:])).to(device)
@@ -284,12 +284,12 @@ def streamline_err_volume(real_VF, rec_VF, res, ts_per_sec, time_length, device,
             flow_real = trilinear_interpolate(real_VF, 
             particles_real.reshape([-1, 3])[:,0] % real_VF.shape[2], 
             particles_real.reshape([-1, 3])[:,1] % real_VF.shape[3], 
-            particles_real.reshape([-1, 3])[:,2] % real_VF.shape[4], periodic = periodic)
+            particles_real.reshape([-1, 3])[:,2] % real_VF.shape[4], device, periodic = periodic)
             
             flow_rec = trilinear_interpolate(rec_VF, 
             particles_rec.reshape([-1, 3])[:,0] % rec_VF.shape[2], 
             particles_rec.reshape([-1, 3])[:,1] % rec_VF.shape[3], 
-            particles_rec.reshape([-1, 3])[:,2] % rec_VF.shape[4], periodic = periodic)
+            particles_rec.reshape([-1, 3])[:,2] % rec_VF.shape[4], device, periodic = periodic)
 
             particles_real += flow_real.transpose(0,1).reshape([real_VF.shape[2], real_VF.shape[3], real_VF.shape[4], 3])
             particles_rec += flow_rec.transpose(0,1).reshape([real_VF.shape[2], real_VF.shape[3], real_VF.shape[4], 3])
@@ -303,11 +303,11 @@ def streamline_err_volume(real_VF, rec_VF, res, ts_per_sec, time_length, device,
             
             flow_real = trilinear_interpolate(real_VF, 
             particles_real[indices,0], particles_real[indices,1], particles_real[indices,2], 
-            periodic = periodic)
+            device, periodic = periodic)
 
             flow_rec = trilinear_interpolate(rec_VF, 
             particles_rec[indices,0], particles_rec[indices,1], particles_rec[indices,2], 
-            periodic = periodic)
+            device, periodic = periodic)
 
             particles_real[indices] += flow_real.permute(1,0) * (1 / ts_per_sec)
             particles_rec[indices] += flow_rec.permute(1,0) * (1 / ts_per_sec)
@@ -338,12 +338,12 @@ def streamline_loss3D(real_VF, rec_VF, x_res, y_res, z_res, ts_per_sec, time_len
             flow_real = trilinear_interpolate(real_VF, 
             particles_real[:,0] % real_VF.shape[2], 
             particles_real[:,1] % real_VF.shape[3], 
-            particles_real[:,2] % real_VF.shape[4], periodic = periodic)
+            particles_real[:,2] % real_VF.shape[4], device, periodic = periodic)
 
             flow_rec = trilinear_interpolate(rec_VF, 
             particles_rec[:,0] % rec_VF.shape[2], 
             particles_rec[:,1] % rec_VF.shape[3], 
-            particles_rec[:,2] % rec_VF.shape[4], periodic = periodic)
+            particles_rec[:,2] % rec_VF.shape[4], device, periodic = periodic)
             t_interp += time.time() - t
 
             t = time.time()
@@ -361,11 +361,11 @@ def streamline_loss3D(real_VF, rec_VF, x_res, y_res, z_res, ts_per_sec, time_len
             
             flow_real = trilinear_interpolate(real_VF, 
             particles_real[indices,0], particles_real[indices,1], particles_real[indices,2], 
-            periodic = periodic)
+            device, periodic = periodic)
 
             flow_rec = trilinear_interpolate(rec_VF, 
             particles_rec[indices,0], particles_rec[indices,1], particles_rec[indices,2], 
-            periodic = periodic)
+            device, periodic = periodic)
 
             particles_real[indices] += flow_real.permute(1,0) * (1 / ts_per_sec)
             particles_rec[indices] += flow_rec.permute(1,0) * (1 / ts_per_sec)
@@ -434,12 +434,12 @@ ts_per_sec, time_length, device, periodic=False):
             flow_real = trilinear_interpolate(real_VF, 
             particles_real[:,0] % real_VF.shape[2], 
             particles_real[:,1] % real_VF.shape[3], 
-            particles_real[:,2] % real_VF.shape[4])
+            particles_real[:,2] % real_VF.shape[4], device)
 
             flow_rec = trilinear_interpolate(rec_VF, 
             particles_rec[:,0] % rec_VF.shape[2], 
             particles_rec[:,1] % rec_VF.shape[3], 
-            particles_rec[:,2] % rec_VF.shape[4])
+            particles_rec[:,2] % rec_VF.shape[4], device)
 
             particles_real += flow_real.permute(1,0) * (1 / ts_per_sec)
             particles_rec += flow_rec.permute(1,0) * (1 / ts_per_sec)
@@ -453,10 +453,10 @@ ts_per_sec, time_length, device, periodic=False):
             (particles_rec[:,2] < rec_VF.shape[4] ) 
             
             flow_real = trilinear_interpolate(real_VF, 
-            particles_real[indices,0], particles_real[indices,1], particles_real[indices,2])
+            particles_real[indices,0], particles_real[indices,1], particles_real[indices,2], device)
 
             flow_rec = trilinear_interpolate(rec_VF, 
-            particles_rec[indices,0], particles_rec[indices,1], particles_rec[indices,2])
+            particles_rec[indices,0], particles_rec[indices,1], particles_rec[indices,2], device)
 
             particles_real[indices] += flow_real.permute(1,0) * (1 / ts_per_sec)
             particles_rec[indices] += flow_rec.permute(1,0) * (1 / ts_per_sec)
