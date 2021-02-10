@@ -236,7 +236,7 @@ if __name__ == '__main__':
         for i in range(len(dataset)):
             if(p):
                 print("Loading dataset item : " + str(i))
-            GT_data = dataset[i].to(opt['device'])
+            GT_data = dataset[i].to("opt['device']")
             GT_data.requires_grad_(False)
             if(p):
                 print("Data size: " + str(GT_data.shape))
@@ -250,6 +250,8 @@ if __name__ == '__main__':
             elif(opt['downsample_mode'] == "subsampling"):
                 LR_data = GT_data[:,:,::args['scale_factor'], ::args['scale_factor']].clone()
 
+            GT_data = GT_data.to("cpu")
+
             if(p):
                 print("Finished downscaling to " + str(LR_data.shape) + ". Performing super resolution")
             
@@ -257,18 +259,16 @@ if __name__ == '__main__':
                 current_ds = args['scale_factor']
                 while(current_ds > 1):
                     gen_to_use = int(len(generators) - log2(current_ds))
-                    LR_data = generate_by_patch(generators[gen_to_use], LR_data, 102, 6, args['device'])
+                    LR_data = generate_by_patch(generators[gen_to_use], LR_data, 128, 6, args['device'])
                     #LR_data = generators[gen_to_use](LR_data)
                     current_ds = int(current_ds / 2)
             else:
                 LR_data = F.interpolate(LR_data, scale_factor=args['scale_factor'], 
                 mode="trilinear", align_corners=True)
 
-
             if(p):
                 print("Finished super resolving. Performing tests.")
 
-            GT_data = GT_data.to("cpu")
             LR_data = LR_data.to("cpu")
 
             mse_this_frame = None
@@ -297,7 +297,7 @@ if __name__ == '__main__':
                 mre_item = mre_func(GT_data, LR_data, "cpu")
                 if(p):
                     print("MRE: " + str(mre_item))
-                d['mre'].append(mse_item)
+                d['mre'].append(mre_item)
             
             if(args['test_mre']):
                 mre_item = mre_func(
@@ -309,7 +309,7 @@ if __name__ == '__main__':
                             6:LR_data.shape[4]-6], "cpu")
                 if(p):
                     print("Inner MRE: " + str(mre_item))
-                d['inner_mre'].append(mse_item)
+                d['inner_mre'].append(mre_item)
 
             if(args['test_mag']):
                 mag_item = mag_func(GT_data, LR_data, "cpu")
