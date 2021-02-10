@@ -16,6 +16,7 @@ import torch.nn.functional as F
 import imageio
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
+import copy
 
 class img_dataset(torch.utils.data.Dataset):
     def __init__(self, data):
@@ -171,8 +172,8 @@ def generate_by_patch(generator, input_volume, patch_size, receptive_field, devi
 def generate_patch(generator,input_volume,z,y,x,available_gpus):
 
     device = available_gpus.get_next_available()
-    generator = generator.to(device)
-    input_volume = input_volume.to(device)
+    generator = copy.deepcopy(generator).to(device)
+    input_volume = input_volume.clone().to(device)
     result = generator(input_volume)
     return result,z,y,x,device
 
