@@ -171,7 +171,10 @@ def generate_by_patch(generator, input_volume, patch_size, receptive_field, devi
 
 def generate_patch(z,z_stop,y,y_stop,x,x_stop,available_gpus):
 
-    device, generator, input_volume = available_gpus.get_next_available()
+    device = None
+    while(device is None):        
+        device, generator, input_volume = available_gpus.get_next_available()
+        time.sleep(1)
     print("Starting SR on device " + device)
     result = generator(input_volume[:,:,z:z_stop,y:y_stop,x:x_stop])
     return result,z,z_stop,y,y_stop,x,x_stop,device
@@ -191,11 +194,10 @@ class SharedList(object):
         input_volume = None
         try:
             #print('Acquired a lock, counter value: ', self.counter)
-            while(len(self.list) == 0):
-                time.sleep(1)
-            item = self.list.pop(0)
-            generator = self.generators[item]
-            input_volume = self.input_volumes[item]
+            if(len(self.list) > 0):                    
+                item = self.list.pop(0)
+                generator = self.generators[item]
+                input_volume = self.input_volumes[item]
         finally:
             #print('Released a lock, counter value: ', self.counter)
             self.lock.release()
