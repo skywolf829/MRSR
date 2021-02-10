@@ -211,6 +211,8 @@ def generate_by_patch_parallel(generator, input_volume, patch_size, receptive_fi
                         available_gpu = available_gpus.pop(0)
                         g = generators[available_gpu]
                         d = devices[available_gpu]
+                        
+                        print("%d:%d, %d:%d, %d:%d" % (z, z_stop, y, y_stop, x, x_stop))
                         threads.append(
                             executor.submit(
                                 generate_patch, 
@@ -238,7 +240,6 @@ def generate_by_patch_parallel(generator, input_volume, patch_size, receptive_fi
                 x_offset = rf if x > 0 else 0
                 y_offset = rf if y > 0 else 0
                 z_offset = rf if z > 0 else 0
-
                 final_volume[:,:,
                 2*z+z_offset:2*z+result.shape[2],
                 2*y+y_offset:2*y+result.shape[3],
@@ -347,7 +348,7 @@ if __name__ == '__main__':
                     gen_to_use = int(len(generators) - log2(current_ds))
                     if(torch.cuda.device_count() > 1 and args['parallel']):
                         if(p):
-                            print("Upscaling in parallel on " + len(devices) + " gpus")
+                            print("Upscaling in parallel on " + str(len(devices)) + " gpus")
                         LR_data = generate_by_patch_parallel(generators[gen_to_use], 
                         LR_data, 140, 6, devices)
                     else:
