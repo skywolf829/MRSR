@@ -172,6 +172,7 @@ def generate_by_patch(generator, input_volume, patch_size, receptive_field, devi
 def generate_patch(input_volume,z,y,x,available_gpus):
 
     device, generator = available_gpus.get_next_available()
+    print("Starting SR on device " + device)
     input_volume = input_volume.clone().to(device)
     torch.cuda.empty_cache()
     result = generator(input_volume)
