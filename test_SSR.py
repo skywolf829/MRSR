@@ -169,30 +169,33 @@ def generate_by_patch(generator, input_volume, patch_size, receptive_field, devi
 
     return final_volume
 
-def generate_patch(generator,input_volume,z,y,x,available_gpus):
+def generate_patch(input_volume,z,y,x,available_gpus):
 
-    device = available_gpus.get_next_available()
-    generator = copy.deepcopy(generator).to(device)
+    device, generator = available_gpus.get_next_available()
     input_volume = input_volume.clone().to(device)
+    torch.cuda.empty_cache()
     result = generator(input_volume)
     return result,z,y,x,device
 
 class SharedList(object):  
-    def __init__(self, items):
+    def __init__(self, items, generators):
         self.lock = threading.Lock()
         self.list = items
+        self.generators = generators
         
     def get_next_available(self):
         #print("Waiting for a lock")
         self.lock.acquire()
         item = None
+        generator = None
         try:
             #print('Acquired a lock, counter value: ', self.counter)
             item = self.list.pop(0)
+            generator = self.generators[item]
         finally:
             #print('Released a lock, counter value: ', self.counter)
             self.lock.release()
-        return item
+        return item, generator
     
     def add(self, item):
         #print("Waiting for a lock")
@@ -214,11 +217,15 @@ def generate_by_patch_parallel(generator, input_volume, patch_size, receptive_fi
         rf = receptive_field
 
         available_gpus = []
+        generators = {}
 
         for i in range(1, len(devices)):
             available_gpus.append(devices[i])
+            g = copy.deepcopy(generator).to(devices[i])
+            generators[devices[i]] = g
+            torch.cuda.empty_cache()
 
-        available_gpus = SharedList(available_gpus)
+        available_gpus = SharedList(available_gpus, generators)
 
         threads= []
         with ThreadPoolExecutor(max_workers=len(devices)-1) as executor:
@@ -244,8 +251,7 @@ def generate_by_patch_parallel(generator, input_volume, patch_size, receptive_fi
                         
                         threads.append(
                             executor.submit(
-                                generate_patch, 
-                                generator, 
+                                generate_patch,
                                 input_volume[:,:,z:z_stop,y:y_stop,x:x_stop],
                                 z,
                                 y,
@@ -360,7 +366,7 @@ if __name__ == '__main__':
                 GT_data = torch.randn([1, 3, 1024, 1024, 1024]).to(args['device'])
             else:
                 GT_data = dataset[i].to(args['device'])
-                
+
             GT_data.requires_grad_(False)
             if(p):
                 print("Data size: " + str(GT_data.shape))
