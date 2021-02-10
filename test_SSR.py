@@ -98,7 +98,6 @@ def volume_to_imgs(volume, device):
 
     return torch.cat(imgs, dim=0)
     
-
 def img_psnr_func(GT, x, device):
     GT = GT.to(device)
     x = x.to(device)
@@ -175,7 +174,7 @@ def generate_patch(z,z_stop,y,y_stop,x,x_stop,available_gpus):
     while(device is None):        
         device, generator, input_volume = available_gpus.get_next_available()
         time.sleep(1)
-    print("Starting SR on device " + device)
+    #print("Starting SR on device " + device)
     with torch.no_grad():
         result = generator(input_volume[:,:,z:z_stop,y:y_stop,x:x_stop])
     return result,z,z_stop,y,y_stop,x,x_stop,device
@@ -236,7 +235,7 @@ def generate_by_patch_parallel(generator, input_volume, patch_size, receptive_fi
             torch.cuda.empty_cache()
 
         available_gpus = SharedList(available_gpus, generators, input_volumes)
-        print("Copied relevant data")
+
         threads= []
         with ThreadPoolExecutor(max_workers=len(devices)-1) as executor:
             z_done = False
@@ -285,7 +284,7 @@ def generate_by_patch_parallel(generator, input_volume, patch_size, receptive_fi
                 x_offset = rf if x > 0 else 0
                 y_offset = rf if y > 0 else 0
                 z_offset = rf if z > 0 else 0
-                print("%d, %d, %d" % (z, y, z))
+                #print("%d, %d, %d" % (z, y, x))
                 final_volume[:,:,
                 2*z+z_offset:2*z+result.shape[2],
                 2*y+y_offset:2*y+result.shape[3],
@@ -352,6 +351,7 @@ if __name__ == '__main__':
             devices.append("cuda:"+str(i))
 
     d = {
+        "inference_time": [],
         "mse": [],
         "psnr": [],
         "mre": [],
@@ -365,6 +365,8 @@ if __name__ == '__main__':
         "img_ssim": [],
         "img_fid": []
     }
+
+    images = []
 
     with torch.no_grad():
         for i in range(len(dataset)):
@@ -394,6 +396,7 @@ if __name__ == '__main__':
             if(p):
                 print("Finished downscaling to " + str(LR_data.shape) + ". Performing super resolution")
             
+            inference_start_time = time.time()
             if(args['testing_method'] == "model"):
                 current_ds = args['scale_factor']
                 while(current_ds > 1):
@@ -410,9 +413,12 @@ if __name__ == '__main__':
             else:
                 LR_data = F.interpolate(LR_data, scale_factor=args['scale_factor'], 
                 mode="trilinear", align_corners=True)
+            inference_end_time = time.time()
+            
+            inference_this_frame = inference_end_time - inference_start_time
 
             if(p):
-                print("Finished super resolving. Performing tests.")
+                print("Finished super resolving in %0.01f seconds. Performing tests." % inference_this_frame)
 
             LR_data = LR_data.to("cpu")
 
@@ -425,6 +431,32 @@ if __name__ == '__main__':
             img_psnr_this_frame = None
             img_ssim_this_frame = None
             img_fid_this_frame = None
+
+            d['inference_time'].append(inference_this_frame)
+
+            LR_img_this_frame = LR_data[0,:,int(LR_data.shape[2]/2),:,:].clone()
+            GT_img_this_frame = GT_data[0,:,int(GT_data.shape[2]/2),:,:].clone()
+
+            LR_img_this_frame -= GT_data.min()
+            GT_img_this_frame -= GT_data.min()
+
+            LR_img_this_frame *= (255/(GT_data.max()-GT_data.min()))
+            GT_img_this_frame *= (255/(GT_data.max()-GT_data.min()))
+
+            LR_img_this_frame = LR_img_this_frame.permute(1, 2, 0).detach().cpu().numpy().astype(np.uint8)
+            GT_img_this_frame = GT_img_this_frame.permute(1, 2, 0).detach().cpu().numpy().astype(np.uint8)
+
+            img_folder = os.path.join(output_folder, args['scale_factor'] + \
+                "x_imgs")
+            if not os.path.exists(img_folder):
+                os.makedirs(save_folder)
+            LR_img_name = os.path.join(img_folder, dataset.item_names[i]+\
+                "_"+args['save_name']+".png")
+            LR_img_name = os.path.join(img_folder, dataset.item_names[i]+\
+                "_GT.png")
+            imageio.imwrite(LR_img_name, LR_img_this_frame)
+            imageio.imwrite(GT_img_this_frame, LR_img_this_frame)
+            
 
             if(args['test_mse']):
                 mse_item = mse_func(GT_data, LR_data, "cpu")
