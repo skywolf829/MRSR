@@ -14,6 +14,7 @@ from datasets import TestingDataset
 import torch
 import torch.nn.functional as F
 import imageio
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class img_dataset(torch.utils.data.Dataset):
     def __init__(self, data):
@@ -166,6 +167,86 @@ def generate_by_patch(generator, input_volume, patch_size, receptive_field, devi
 
     return final_volume
 
+def generate_patch(generator,input_volume,z,y,x,device_ind):
+    return generator(input_volume),z,y,x,device_ind
+
+def generate_by_patch_parallel(generator, input_volume, patch_size, receptive_field, devices):
+    with torch.no_grad():
+        final_volume = torch.zeros(
+            [input_volume.shape[0], input_volume.shape[1], input_volume.shape[2]*2, 
+            input_volume.shape[3]*2, input_volume.shape[4]*2]
+            ).to(devices[0])
+        
+        rf = receptive_field
+
+        available_gpus = []
+        generators = []
+        for i in range(1, len(devices)):
+            generators.append(generator.to(devices[i]))
+            available_gpus.append(i-1)
+
+        threads= []
+        with ThreadPoolExecutor(max_workers=len(devices)-1) as executor:
+            z_done = False
+            z = 0
+            z_stop = min(input_volume.shape[2], z + patch_size)
+            while(not z_done):
+                if(z_stop == input_volume.shape[2]):
+                    z_done = True
+                y_done = False
+                y = 0
+                y_stop = min(input_volume.shape[3], y + patch_size)
+                while(not y_done):
+                    if(y_stop == input_volume.shape[3]):
+                        y_done = True
+                    x_done = False
+                    x = 0
+                    x_stop = min(input_volume.shape[4], x + patch_size)
+                    while(not x_done):                        
+                        if(x_stop == input_volume.shape[4]):
+                            x_done = True
+                        
+                        while(len(available_gpus) == 0):
+                            time.sleep(1)
+                        available_gpu = available_gpus.pop(0)
+                        g = generators[available_gpu]
+                        d = devices[available_gpu]
+                        threads.append(
+                            executor.submit(
+                                generate_patch, 
+                                g, 
+                                input_volume[:,:,z:z_stop,y:y_stop,x:x_stop].to(d),
+                                z,
+                                y,
+                                x,
+                                available_gpu
+                            )
+                        )
+                        
+                        x += patch_size - 2*rf
+                        x = min(x, max(0, input_volume.shape[4] - patch_size))
+                        x_stop = min(input_volume.shape[4], x + patch_size)
+                    y += patch_size - 2*rf
+                    y = min(y, max(0, input_volume.shape[3] - patch_size))
+                    y_stop = min(input_volume.shape[3], y + patch_size)
+                z += patch_size - 2*rf
+                z = min(z, max(0, input_volume.shape[2] - patch_size))
+                z_stop = min(input_volume.shape[2], z + patch_size)
+
+            for task in as_completed(threads):
+                result, z,y,x,device_ind = task.result()
+                x_offset = rf if x > 0 else 0
+                y_offset = rf if y > 0 else 0
+                z_offset = rf if z > 0 else 0
+
+                final_volume[:,:,
+                2*z+z_offset:2*z+result.shape[2],
+                2*y+y_offset:2*y+result.shape[3],
+                2*x+x_offset:2*x+result.shape[4]] = result[:,:,z_offset:,y_offset:,x_offset:]
+                available_gpus.append(device_ind)
+    
+    return final_volume
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
 
@@ -176,6 +257,7 @@ if __name__ == '__main__':
     parser.add_argument('--data_folder',default="iso1024",type=str,help='Name of folder with test data in /TestingData')
     parser.add_argument('--model_name',default="SSR",type=str,help='The folder with the model to load')
     parser.add_argument('--device',default="cpu",type=str,help='Device to use for testing')
+    parser.add_argument('--parallel',default="False",type=str2bool,help='Perform SR in parallel')
     parser.add_argument('--print',default="True",type=str2bool,help='Print output during testing')
 
     parser.add_argument('--test_mse',default="True",type=str2bool,help='Enables tests for mse')
@@ -216,6 +298,10 @@ if __name__ == '__main__':
     dataset = TestingDataset(opt['data_folder'])
     results_location = os.path.join(output_folder, args['output_file_name'])
 
+    if(torch.cuda.device_count() > 1 and args['parallel']):
+        devices = []
+        for i in range(torch.cuda.device_count):
+            devices.append("cuda:"+str(i))
 
     d = {
         "mse": [],
@@ -259,7 +345,14 @@ if __name__ == '__main__':
                 current_ds = args['scale_factor']
                 while(current_ds > 1):
                     gen_to_use = int(len(generators) - log2(current_ds))
-                    LR_data = generate_by_patch(generators[gen_to_use], LR_data, 140, 6, args['device'])
+                    if(torch.cuda.device_count() > 1 and args['parallel']):
+                        if(p):
+                            print("Upscaling in parallel on " + len(devices) + " gpus")
+                        LR_data = generate_by_patch_parallel(generators[gen_to_use], 
+                        LR_data, 140, 6, devices)
+                    else:
+                        LR_data = generate_by_patch(generators[gen_to_use], 
+                        LR_data, 140, 6, args['device'])
                     current_ds = int(current_ds / 2)
             else:
                 LR_data = F.interpolate(LR_data, scale_factor=args['scale_factor'], 
