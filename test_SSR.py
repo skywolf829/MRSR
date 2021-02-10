@@ -220,6 +220,7 @@ if __name__ == '__main__':
             if(p):
                 print("Loading dataset item : " + str(i))
             GT_data = dataset[i].to(opt['device'])
+            GT_data.requires_grad_(False)
             if(p):
                 print("Data size: " + str(GT_data.shape))
                 print("Finished loading. Downscaling by " + str(args['scale_factor']))
