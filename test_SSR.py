@@ -56,7 +56,7 @@ def angle_func(GT, x, device):
     GT = GT.to(device)
     x = x.to(device)
     cs = torch.nn.CosineSimilarity(dim=1).to(device)
-    return (torch.abs(cs(GT,x) - 1) / 2).item()
+    return (torch.abs(cs(GT,x) - 1) / 2).mean().item()
 
 def streamline_func(GT, x, device):
     GT = GT.to(device)
