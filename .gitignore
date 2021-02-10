@@ -138,5 +138,6 @@ nohup.out
 /SavedModels
 /InputData
 /Other
+/Output
 /tensorboard
 .vscode/settings.json
