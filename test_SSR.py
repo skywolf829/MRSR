@@ -291,6 +291,7 @@ if __name__ == '__main__':
     parser.add_argument('--device',default="cpu",type=str,help='Device to use for testing')
     parser.add_argument('--parallel',default="False",type=str2bool,help='Perform SR in parallel')
     parser.add_argument('--print',default="True",type=str2bool,help='Print output during testing')
+    parser.add_argument('--debug',default="False",type=str2bool,help='Use fake data during testing instead of loading')
 
     parser.add_argument('--test_mse',default="True",type=str2bool,help='Enables tests for mse')
     parser.add_argument('--test_psnr',default="True",type=str2bool,help='Enables tests for mse')
@@ -354,7 +355,12 @@ if __name__ == '__main__':
         for i in range(len(dataset)):
             if(p):
                 print("Loading dataset item : " + str(i))
-            GT_data = dataset[i].to(args['device'])
+            
+            if(args['debug']):
+                GT_data = torch.randn([1, 3, 1024, 1024, 1024]).to(args['device'])
+            else:
+                GT_data = dataset[i].to(args['device'])
+                
             GT_data.requires_grad_(False)
             if(p):
                 print("Data size: " + str(GT_data.shape))
