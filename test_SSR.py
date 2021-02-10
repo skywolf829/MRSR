@@ -169,34 +169,37 @@ def generate_by_patch(generator, input_volume, patch_size, receptive_field, devi
 
     return final_volume
 
-def generate_patch(input_volume,z,y,x,available_gpus):
+def generate_patch(z,z_stop,y,y_stop,x,x_stop,available_gpus):
 
-    device, generator = available_gpus.get_next_available()
+    device, generator, input_volume = available_gpus.get_next_available()
     print("Starting SR on device " + device)
-    input_volume = input_volume.clone().to(device)
-    torch.cuda.empty_cache()
-    result = generator(input_volume)
-    return result,z,y,x,device
+    result = generator(input_volume[:,:,z:z_stop,y:y_stop,x:x_stop])
+    return result,z,z_stop,y,y_stop,x,x_stop,device
 
 class SharedList(object):  
-    def __init__(self, items, generators):
+    def __init__(self, items, generators, input_volumes):
         self.lock = threading.Lock()
         self.list = items
         self.generators = generators
+        self.input_volumes = input_volumes
         
     def get_next_available(self):
         #print("Waiting for a lock")
         self.lock.acquire()
         item = None
         generator = None
+        input_volume = None
         try:
             #print('Acquired a lock, counter value: ', self.counter)
+            while(len(self.list) == 0):
+                time.sleep(1)
             item = self.list.pop(0)
             generator = self.generators[item]
+            input_volume = self.input_volumes[item]
         finally:
             #print('Released a lock, counter value: ', self.counter)
             self.lock.release()
-        return item, generator
+        return item, generator, input_volume
     
     def add(self, item):
         #print("Waiting for a lock")
@@ -219,15 +222,18 @@ def generate_by_patch_parallel(generator, input_volume, patch_size, receptive_fi
 
         available_gpus = []
         generators = {}
+        input_volumes = {}
 
         for i in range(1, len(devices)):
             available_gpus.append(devices[i])
             g = copy.deepcopy(generator).to(devices[i])
+            iv = input_volume.clone().to(devices[i])
             generators[devices[i]] = g
+            input_volumes[devices[i]] = iv
             torch.cuda.empty_cache()
 
-        available_gpus = SharedList(available_gpus, generators)
-
+        available_gpus = SharedList(available_gpus, generators, input_volumes)
+        print("Copied relevant data")
         threads= []
         with ThreadPoolExecutor(max_workers=len(devices)-1) as executor:
             z_done = False
@@ -253,10 +259,9 @@ def generate_by_patch_parallel(generator, input_volume, patch_size, receptive_fi
                         threads.append(
                             executor.submit(
                                 generate_patch,
-                                input_volume[:,:,z:z_stop,y:y_stop,x:x_stop],
-                                z,
-                                y,
-                                x,
+                                z,z_stop,
+                                y,y_stop,
+                                x,x_stop,
                                 available_gpus
                             )
                         )
@@ -272,7 +277,7 @@ def generate_by_patch_parallel(generator, input_volume, patch_size, receptive_fi
                 z_stop = min(input_volume.shape[2], z + patch_size)
 
             for task in as_completed(threads):
-                result,z,y,x,device = task.result()
+                result,z,z,stop,y,y_stop,x,x_stop,device = task.result()
                 result = result.to(devices[0])
                 x_offset = rf if x > 0 else 0
                 y_offset = rf if y > 0 else 0
