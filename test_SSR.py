@@ -306,20 +306,13 @@ if __name__ == '__main__':
                 if(p):
                     print("Angle: " + str(angle_item))
                 d['angle'].append(angle_item)
-
-            if(args['test_angle']):
-                angle_item = angle_func(GT_data, LR_data, "cpu")
-                if(p):
-                    print("Angle: " + str(angle_item))
-                d['angle'].append(angle_item)
-
             
             if(args['test_streamline']):
                 sl_avg, sl_std = streamline_func(GT_data, LR_data, "cpu")
                 if(p):
                     print("Streamline average/std: " + str(sl_avg) + "/" + str(sl_std))
                 d['streamline_average'].append(sl_avg)
-                d['streamline_std '].append(sl_std)
+                d['streamline_std'].append(sl_std)
             
             if(args['test_img_psnr']):
                 psnr_item = img_psnr_func(GT_data, LR_data, "cpu")
