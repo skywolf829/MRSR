@@ -446,7 +446,7 @@ if __name__ == '__main__':
             LR_img_this_frame = LR_img_this_frame.permute(1, 2, 0).detach().cpu().numpy().astype(np.uint8)
             GT_img_this_frame = GT_img_this_frame.permute(1, 2, 0).detach().cpu().numpy().astype(np.uint8)
 
-            img_folder = os.path.join(output_folder, args['scale_factor'] + \
+            img_folder = os.path.join(output_folder, str(args['scale_factor']) + \
                 "x_imgs")
             if not os.path.exists(img_folder):
                 os.makedirs(save_folder)
