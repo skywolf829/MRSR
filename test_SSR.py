@@ -452,10 +452,10 @@ if __name__ == '__main__':
                 os.makedirs(save_folder)
             LR_img_name = os.path.join(img_folder, dataset.item_names[i]+\
                 "_"+args['save_name']+".png")
-            LR_img_name = os.path.join(img_folder, dataset.item_names[i]+\
+            GT_img_name = os.path.join(img_folder, dataset.item_names[i]+\
                 "_GT.png")
             imageio.imwrite(LR_img_name, LR_img_this_frame)
-            imageio.imwrite(GT_img_this_frame, LR_img_this_frame)
+            imageio.imwrite(GT_img_name, GT_img_this_frame)
             
 
             if(args['test_mse']):
