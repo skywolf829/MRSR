@@ -239,7 +239,7 @@ if __name__ == '__main__':
                 current_ds = args['scale_factor']
                 while(current_ds > 1):
                     gen_to_use = int(len(generators) - log2(current_ds))
-                    LR_data = generate_by_patch(generators[gen_to_use], LR_data, 128, 6, args['device'])
+                    LR_data = generate_by_patch(generators[gen_to_use], LR_data, 102, 6, args['device'])
                     #LR_data = generators[gen_to_use](LR_data)
                     current_ds = int(current_ds / 2)
             else:
