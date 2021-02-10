@@ -261,51 +261,51 @@ if __name__ == '__main__':
             img_fid_this_frame = None
 
             if(args['test_mse']):
-                mse_item = mse_func(GT_data, LR_data, args['deivce'])
+                mse_item = mse_func(GT_data, LR_data, args['device'])
                 if(p):
                     print("MSE: " + str(mse_item))
                 d['mse'].append(mse_item)
 
             if(args['test_psnr']):
-                psnr_item = psnr_func(GT_data, LR_data, args['deivce'])
+                psnr_item = psnr_func(GT_data, LR_data, args['device'])
                 if(p):
                     print("PSNR: " + str(psnr_item))
                 d['psnr'].append(mse_item)
 
             if(args['test_mre']):
-                mre_item = mre_func(GT_data, LR_data, args['deivce'])
+                mre_item = mre_func(GT_data, LR_data, args['device'])
                 if(p):
                     print("MRE: " + str(mre_item))
                 d['mre'].append(mse_item)
 
             if(args['test_mag']):
-                mag_item = mag_func(GT_data, LR_data, args['deivce'])
+                mag_item = mag_func(GT_data, LR_data, args['device'])
                 if(p):
                     print("Mag: " + str(mag_item))
                 d['mag'].append(mag_item)
 
             if(args['test_angle']):
-                angle_item = angle_func(GT_data, LR_data, args['deivce'])
+                angle_item = angle_func(GT_data, LR_data, args['device'])
                 if(p):
                     print("Angle: " + str(angle_item))
                 d['angle'].append(angle_item)
 
             if(args['test_angle']):
-                angle_item = angle_func(GT_data, LR_data, args['deivce'])
+                angle_item = angle_func(GT_data, LR_data, args['device'])
                 if(p):
                     print("Angle: " + str(angle_item))
                 d['angle'].append(angle_item)
 
             
             if(args['test_streamline']):
-                sl_avg, sl_std = streamline_func(GT_data, LR_data, args['deivce'])
+                sl_avg, sl_std = streamline_func(GT_data, LR_data, args['device'])
                 if(p):
                     print("Streamline average/std: " + str(sl_avg) + "/" + str(sl_std))
                 d['streamline_average'].append(sl_avg)
                 d['streamline_std '].append(sl_std)
             
             if(args['test_img_psnr']):
-                psnr_item = img_psnr_func(GT_data, LR_data, args['deivce'])
+                psnr_item = img_psnr_func(GT_data, LR_data, args['device'])
                 if(p):
                     print("Image PSNR: " + str(psnr_item))
                 d['img_psnr'].append(psnr_item)
