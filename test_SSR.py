@@ -221,6 +221,7 @@ if __name__ == '__main__':
         "mse": [],
         "psnr": [],
         "mre": [],
+        "inner_mre": [],
         "mag": [],
         "angle": [],
         "streamline_average": [],
@@ -267,6 +268,9 @@ if __name__ == '__main__':
             if(p):
                 print("Finished super resolving. Performing tests.")
 
+            GT_data = GT_data.to("cpu")
+            LR_data = LR_data.to("cpu")
+
             mse_this_frame = None
             psnr_this_frame = None
             mre_this_frame = None
@@ -294,6 +298,18 @@ if __name__ == '__main__':
                 if(p):
                     print("MRE: " + str(mre_item))
                 d['mre'].append(mse_item)
+            
+            if(args['test_mre']):
+                mre_item = mre_func(
+                    GT_data[:,:,6:GT_data.shape[2]-6,
+                            6:GT_data.shape[3]-6,
+                            6:GT_data.shape[4]-6], 
+                            LR_data[:,:,6:LR_data.shape[2]-6,
+                            6:LR_data.shape[3]-6,
+                            6:LR_data.shape[4]-6], "cpu")
+                if(p):
+                    print("Inner MRE: " + str(mre_item))
+                d['inner_mre'].append(mse_item)
 
             if(args['test_mag']):
                 mag_item = mag_func(GT_data, LR_data, "cpu")
