@@ -300,7 +300,7 @@ if __name__ == '__main__':
 
     if(torch.cuda.device_count() > 1 and args['parallel']):
         devices = []
-        for i in range(torch.cuda.device_count):
+        for i in range(torch.cuda.device_count()):
             devices.append("cuda:"+str(i))
 
     d = {
