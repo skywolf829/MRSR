@@ -15,6 +15,7 @@ import torch
 import torch.nn.functional as F
 import imageio
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 class img_dataset(torch.utils.data.Dataset):
     def __init__(self, data):
@@ -167,8 +168,40 @@ def generate_by_patch(generator, input_volume, patch_size, receptive_field, devi
 
     return final_volume
 
-def generate_patch(generator,input_volume,z,y,x,device_ind):
-    return generator(input_volume),z,y,x,device_ind
+def generate_patch(generator,input_volume,z,y,x,available_gpus):
+
+    device = available_gpus.get_next_available()
+    generator = generator.to(device)
+    input_volume = input_volume.to(device)
+    result = generator(input_volume)
+    return result,z,y,x,device
+
+class SharedList(object):  
+    def __init__(self, items):
+        self.lock = threading.Lock()
+        self.list = items
+        
+    def get_next_available(self):
+        #print("Waiting for a lock")
+        self.lock.acquire()
+        item = None
+        try:
+            #print('Acquired a lock, counter value: ', self.counter)
+            item = self.list.pop(0)
+        finally:
+            #print('Released a lock, counter value: ', self.counter)
+            self.lock.release()
+        return item
+    
+    def add(self, item):
+        #print("Waiting for a lock")
+        self.lock.acquire()
+        try:
+            #print('Acquired a lock, counter value: ', self.counter)
+            self.list.append(item)
+        finally:
+            #print('Released a lock, counter value: ', self.counter)
+            self.lock.release()
 
 def generate_by_patch_parallel(generator, input_volume, patch_size, receptive_field, devices):
     with torch.no_grad():
@@ -180,10 +213,11 @@ def generate_by_patch_parallel(generator, input_volume, patch_size, receptive_fi
         rf = receptive_field
 
         available_gpus = []
-        generators = []
+
         for i in range(1, len(devices)):
-            generators.append(generator.to(devices[i]))
-            available_gpus.append(i-1)
+            available_gpus.append(devices[i])
+
+        available_gpus = SharedList(available_gpus)
 
         threads= []
         with ThreadPoolExecutor(max_workers=len(devices)-1) as executor:
@@ -206,22 +240,16 @@ def generate_by_patch_parallel(generator, input_volume, patch_size, receptive_fi
                         if(x_stop == input_volume.shape[4]):
                             x_done = True
                         
-                        while(len(available_gpus) == 0):
-                            time.sleep(1)
-                        available_gpu = available_gpus.pop(0)
-                        g = generators[available_gpu]
-                        d = devices[available_gpu]
                         
-                        print("%d:%d, %d:%d, %d:%d" % (z, z_stop, y, y_stop, x, x_stop))
                         threads.append(
                             executor.submit(
                                 generate_patch, 
-                                g, 
-                                input_volume[:,:,z:z_stop,y:y_stop,x:x_stop].to(d),
+                                generator, 
+                                input_volume[:,:,z:z_stop,y:y_stop,x:x_stop],
                                 z,
                                 y,
                                 x,
-                                available_gpu
+                                available_gpus
                             )
                         )
                         
@@ -236,15 +264,17 @@ def generate_by_patch_parallel(generator, input_volume, patch_size, receptive_fi
                 z_stop = min(input_volume.shape[2], z + patch_size)
 
             for task in as_completed(threads):
-                result, z,y,x,device_ind = task.result()
+                result,z,y,x,device = task.result()
+                result = result.to(devices[0])
                 x_offset = rf if x > 0 else 0
                 y_offset = rf if y > 0 else 0
                 z_offset = rf if z > 0 else 0
+                print("%d, %d, %d" % (z, y, z))
                 final_volume[:,:,
                 2*z+z_offset:2*z+result.shape[2],
                 2*y+y_offset:2*y+result.shape[3],
                 2*x+x_offset:2*x+result.shape[4]] = result[:,:,z_offset:,y_offset:,x_offset:]
-                available_gpus.append(device_ind)
+                available_gpus.add(device)
     
     return final_volume
 
