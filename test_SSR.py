@@ -450,7 +450,7 @@ if __name__ == '__main__':
             img_folder = os.path.join(output_folder, str(args['scale_factor']) + \
                 "x_imgs")
             if not os.path.exists(img_folder):
-                os.makedirs(save_folder)
+                os.makedirs(img_folder)
             LR_img_name = os.path.join(img_folder, dataset.item_names[i]+\
                 "_"+args['save_name']+".png")
             GT_img_name = os.path.join(img_folder, dataset.item_names[i]+\
