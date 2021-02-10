@@ -43,6 +43,6 @@ if __name__ == '__main__':
         plt.legend()
         plt.xlabel("Simulation timestep")
         plt.ylabel(metric)
-
+        plt.title(args['output_file_name'] + " - " + metric)
         plt.savefig(os.path.join(save_folder, metric+".png"))
         plt.clf()
