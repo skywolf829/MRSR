@@ -124,7 +124,7 @@ def bicubic_upscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
     img = img.permute(2,0,1).unsqueeze(0)
     img = F.interpolate(img, scale_factor=float(scale_factor), 
     align_corners=False, mode='bicubic')
-    img = img[0].permute(1,2,0)
+    img = img[0].permute(1,2,0).clamp_(0.0, 255.0)
     return img
 
 @torch.jit.script
@@ -544,10 +544,10 @@ min_chunk_size: int, device : str) -> OctreeNodeList:
     return nodes
 
 if __name__ == '__main__':
-    max_ds_ratio : int = 64
-    min_chunk : int = 8
+    max_ds_ratio : int = 128
+    min_chunk : int = 32
     device: str = "cuda"
-    upscaling_technique : str = "bilinear"
+    upscaling_technique : str = "bicubic"
     downscaling_technique : str = "avgpool"
     criterion : str = "mre"
     criterion_value : float = 0.05
