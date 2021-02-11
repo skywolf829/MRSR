@@ -7,9 +7,9 @@ import os
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
     
-    parser.add_argument('--save_folder',default="4x_results",
+    parser.add_argument('--save_folder',default="8x_results",
     type=str,help='Folder to save images to')
-    parser.add_argument('--output_file_name',default="SSR_4x",
+    parser.add_argument('--output_file_name',default="SSR_8x",
     type=str,help='filename to visualize in output folder')
     parser.add_argument('--start_ts', default=1000, type=int)
     parser.add_argument('--ts_skip', default=10, type=int)

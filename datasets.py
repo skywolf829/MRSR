@@ -353,6 +353,7 @@ class TestingDataset(torch.utils.data.Dataset):
         self.item_names = []
         for filename in os.listdir(location):
             self.item_names.append(filename)
+        self.item_names.sort()
         print("Dataset has " + str(len(self.item_names)) + " items")
     def __len__(self):
         return len(self.item_names)
@@ -416,6 +417,7 @@ class LocalDataset(torch.utils.data.Dataset):
                             self.channel_mins[i] = d[i].min()
             
             self.num_items += 1
+        self.item_names.sort()
 
     def __len__(self):
         return self.num_items
