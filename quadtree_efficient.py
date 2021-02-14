@@ -235,43 +235,23 @@ def nodes_to_full_img(nodes: OctreeNodeList, full_shape: List[int],
     data_levels: List[torch.Tensor], mask_levels:List[torch.Tensor],
     data_downscaled_levels: List[torch.Tensor], mask_downscaled_levels:List[torch.Tensor]) -> torch.Tensor:
 
-    #start_t = time.time()
     nodes_to_downscaled_levels(nodes, 
     full_shape, max_downscaling_ratio, downscaling_technique,
     device, data_levels, mask_levels, data_downscaled_levels, 
     mask_downscaled_levels)
-    #print("Downscale_time: " + str(time.time() - start_t))
     
-    #for i in range(len(full_imgs)):
-    #    imageio.imwrite("./Output/downscaling_im_"+str(i)+".png", full_imgs[i].cpu().numpy())
-    #    imageio.imwrite("./Output/downscaling_mask_"+str(i)+".png", masks[i].cpu().numpy())
-
     curr_ds_ratio = max_downscaling_ratio
     full_img = data_downscaled_levels[0]
     
-    #im_no = 0
     i = 0
-
-    #start_t = time.time()
-    #imageio.imwrite("./Output/im_"+str(im_no)+".png", full_img.cpu().numpy())
-    #im_no += 1
     while(curr_ds_ratio > 1):
         
-        # 1. Upsample
         full_img = upscale(upscaling_technique, full_img, 2)
-        #imageio.imwrite("./Output/im_"+str(im_no)+".png", full_img.cpu().numpy())
-        #im_no += 1
         curr_ds_ratio = int(curr_ds_ratio / 2)
         i += 1
 
-        # 2. Fill in data
         full_img = full_img * (1-mask_downscaled_levels[i]) + \
              data_downscaled_levels[i]*mask_downscaled_levels[i]
-        #full_img[masks[i] > 0] = full_imgs[i][masks[i] > 0]
-        #imageio.imwrite("./Output/im_"+str(im_no)+".png", full_img.cpu().numpy())
-        #im_no += 1
-    
-    #print("Upscale_time: " + str(time.time() - start_t))
     return full_img
 
 @torch.jit.script
@@ -545,12 +525,12 @@ min_chunk_size: int, device : str) -> OctreeNodeList:
 
 if __name__ == '__main__':
     max_ds_ratio : int = 128
-    min_chunk : int = 32
+    min_chunk : int = 2
     device: str = "cuda"
     upscaling_technique : str = "bicubic"
     downscaling_technique : str = "avgpool"
     criterion : str = "mre"
-    criterion_value : float = 0.05
+    criterion_value : float = 0.005
 
     img_name : str = "mixing"
     img_ext : str = "jpg"
