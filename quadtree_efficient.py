@@ -7,7 +7,7 @@ from utility_functions import *
 import time
 from typing import Dict, List, Tuple, Optional
 
-@torch.jit.script
+#@torch.jit.script
 class OctreeNode:
     def __init__(self, data : torch.Tensor, 
     downscaling_ratio : int, depth : int, index : int):
@@ -25,7 +25,7 @@ class OctreeNode:
     def size(self) -> float:
         return (self.data.element_size() * self.data.numel()) / 1024.0
 
-@torch.jit.script
+#@torch.jit.script
 def get_location(full_height: int, full_width : int, depth : int, index : int) -> Tuple[int, int]:
     final_x : int = 0
     final_y : int = 0
@@ -45,7 +45,7 @@ def get_location(full_height: int, full_width : int, depth : int, index : int) -
     return (final_x, final_y)
 
 
-@torch.jit.script
+#@torch.jit.script
 class OctreeNodeList:
     def __init__(self):
         self.node_list : List[OctreeNode] = []
@@ -85,33 +85,33 @@ class OctreeNodeList:
 def ssim_criterion(GT_image, img, min_ssim=0.6) -> float:
     return ssim(img.permute(2, 0, 1).unsqueeze(0), GT_image.permute(2, 0, 1).unsqueeze(0)) > min_ssim
 
-@torch.jit.script
+#@torch.jit.script
 def MSE(x, GT) -> float:
     return ((x-GT)**2).mean()
 
-@torch.jit.script
+#@torch.jit.script
 def PSNR(x, GT) -> float:
     max_diff : float = 255.0
     return 20 * torch.log(torch.tensor(max_diff)) - 10*torch.log(MSE(x, GT))
 
-@torch.jit.script
+#@torch.jit.script
 def relative_error(x, GT) -> float:
     max_diff : float = 255.0
     return torch.abs(GT-x).max() / max_diff
 
-@torch.jit.script
+#@torch.jit.script
 def psnr_criterion(GT_image, img, min_PSNR : float) -> bool:
     return PSNR(img, GT_image) > min_PSNR
 
-@torch.jit.script
+#@torch.jit.script
 def mse_criterion(GT_image, img, max_mse : float) -> bool:
     return MSE(img, GT_image) < max_mse
 
-@torch.jit.script
+#@torch.jit.script
 def maximum_relative_error(GT_image, img, max_e : float) -> bool:
     return relative_error(img, GT_image) < max_e
 
-@torch.jit.script
+#@torch.jit.script
 def bilinear_upscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
     img = img.permute(2,0,1).unsqueeze(0)
     img = F.interpolate(img, scale_factor=float(scale_factor), 
@@ -119,7 +119,7 @@ def bilinear_upscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
     img = img[0].permute(1,2,0)
     return img
 
-@torch.jit.script
+#@torch.jit.script
 def bicubic_upscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
     img = img.permute(2,0,1).unsqueeze(0)
     img = F.interpolate(img, scale_factor=float(scale_factor), 
@@ -127,7 +127,7 @@ def bicubic_upscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
     img = img[0].permute(1,2,0).clamp_(0.0, 255.0)
     return img
 
-@torch.jit.script
+#@torch.jit.script
 def point_upscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
     upscaled_img = torch.zeros([int(img.shape[0]*scale_factor), 
     int(img.shape[1]*scale_factor), 
@@ -138,7 +138,7 @@ def point_upscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
             y*scale_factor:(y+1)*scale_factor,:] = img[x,y,:]
     return upscaled_img
 
-@torch.jit.script
+#@torch.jit.script
 def nearest_neighbor_upscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
     img = img.permute(2,0,1).unsqueeze(0)
     img = F.interpolate(img, scale_factor=float(scale_factor), 
@@ -146,26 +146,26 @@ def nearest_neighbor_upscale(img : torch.Tensor, scale_factor : int) -> torch.Te
     img = img[0].permute(1,2,0)
     return img
 
-@torch.jit.script
+#@torch.jit.script
 def bilinear_downscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
     img = img.permute(2,0,1).unsqueeze(0)
     img = F.interpolate(img, scale_factor=(1/scale_factor), align_corners=True, mode='bilinear')
     img = img[0].permute(1,2,0)
     return img
 
-@torch.jit.script
+#@torch.jit.script
 def avgpool_downscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
     img = img.permute(2,0,1).unsqueeze(0)
     img = AvgPool2D(img, scale_factor)
     img = img[0].permute(1,2,0)
     return img
 
-@torch.jit.script
+#@torch.jit.script
 def subsample_downscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
     img = img[::2, ::2, :]
     return img
 
-@torch.jit.script
+#@torch.jit.script
 def upscale(method: str, img: torch.Tensor, scale_factor: int) -> torch.Tensor:
     up = torch.zeros([1])
     if(method == "bilinear"):
@@ -180,7 +180,7 @@ def upscale(method: str, img: torch.Tensor, scale_factor: int) -> torch.Tensor:
         print("No support for upscaling method: " + str(method))
     return up
 
-@torch.jit.script
+#@torch.jit.script
 def downscale(method: str, img: torch.Tensor, scale_factor: int) -> torch.Tensor:
     down = torch.zeros([1])
     if(method == "bilinear"):
@@ -193,7 +193,7 @@ def downscale(method: str, img: torch.Tensor, scale_factor: int) -> torch.Tensor
         print("No support for downscaling method: " + str(method))
     return down
 
-@torch.jit.script
+#@torch.jit.script
 def criterion_met(method: str, value: float, 
 a: torch.Tensor, b: torch.Tensor) -> bool:
     passed = False
@@ -207,7 +207,7 @@ a: torch.Tensor, b: torch.Tensor) -> bool:
         print("No support for criterion: " + str(method))
     return passed
 
-@torch.jit.script
+#@torch.jit.script
 def nodes_to_downscaled_levels(nodes : OctreeNodeList, full_shape : List[int],
     max_downscaling_ratio : int, downscaling_technique: str, device : str, 
     data_levels: List[torch.Tensor], mask_levels:List[torch.Tensor],
@@ -218,17 +218,25 @@ def nodes_to_downscaled_levels(nodes : OctreeNodeList, full_shape : List[int],
     mask_downscaled_levels[-1][:] = mask_levels[-1][:]
     data_downscaled_levels[-1][:] = data_levels[-1][:]
 
+    imageio.imwrite("data_"+str(i+1)+"_filled_in.png", data_downscaled_levels[-1].cpu().numpy().astype(np.uint8)) 
+    imageio.imwrite("mask_"+str(i+1)+"_filled_in.png", mask_downscaled_levels[-1].cpu().numpy().astype(np.uint8)*255)
     while i >= 0:
         data_down = downscale(downscaling_technique, 
         data_downscaled_levels[i+1], 2)
         mask_down = mask_downscaled_levels[i+1][::2, ::2]
+        
+        imageio.imwrite("data_"+str(i)+"_downscaled.png", data_down.cpu().numpy().astype(np.uint8))        
+        imageio.imwrite("mask_"+str(i)+"_downscaled.png", mask_down.cpu().numpy().astype(np.uint8)*255)
 
         data_downscaled_levels[i] = data_down + data_levels[i]
         mask_downscaled_levels[i] = mask_down + mask_levels[i]
+        
+        imageio.imwrite("data_"+str(i)+"_filldedin.png", data_downscaled_levels[i].cpu().numpy().astype(np.uint8))        
+        imageio.imwrite("mask_"+str(i)+"_filledin.png", mask_downscaled_levels[i].cpu().numpy().astype(np.uint8)*255)
 
         i -= 1
         
-@torch.jit.script
+#@torch.jit.script
 def nodes_to_full_img(nodes: OctreeNodeList, full_shape: List[int], 
     max_downscaling_ratio : int, upscaling_technique : str, 
     downscaling_technique : str, device : str, 
@@ -254,7 +262,7 @@ def nodes_to_full_img(nodes: OctreeNodeList, full_shape: List[int],
              data_downscaled_levels[i]*mask_downscaled_levels[i]
     return full_img
 
-@torch.jit.script
+#@torch.jit.script
 def nodes_to_full_img_debug(nodes: OctreeNodeList, full_shape: List[int], 
 max_downscaling_ratio : int, upscaling_technique : str, 
 downscaling_technique : str, device : str) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -304,7 +312,7 @@ downscaling_technique : str, device : str) -> Tuple[torch.Tensor, torch.Tensor]:
 
     return full_img, cmap_img
 
-@torch.jit.script
+#@torch.jit.script
 def nodes_to_full_img_seams(nodes: OctreeNodeList, full_shape: List[int], 
 upscaling_technique : str, device: str):
     full_img = torch.zeros(full_shape).to(device)
@@ -318,7 +326,7 @@ upscaling_technique : str, device: str):
     
     return full_img
 
-@torch.jit.script
+#@torch.jit.script
 def remove_node_from_data_caches(node: OctreeNode, full_shape: List[int],
 data_levels: List[torch.Tensor], mask_levels: List[torch.Tensor]):
 
@@ -340,7 +348,7 @@ data_levels: List[torch.Tensor], mask_levels: List[torch.Tensor]):
         :
     ] = 0
 
-@torch.jit.script
+#@torch.jit.script
 def add_node_to_data_caches(node: OctreeNode, full_shape: List[int],
 data_levels: List[torch.Tensor], mask_levels: List[torch.Tensor]):
 
@@ -362,7 +370,7 @@ data_levels: List[torch.Tensor], mask_levels: List[torch.Tensor]):
         :
     ] = 1
 
-@torch.jit.script
+#@torch.jit.script
 def create_caches_from_nodelist(nodes: OctreeNodeList, 
 full_shape : List[int], max_downscaling_ratio: int, device: str) -> \
 Tuple[List[torch.Tensor], List[torch.Tensor], 
@@ -391,7 +399,7 @@ List[torch.Tensor], List[torch.Tensor]]:
     
     return data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels
 
-@torch.jit.script
+#@torch.jit.script
 def quadtree_SR_compress(
     nodes : OctreeNodeList, GT_image : torch.Tensor, 
     criterion: str, criterion_value : float,
@@ -525,12 +533,13 @@ min_chunk_size: int, device : str) -> OctreeNodeList:
 
 if __name__ == '__main__':
     max_ds_ratio : int = 128
-    min_chunk : int = 2
+    min_chunk : int = 8
     device: str = "cuda"
     upscaling_technique : str = "bicubic"
     downscaling_technique : str = "avgpool"
     criterion : str = "mre"
-    criterion_value : float = 0.005
+    criterion_value : float = 0.05
+    load_existing = True
 
     img_name : str = "mixing"
     img_ext : str = "jpg"
@@ -539,33 +548,33 @@ if __name__ == '__main__':
     #img_gt = AvgPool2D(img_gt.permute(2, 0, 1).unsqueeze(0), 16)[0].permute(1, 2, 0)
     full_shape : List[int] = list(img_gt.shape)
 
-    
-    root_node = OctreeNode(img_gt, 1, 0, 0)
-    nodes : OctreeNodeList = OctreeNodeList()
-    nodes.append(root_node)
-    torch.save(nodes, './Output/'+img_name+'.torch')
+    if not load_existing:
+        root_node = OctreeNode(img_gt, 1, 0, 0)
+        nodes : OctreeNodeList = OctreeNodeList()
+        nodes.append(root_node)
+        torch.save(nodes, './Output/'+img_name+'.torch')
 
-    ##############################################
-    nodes : OctreeNodeList = torch.load('./Output/'+img_name+'.torch')
-    start_time : float = time.time()
-    nodes : OctreeNodeList = quadtree_SR_compress(
-        nodes, img_gt, criterion, criterion_value,
-        upscaling_technique, downscaling_technique,
-        min_chunk, max_ds_ratio, device)
+        ##############################################
+        nodes : OctreeNodeList = torch.load('./Output/'+img_name+'.torch')
+        start_time : float = time.time()
+        nodes : OctreeNodeList = quadtree_SR_compress(
+            nodes, img_gt, criterion, criterion_value,
+            upscaling_technique, downscaling_technique,
+            min_chunk, max_ds_ratio, device)
+            
+        end_time : float = time.time()
+        print("Compression took %s seconds" % (str(end_time - start_time)))
         
-    end_time : float = time.time()
-    print("Compression took %s seconds" % (str(end_time - start_time)))
-    
 
-    num_nodes : int = len(nodes)
-    nodes = compress_nodelist(nodes, full_shape, min_chunk, device)
-    concat_num_nodes : int = len(nodes)
+        num_nodes : int = len(nodes)
+        nodes = compress_nodelist(nodes, full_shape, min_chunk, device)
+        concat_num_nodes : int = len(nodes)
 
-    print("Concatenating blocks turned %s blocks into %s" % (str(num_nodes), str(concat_num_nodes)))
+        print("Concatenating blocks turned %s blocks into %s" % (str(num_nodes), str(concat_num_nodes)))
 
-    torch.save(nodes, "./Output/"+img_name+"_"+upscaling_technique+ \
-        "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-            "ds"+str(max_ds_ratio)+"_chunk"+str(min_chunk)+".torch")
+        torch.save(nodes, "./Output/"+img_name+"_"+upscaling_technique+ \
+            "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
+                "ds"+str(max_ds_ratio)+"_chunk"+str(min_chunk)+".torch")
     
 
     nodes : OctreeNodeList = torch.load("./Output/"+img_name+"_"+upscaling_technique+ \

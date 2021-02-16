@@ -6,10 +6,35 @@ import imageio
 import numpy as np
 import matplotlib.pyplot as plt
 from utility_functions import AvgPool2D
+import os
 
 
+# This simply converts a vector field from some .h5 files
+# to their magnitude fields, and also splits it into octants before
+# saving.
 
+FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
+location = os.path.join(FlowSTSR_folder_path, "InputData", "iso1024")
 
+for filename in os.listdir(location):
+     print("Loading " + filename)
+     f = h5py.File(os.path.join(location, filename), 'r')
+     fname = filename.split(".")[0]
+     data =  np.array(f['data'])
+     print("Loaded velocity field " + str(data.shape))
+     mag_field = np.linalg.norm(data, axis=3)
+     print("Converted to velocity magnitude " + str(mag_field.shape))
+     octant_no = 0
+     for x_start, x_end in [(0, int(mag_field.shape[0]/2)), (int(mag_field.shape[0]/2), mag_field.shape[0])]:
+          for y_start, y_end in [(0, int(mag_field.shape[1]/2)), (int(mag_field.shape[1]/2), mag_field.shape[1])]:
+               for z_start, z_end in [(0, int(mag_field.shape[2]/2)), (int(mag_field.shape[2]/2), mag_field.shape[2])]:
+                    print("Saving octant " + str(octant_no))
+                    f_h5 = h5py.File(os.path.join(location, "v_mag_ts"+fname+"_octant"+str(octant_no)+'.h5'), 'w')
+                    f_h5.create_dataset("data", data=mag_field[x_start:x_end, y_start:y_end, z_start:z_end])
+                    f_h5.close()
+                    octant_no += 1
+
+'''
 # Experiment to see if the distribution of downscaled frames that are
 # downscaled with a method that doesn't follow downscale(x, S) = 
 # downscale(downscale(x, S/2), S/2).
@@ -130,6 +155,7 @@ plt.xlabel("Simulation timestep")
 plt.ylabel("m/s")
 plt.title("Min/max/mean/std of data downscaled by a factor of " + str(ds) + "x once or a factor of 2x " + str(int(np.log(ds)/np.log(2))) + " times")
 plt.show()
+'''
 
 '''
 # This experiment shows the seams between leaf nodes of a quadtree
