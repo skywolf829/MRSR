@@ -9,6 +9,7 @@ import base64
 import time
 import h5py
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from utility_functions import toImg
 client = zeep.Client('http://turbulence.pha.jhu.edu/service/turbulence.asmx?WSDL')
 ArrayOfFloat = client.get_type('ns0:ArrayOfFloat')
 ArrayOfArrayOfFloat = client.get_type('ns0:ArrayOfArrayOfFloat')
@@ -88,24 +89,22 @@ sim_name, timestep, field, num_components, num_workers):
     return full
 
 
-save_dir = "./TestingData/iso1024"
-#name = "channel"
-name = "isotropic1024"
-#name="mixing"
+save_dir = "./InputData/mixing_p"
+name = "mixing"
 t0 = time.time()
 count = 0
-startts = 1031
-endts = 1101
+startts = 1
+endts = 1000
 ts_skip = 10
+frames = []
 for i in range(startts, endts, ts_skip):
     print("TS %i/%i" % (i, endts))
-    f = get_full_frame_parallel(0, 1024, 1,#x
-    0, 1024, 1, #y
-    0, 1024, 1, #z
+    f = get_full_frame_parallel(0, 1024, 2,#x
+    0, 1024, 2, #y
+    0, 1024, 2, #z
     name, i, 
-    "u", 3, 
+    "p", 1, 
     64)    
-    #imageio.imwrite("mixing.jpg", f[:,:,0,:])
     f_h5 = h5py.File(os.path.join(save_dir, str(i-1)+ '.h5'), 'w')
     f_h5.create_dataset("data", data=f, compression="gzip")
     f_h5.close()
