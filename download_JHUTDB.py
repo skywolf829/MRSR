@@ -108,6 +108,7 @@ for i in range(startts, endts, ts_skip):
     f_h5 = h5py.File(os.path.join(save_dir, str(i-1)+ '.h5'), 'w')
     f_h5.create_dataset("data", data=f, compression="gzip")
     f_h5.close()
+    print("Finished " + str(i))
     count += 1
 print("finished")
 print(time.time() - t0)
