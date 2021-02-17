@@ -14,7 +14,8 @@ import os
 # saving.
 
 FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
-location = os.path.join(FlowSTSR_folder_path, "InputData", "iso1024")
+location = os.path.join(FlowSTSR_folder_path, "InputData", "iso1024_VF")
+save_location = os.path.join(FlowSTSR_folder_path, "InputData", "iso1024_magfield")
 
 for filename in os.listdir(location):
      print("Loading " + filename)
@@ -29,7 +30,7 @@ for filename in os.listdir(location):
           for y_start, y_end in [(0, int(mag_field.shape[1]/2)), (int(mag_field.shape[1]/2), mag_field.shape[1])]:
                for z_start, z_end in [(0, int(mag_field.shape[2]/2)), (int(mag_field.shape[2]/2), mag_field.shape[2])]:
                     print("Saving octant " + str(octant_no))
-                    f_h5 = h5py.File(os.path.join(location, "v_mag_ts"+fname+"_octant"+str(octant_no)+'.h5'), 'w')
+                    f_h5 = h5py.File(os.path.join(save_location, "v_mag_ts"+fname+"_octant"+str(octant_no)+'.h5'), 'w')
                     f_h5.create_dataset("data", data=mag_field[x_start:x_end, y_start:y_end, z_start:z_end])
                     f_h5.close()
                     octant_no += 1
