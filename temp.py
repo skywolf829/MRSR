@@ -22,7 +22,7 @@ for filename in os.listdir(location):
      fname = filename.split(".")[0]
      data =  np.array(f['data'])
      print("Loaded velocity field " + str(data.shape))
-     mag_field = np.linalg.norm(data, axis=3)
+     mag_field = np.linalg.norm(data, axis=0)
      print("Converted to velocity magnitude " + str(mag_field.shape))
      octant_no = 0
      for x_start, x_end in [(0, int(mag_field.shape[0]/2)), (int(mag_field.shape[0]/2), mag_field.shape[0])]:
