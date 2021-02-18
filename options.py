@@ -12,9 +12,9 @@ class Options():
         opt['single_shot']            =  False
         opt["save_folder"]             = "SavedModels"
         opt["save_name"]               = "Temp"    # Folder that the model will be saved to
-        opt["num_channels"]            = 3
+        opt["num_channels"]            = 1
         opt["spatial_downscale_ratio"] = 0.5       # Spatial downscale ratio between levels
-        opt["min_dimension_size"]      = 128        # Smallest a dimension can go to upscale from
+        opt["min_dimension_size"]      = 32        # Smallest a dimension can go to upscale from
         opt["cropping_resolution"]     = 96
         opt["train_date_time"]         = None      # The day/time the model was trained (finish time)
         
@@ -67,10 +67,10 @@ class Options():
         opt["regularization"]          = "GP" #Either TV (total variation) or GP (gradient penalty) or SN 
 
         # GAN training info
-        opt["alpha_1"]                 = 0       # Reconstruction loss coefficient
+        opt["alpha_1"]                 = 1       # Reconstruction loss coefficient
         opt["alpha_2"]                 = 0.1        # Adversarial loss coefficient
         opt["alpha_3"]                 = 0        # Soft physical loss coefficient
-        opt["alpha_4"]                 = 1        # mag_and_angle loss
+        opt["alpha_4"]                 = 0        # mag_and_angle loss
         opt["alpha_5"]                 = 0          # first derivative loss coeff
         opt["alpha_6"]                 = 0         # Lagrangian transport loss
 
