@@ -20,9 +20,9 @@ class Options():
         
         opt['dataset_name']            = "isotropic1024coarse"
         opt['num_dataset_timesteps']   = 100
-        opt['x_resolution']            = 1024
-        opt['y_resolution']            = 1024
-        opt['z_resolution']            = 1024
+        opt['x_resolution']            = 512
+        opt['y_resolution']            = 512
+        opt['z_resolution']            = 512
         opt['ts_skip']                 = 10
         opt['num_dims']                = 3
         opt['random_flipping']         = True
