@@ -7,8 +7,33 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utility_functions import AvgPool2D
 import os
+import h5py
+
+FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 
 
+mag_field_folder = os.path.join(FlowSTSR_folder_path, "InputData", "iso1024_magfield")
+mixing_folder = os.path.join(FlowSTSR_folder_path, "InputData", "mixing_p")
+
+for filename in os.listdir(mag_field_folder):
+     file_loc = os.path.join(mag_field_folder, filename)
+     f = h5py.File(file_loc, 'r+')
+     d = torch.tensor(f.get('data'))
+     d = d.unsqueeze(0)
+     f['data'] = d
+     f.close()
+
+for filename in os.listdir(mixing_folder):
+     file_loc = os.path.join(mag_field_folder, filename)
+     f = h5py.File(file_loc, 'r+')
+     d = torch.tensor(f.get('data'))
+     d = d[:,:,:,0].unsqueeze(0)
+     f['data'] = d
+     f.close()
+
+
+
+'''
 # This simply converts a vector field from some .h5 files
 # to their magnitude fields, and also splits it into octants before
 # saving.
@@ -35,6 +60,7 @@ for filename in os.listdir(location):
                     f_h5.close()
                     octant_no += 1
 
+'''
 '''
 # Experiment to see if the distribution of downscaled frames that are
 # downscaled with a method that doesn't follow downscale(x, S) = 
