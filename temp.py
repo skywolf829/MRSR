@@ -18,17 +18,15 @@ mixing_folder = os.path.join(FlowSTSR_folder_path, "InputData", "mixing_p")
 for filename in os.listdir(mag_field_folder):
      file_loc = os.path.join(mag_field_folder, filename)
      f = h5py.File(file_loc, 'r+')
-     d = torch.tensor(f.get('data'))
-     d = d.unsqueeze(0)
-     f['data'] = d
+     d = f.get('data')
+     d = np.expand_dims(d, axis=0)
      f.close()
 
 for filename in os.listdir(mixing_folder):
      file_loc = os.path.join(mag_field_folder, filename)
      f = h5py.File(file_loc, 'r+')
-     d = torch.tensor(f.get('data'))
-     d = d[:,:,:,0].unsqueeze(0)
-     f['data'] = d
+     d = f.get('data')
+     d = np.expand_dims(d[:,:,:,0], axis=0)
      f.close()
 
 
