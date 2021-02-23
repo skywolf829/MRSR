@@ -13,22 +13,34 @@ FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 
 
 mag_field_folder = os.path.join(FlowSTSR_folder_path, "InputData", "iso1024_magfield")
+new_mag_folder = os.path.join(FlowSTSR_folder_path, "InputData", "iso_mag")
 mixing_folder = os.path.join(FlowSTSR_folder_path, "InputData", "mixing_p")
+new_mixing_folder = os.path.join(FlowSTSR_folder_path, "InputData", "mix_p")
 
 for filename in os.listdir(mag_field_folder):
      file_loc = os.path.join(mag_field_folder, filename)
      f = h5py.File(file_loc, 'r+')
-     f.get('data') = np.expand_dims(f.get('data'), axis=0)
+     d = np.expand_dims(f.get('data'), axis=0).astype(np.float32)
      f.close()
 
-'''
+     file_loc = os.path.join(new_mag_folder, filename)
+     f = h5py.File(file_loc, 'w')
+     f.create_dataset("data", data=d)
+     f.close()
+
+
 for filename in os.listdir(mixing_folder):
      file_loc = os.path.join(mixing_folder, filename)
      f = h5py.File(file_loc, 'r+')
-     f.get('data') = np.expand_dims(f.get('data')[:,:,:,0], axis=0)
+     d = np.expand_dims(f.get('data')[:,:,:,0], axis=0).astype(np.float32)
      f.close()
 
-'''
+     file_loc = os.path.join(new_mixing_folder, filename)
+     f = h5py.File(file_loc, 'w')
+     f.create_dataset("data", data=d)
+     f.close()
+
+
 
 
 '''
