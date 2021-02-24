@@ -14,7 +14,7 @@ class Options():
         opt["save_name"]               = "Temp"    # Folder that the model will be saved to
         opt["num_channels"]            = 1
         opt["spatial_downscale_ratio"] = 0.5       # Spatial downscale ratio between levels
-        opt["min_dimension_size"]      = 32        # Smallest a dimension can go to upscale from
+        opt["min_dimension_size"]      = 8        # Smallest a dimension can go to upscale from
         opt["cropping_resolution"]     = 96
         opt["train_date_time"]         = None      # The day/time the model was trained (finish time)
         
@@ -81,7 +81,7 @@ class Options():
         opt['periodic']                = False
         opt["generator_steps"]         = 1
         opt["discriminator_steps"]     = 1
-        opt["epochs"]                  = 500
+        opt["epochs"]                  = 50
         opt["minibatch"]               = 1        # Minibatch for training
         opt["g_lr"]                    = 0.0001    # Learning rate for GAN generator
         opt["d_lr"]                    = 0.0004    # Learning rate for GAN discriminator
