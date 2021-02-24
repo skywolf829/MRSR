@@ -985,15 +985,16 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
             t_io_start = time.time()
         discriminator_scheduler.step()
         generator_scheduler.step()
-        
+
+
     generator = reset_grads(generator, False)
     generator.eval()
     discriminator = reset_grads(discriminator, False)
     discriminator.eval()
-
-    save_models(generators + [generator], discriminators + [discriminator], opt)
-
-    return generator, discriminator
+    if(not opt['train_distributed'] or rank == 0):
+        save_models(generators + [generator], discriminators + [discriminator], opt)
+    if not opt['train_distributed']:
+        return generator, discriminator
 
 
 class DenseBlock(nn.Module):

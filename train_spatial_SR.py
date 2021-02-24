@@ -129,7 +129,7 @@ if __name__ == '__main__':
             generator, discriminator = train_single_scale(opt['device'], generators, 
             discriminators, opt, dataset)
 
-        generators, discriminators = load_models(opt,args["device"])
+        generators, discriminators = load_models(opt,opt["device"])
         
         
         i += 1
