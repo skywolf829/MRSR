@@ -699,7 +699,7 @@ def train_single_scale_wrapper(generators, discriminators, opt):
 
 def train_single_scale(rank, generators, discriminators, opt, dataset):
     
-    opt['device'] = rank
+    opt['device'] = "cuda:" + str(rank)
     print("Training on device " + str(rank) + ", initializing process group.")
     if(opt['train_distributed']):
         dist.init_process_group(                                   
