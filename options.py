@@ -54,7 +54,7 @@ class Options():
         opt["upsample_mode"]           = "trilinear"
 
         opt["train_distributed"]       = False
-        opt["device"]                  = 0
+        opt["device"]                  = "cuda:0"
         opt["gpus_per_node"]           = 8
         opt["num_nodes"]               = 1
         opt["ranking"]                 = 0
