@@ -449,7 +449,7 @@ def init_scales(opt, dataset):
             ns.append(round(math.log(opt["min_dimension_size"] / opt['x_resolution']) / math.log(opt["spatial_downscale_ratio"])))
             ns.append(round(math.log(opt["min_dimension_size"] / opt['y_resolution']) / math.log(opt["spatial_downscale_ratio"])))
             res = [opt['x_resolution'], opt['y_resolution']]
-
+    print(ns)
     opt["n"] = min(ns)
     print("The model will have %i generators" % (opt["n"]))
     for i in range(opt["n"]+1):
@@ -699,9 +699,9 @@ def train_single_scale_wrapper(generators, discriminators, opt):
 
 def train_single_scale(rank, generators, discriminators, opt, dataset):
     
-    opt['device'] = "cuda:" + str(rank)
     print("Training on device " + str(rank) + ", initializing process group.")
-    if(opt['train_distributed']):
+    if(opt['train_distributed']):        
+        opt['device'] = "cuda:" + str(rank)
         dist.init_process_group(                                   
             backend='nccl',                                         
             init_method='env://',                                   
@@ -787,16 +787,27 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
             #print("IO time: %0.06f" % (time.time() - t_io_start))
             t_update_start = time.time()
             
-            real_hr = real_hr.to(opt["device"])            
-            if opt['downsample_mode'] == "nearest":
-                real_lr = real_hr[:,:,::2,::2,::2].clone()
-            elif opt['downsample_mode'] == "average_pooling":                    
-                with torch.no_grad():    
-                    real_lr = AvgPool3D(real_hr, 2)
-            else:
-                real_lr = F.interpolate(real_hr, 
-                scale_factor=opt['spatial_downscale_ratio'],
-                mode=opt['downsample_mode'])
+            real_hr = real_hr.to(opt["device"])           
+            if opt['mode'] == "3D": 
+                if opt['downsample_mode'] == "nearest":
+                    real_lr = real_hr[:,:,::2,::2,::2].clone()
+                elif opt['downsample_mode'] == "average_pooling":                    
+                    with torch.no_grad():    
+                        real_lr = AvgPool3D(real_hr, 2)
+                else:
+                    real_lr = F.interpolate(real_hr, 
+                    scale_factor=opt['spatial_downscale_ratio'],
+                    mode=opt['downsample_mode'])
+            elif opt['mode'] == "2D":
+                if opt['downsample_mode'] == "nearest":
+                    real_lr = real_hr[:,:,::2,::2].clone()
+                elif opt['downsample_mode'] == "average_pooling":                    
+                    with torch.no_grad():    
+                        real_lr = AvgPool2D(real_hr, 2)
+                else:
+                    real_lr = F.interpolate(real_hr, 
+                    scale_factor=opt['spatial_downscale_ratio'],
+                    mode=opt['downsample_mode'])
             D_loss = 0
             G_loss = 0        
             gradient_loss = 0
@@ -933,7 +944,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                     real_cm *= (1/real_cm.max())
                     writer.add_image("real/%i"%len(generators), 
                     real_cm.clip(0,1), volumes_seen)
-
+                    '''
                     trilin_np = F.interpolate(real_lr, scale_factor=2, mode='trilinear', 
                     align_corners=True).detach().cpu().numpy()[0]
                     trilin_cm = toImg(trilin_np)
@@ -941,7 +952,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                     trilin_cm *= (1/trilin_cm.max())
                     writer.add_image("%s_trilin/%i"%(opt['save_name'], len(generators)), 
                     trilin_cm.clip(0,1), volumes_seen)
-
+                    '''
                     if(opt["alpha_3"] > 0.0):
                         g_cm = toImg(g_map.detach().cpu().numpy()[0])
                         writer.add_image("Divergence/%i"%len(generators), 
@@ -1000,17 +1011,20 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
 class DenseBlock(nn.Module):
     def __init__(self, kernels, growth_channel, opt):
         super(DenseBlock, self).__init__()
-
-        self.c1 = nn.Conv3d(kernels, growth_channel, kernel_size=opt['kernel_size'],
+        if(opt['mode'] == "2D"):
+            conv_layer = nn.Conv2d
+        elif(opt['mode'] == "3D"):
+            conv_layer = nn.Conv3d
+        self.c1 = conv_layer(kernels, growth_channel, kernel_size=opt['kernel_size'],
         stride=opt['stride'],padding=opt['padding'])
-        self.c2 = nn.Conv3d(kernels+growth_channel*1, growth_channel, kernel_size=opt['kernel_size'],
+        self.c2 = conv_layer(kernels+growth_channel*1, growth_channel, kernel_size=opt['kernel_size'],
         stride=opt['stride'],padding=opt['padding'])
-        self.c3 = nn.Conv3d(kernels+growth_channel*2, growth_channel, kernel_size=opt['kernel_size'],
+        self.c3 = conv_layer(kernels+growth_channel*2, growth_channel, kernel_size=opt['kernel_size'],
         stride=opt['stride'],padding=opt['padding'])
-        self.c4 = nn.Conv3d(kernels+growth_channel*3, growth_channel, kernel_size=opt['kernel_size'],
+        self.c4 = conv_layer(kernels+growth_channel*3, growth_channel, kernel_size=opt['kernel_size'],
         stride=opt['stride'],padding=opt['padding'])
         self.lrelu = nn.LeakyReLU(0.2,inplace=True)
-        self.final_conv = nn.Conv3d(kernels+growth_channel*4, kernels, kernel_size=opt['kernel_size'],
+        self.final_conv = conv_layer(kernels+growth_channel*4, kernels, kernel_size=opt['kernel_size'],
         stride=opt['stride'],padding=opt['padding'])
 
     def forward(self,x):       
@@ -1043,26 +1057,35 @@ class Generator(nn.Module):
         super(Generator, self).__init__()
         self.resolution = resolution
         self.opt = opt
+        if(opt['mode'] == "2D"):
+            conv_layer = nn.Conv2d
+            self.pix_shuffle = nn.PixelShuffle(2)
+        elif(opt['mode'] == "3D"):
+            conv_layer = nn.Conv3d
 
-        self.c1 = nn.Conv3d(opt['num_channels'], opt['base_num_kernels'],
+        self.c1 = conv_layer(opt['num_channels'], opt['base_num_kernels'],
         stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
         self.blocks = []
         for i in range(opt['num_blocks']):
             self.blocks.append(RRDB(opt))
         self.blocks =  nn.ModuleList(self.blocks)
         
-        self.c2 = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels'],
+        self.c2 = conv_layer(opt['base_num_kernels'], opt['base_num_kernels'],
         stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
 
         # Upscaling happens between 2 and 3
+        if(self.opt['mode'] == "2D"):
+            fact = 4
+        elif(self.opt['mode'] == "3D"):
+            fact = 8
         if(self.opt['upsample_mode'] == "shuffle"):
-            self.c2_vs = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels']*8,
+            self.c2_vs = conv_layer(opt['base_num_kernels'], opt['base_num_kernels']*fact,
             stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
        
-        self.c3 = nn.Conv3d(opt['base_num_kernels'], opt['base_num_kernels'],
+        self.c3 = conv_layer(opt['base_num_kernels'], opt['base_num_kernels'],
         stride=opt['stride'],padding=opt['padding'],kernel_size=opt['kernel_size'])
 
-        self.final_conv = nn.Conv3d(opt['base_num_kernels'], opt['num_channels'],
+        self.final_conv = conv_layer(opt['base_num_kernels'], opt['num_channels'],
         stride=opt['stride'],padding=2,kernel_size=5)
         self.lrelu = nn.LeakyReLU(0.2, inplace=True)
 
@@ -1099,7 +1122,10 @@ class Generator(nn.Module):
             mode=self.opt['upsample_mode'], align_corners=True)
         elif(self.opt['upsample_mode'] == "shuffle"):
             out = self.c2_vs(out)
-            out = VoxelShuffle(out)
+            if(self.opt['mode'] == "3D"):
+                out = VoxelShuffle(out)
+            elif(self.opt['mode'] == "2D"):
+                out = self.pix_shuffle(out)
         
         out = self.lrelu(self.c3(out))
         out = self.final_conv(out)
@@ -1121,7 +1147,7 @@ def VoxelShuffle(t):
 class Discriminator(nn.Module):
     def __init__ (self, resolution, num_kernels, opt):
         super(Discriminator, self).__init__()
-        
+
         self.resolution = resolution
         self.num_kernels = num_kernels
 

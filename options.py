@@ -14,15 +14,15 @@ class Options():
         opt["save_name"]               = "Temp"    # Folder that the model will be saved to
         opt["num_channels"]            = 1
         opt["spatial_downscale_ratio"] = 0.5       # Spatial downscale ratio between levels
-        opt["min_dimension_size"]      = 8        # Smallest a dimension can go to upscale from
+        opt["min_dimension_size"]      = 16        # Smallest a dimension can go to upscale from
         opt["cropping_resolution"]     = 96
         opt["train_date_time"]         = None      # The day/time the model was trained (finish time)
         
         opt['dataset_name']            = "isotropic1024coarse"
         opt['num_dataset_timesteps']   = 100
-        opt['x_resolution']            = 512
-        opt['y_resolution']            = 512
-        opt['z_resolution']            = 512
+        opt['x_resolution']            = 1024
+        opt['y_resolution']            = 1024
+        opt['z_resolution']            = 1
         opt['ts_skip']                 = 10
         opt['num_dims']                = 3
         opt['random_flipping']         = True
