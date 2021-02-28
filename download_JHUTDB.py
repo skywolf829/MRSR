@@ -93,7 +93,7 @@ save_dir = "./TestingData/iso1024mag"
 name = "isotropic1024coarse"
 t0 = time.time()
 count = 0
-startts = 1001
+startts = 1021
 endts = 1101
 ts_skip = 10
 frames = []
@@ -104,7 +104,7 @@ for i in range(startts, endts, ts_skip):
     0, 1024, 1, #z
     name, i, 
     "u", 3, 
-    64)    
+    16)    
     #f = f[:,:,:,0]
     f = np.linalg.norm(f, axis=3)
     f = np.expand_dims(f, 0)
