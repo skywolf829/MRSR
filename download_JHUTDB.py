@@ -94,7 +94,7 @@ name = "isotropic1024coarse"
 t0 = time.time()
 count = 0
 startts = 1001
-endts = 1002
+endts = 1101
 ts_skip = 10
 frames = []
 for i in range(startts, endts, ts_skip):
@@ -107,12 +107,12 @@ for i in range(startts, endts, ts_skip):
     64)    
     #f = f[:,:,:,0]
     f = np.linalg.norm(f, axis=3)
-    #f = np.expand_dims(f, 0)
+    f = np.expand_dims(f, 0)
     print(f.shape)
     #frames.append(f)
-    #f_h5 = h5py.File(os.path.join(save_dir, str(i-1)+ '.h5'), 'w')
-    #f_h5.create_dataset("data", data=f)
-    #f_h5.close()
+    f_h5 = h5py.File(os.path.join(save_dir, str(i-1)+ '.h5'), 'w')
+    f_h5.create_dataset("data", data=f)
+    f_h5.close()
     print("Finished " + str(i))
     count += 1
 print("finished")
