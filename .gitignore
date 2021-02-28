@@ -140,4 +140,5 @@ nohup.out
 /Other
 /Output
 /tensorboard
+/TestingData
 .vscode/settings.json
