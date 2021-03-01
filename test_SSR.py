@@ -387,18 +387,18 @@ if __name__ == '__main__':
 
             
             if(opt['downsample_mode'] == "average_pooling"):
-                if(opt['mode'] == "3D"):
+                if(args['mode'] == "3D"):
                     LR_data = AvgPool3D(GT_data[:,0:1,:,:,:], args['scale_factor'])
                     for i in range(1, args['channels']):
                         LR_data = torch.cat((LR_data, AvgPool3D(GT_data[:,i:i+1,:,:,:], args['scale_factor'])), dim=1)
-                elif(opt['mode'] == "2D"):
+                elif(args['mode'] == "2D"):
                     LR_data = AvgPool2D(GT_data[:,0:1,:,:], args['scale_factor'])
                     for i in range(1, args['channels']):
-                        LR_data = torch.cat((LR_data, AvgPool3D(GT_data[:,i:i+1,:,:], args['scale_factor'])), dim=1)
+                        LR_data = torch.cat((LR_data, AvgPool2D(GT_data[:,i:i+1,:,:], args['scale_factor'])), dim=1)
             elif(opt['downsample_mode'] == "subsampling"):
-                if(opt['mode'] == "3D"):
+                if(args['mode'] == "3D"):
                     LR_data = GT_data[:,:,::args['scale_factor'], ::args['scale_factor'],::args['scale_factor']].clone()
-                elif(opt['mode'] == "2D"):
+                elif(args['mode'] == "2D"):
                     LR_data = GT_data[:,:,::args['scale_factor'], ::args['scale_factor']].clone()
 
             GT_data = GT_data.to("cpu")
