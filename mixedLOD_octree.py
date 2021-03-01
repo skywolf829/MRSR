@@ -482,7 +482,7 @@ data_levels: List[torch.Tensor], mask_levels: List[torch.Tensor], mode : str):
             int(x_start/curr_ds_ratio): \
             int(x_start/curr_ds_ratio)+node.data.shape[2],
             int(y_start/curr_ds_ratio): \
-            int(y_start/curr_ds_ratio)+node.data.shape[3],,
+            int(y_start/curr_ds_ratio)+node.data.shape[3],
             int(z_start/curr_ds_ratio): \
             int(z_start/curr_ds_ratio)+node.data.shape[4]
         ] = 1
