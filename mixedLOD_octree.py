@@ -339,14 +339,14 @@ downscaling_technique : str, device : str, mode : str) -> Tuple[torch.Tensor, to
     if(mode == "3D"):
         full_img = torch.zeros([full_shape[0], 3, full_shape[2], full_shape[3], full_shape[4]]).to(device)
     cmap : List[torch.Tensor] = [
-        torch.tensor([[0, 0, 0]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[37, 15, 77]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[115, 30, 107]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[178, 52, 85]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[233, 112, 37]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[244, 189, 55]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[255, 255, 255]], dtype=nodes[0].data.dtype, device=device),
         torch.tensor([[247, 251, 162]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[255, 255, 255]], dtype=nodes[0].data.dtype, device=device)
+        torch.tensor([[244, 189, 55]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[233, 112, 37]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[178, 52, 85]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[115, 30, 107]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[37, 15, 77]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[0, 0, 0]], dtype=nodes[0].data.dtype, device=device)
     ]
     for i in range(len(cmap)):
         cmap[i] = cmap[i].unsqueeze(2).unsqueeze(3)
