@@ -1,6 +1,6 @@
 from spatial_models import Generator, load_models
 from options import Options, load_options
-from utility_functions import streamline_loss3D, str2bool, AvgPool3D
+from utility_functions import streamline_loss3D, str2bool, AvgPool3D, AvgPool2D
 import numpy as np
 import os
 import imageio
@@ -297,9 +297,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
 
     
+    parser.add_argument('--mode',default="3D",type=str,help='2D or 3D')
     parser.add_argument('--testing_method',default="model",type=str,help='What method to test, model or trilinear')
     parser.add_argument('--scale_factor',default=2,type=int,help='2x, 4x, 8x... what the model supports')
     parser.add_argument('--full_resolution',default=1024,type=int,help='The full resolution of the frame')
+    parser.add_argument('--channels',default=3,type=int,help='Number of channels in the data')
     parser.add_argument('--data_folder',default="iso1024",type=str,help='Name of folder with test data in /TestingData')
     parser.add_argument('--model_name',default="SSR",type=str,help='The folder with the model to load')
     parser.add_argument('--device',default="cpu",type=str,help='Device to use for testing')
@@ -311,9 +313,9 @@ if __name__ == '__main__':
     parser.add_argument('--test_psnr',default="True",type=str2bool,help='Enables tests for mse')
     parser.add_argument('--test_mre',default="True",type=str2bool,help='Enables tests for maximum relative error')
 
-    parser.add_argument('--test_img_psnr',default="True",type=str2bool,help='Enables tests for image PSNR score')
-    parser.add_argument('--test_img_ssim',default="True",type=str2bool,help='Enables tests for image SSIM score')
-    parser.add_argument('--test_img_fid',default="True",type=str2bool,help='Enables tests for image FID score')
+    parser.add_argument('--test_img_psnr',default="False",type=str2bool,help='Enables tests for image PSNR score')
+    parser.add_argument('--test_img_ssim',default="False",type=str2bool,help='Enables tests for image SSIM score')
+    parser.add_argument('--test_img_fid',default="False",type=str2bool,help='Enables tests for image FID score')
 
     parser.add_argument('--save_name',default="SSR",type=str,help='Where to write results')
     parser.add_argument('--output_file_name',default="SSR.pkl",type=str,help='Where to write results')
@@ -351,8 +353,6 @@ if __name__ == '__main__':
         "psnr": [],
         "mre": [],
         "inner_mre": [],
-        "mag": [],
-        "angle": [],
         "img_psnr": [],
         "img_ssim": [],
         "img_fid": []
@@ -366,7 +366,10 @@ if __name__ == '__main__':
                 print("Loading dataset item : " + str(i))
             start_load_time = time.time()
             if(args['debug']):
-                GT_data = torch.randn([1, 3, 1024, 1024, 1024]).to(args['device'])
+                if(args['mode'] == "3D"):
+                    GT_data = torch.randn([1, args['channels'], args['full_resolution'], args['full_resolution'], args['full_resolution']]).to(args['device'])
+                elif(args['mode'] == "2D"):
+                    GT_data = torch.randn([1, args['channels'], args['full_resolution'], args['full_resolution']]).to(args['device'])
             else:
                 GT_data = dataset[i].to(args['device'])
             end_load_time = time.time()
@@ -378,11 +381,19 @@ if __name__ == '__main__':
 
             
             if(opt['downsample_mode'] == "average_pooling"):
-                LR_data = AvgPool3D(GT_data[:,0:1,:,:,:], args['scale_factor'])
-                LR_data = torch.cat((LR_data, AvgPool3D(GT_data[:,1:2,:,:,:], args['scale_factor'])), dim=1)
-                LR_data = torch.cat((LR_data, AvgPool3D(GT_data[:,2:3,:,:,:], args['scale_factor'])), dim=1)
+                if(opt['mode'] == "3D"):
+                    LR_data = AvgPool3D(GT_data[:,0:1,:,:,:], args['scale_factor'])
+                    for i in range(1, args['channels']):
+                        LR_data = torch.cat((LR_data, AvgPool3D(GT_data[:,i:i+1,:,:,:], args['scale_factor'])), dim=1)
+                elif(opt['mode'] == "2D"):
+                    LR_data = AvgPool2D(GT_data[:,0:1,:,:], args['scale_factor'])
+                    for i in range(1, args['channels']):
+                        LR_data = torch.cat((LR_data, AvgPool3D(GT_data[:,i:i+1,:,:], args['scale_factor'])), dim=1)
             elif(opt['downsample_mode'] == "subsampling"):
-                LR_data = GT_data[:,:,::args['scale_factor'], ::args['scale_factor']].clone()
+                if(opt['mode'] == "3D"):
+                    LR_data = GT_data[:,:,::args['scale_factor'], ::args['scale_factor'],::args['scale_factor']].clone()
+                elif(opt['mode'] == "2D"):
+                    LR_data = GT_data[:,:,::args['scale_factor'], ::args['scale_factor']].clone()
 
             GT_data = GT_data.to("cpu")
             torch.cuda.empty_cache()
@@ -394,18 +405,26 @@ if __name__ == '__main__':
                 current_ds = args['scale_factor']
                 while(current_ds > 1):
                     gen_to_use = int(len(generators) - log2(current_ds))
-                    if(torch.cuda.device_count() > 1 and args['parallel']):
+                    if(torch.cuda.device_count() > 1 and args['parallel'] and args['mode'] == '3D'):
                         if(p):
                             print("Upscaling in parallel on " + str(len(devices)) + " gpus")
                         LR_data = generate_by_patch_parallel(generators[gen_to_use], 
-                        LR_data, 140, 6, devices)
+                        LR_data, 140, 10, devices)
                     else:
-                        LR_data = generate_by_patch(generators[gen_to_use], 
-                        LR_data, 140, 6, args['device'])
+                        if(args['mode'] == '3D'):
+                            LR_data = generate_by_patch(generators[gen_to_use], 
+                            LR_data, 140, 10, args['device'])
+                        elif(args['mode'] == '2D'):
+                            with torch.no_grad():
+                                LR_data = generators[gen_to_use](LR_data)
                     current_ds = int(current_ds / 2)
             else:
-                LR_data = F.interpolate(LR_data, scale_factor=args['scale_factor'], 
-                mode="trilinear", align_corners=True)
+                if(args['mode'] == "3D"):
+                    LR_data = F.interpolate(LR_data, scale_factor=args['scale_factor'], 
+                    mode="trilinear", align_corners=True)
+                elif(args['mode'] == '2D'):
+                    LR_data = F.interpolate(LR_data, scale_factor=args['scale_factor'], 
+                    mode="bilinear", align_corners=True)
             inference_end_time = time.time()
             
             inference_this_frame = inference_end_time - inference_start_time
@@ -418,17 +437,18 @@ if __name__ == '__main__':
             mse_this_frame = None
             psnr_this_frame = None
             mre_this_frame = None
-            mag_this_frame = None
-            angle_this_frame = None
-            energy_spectra_this_frame = None
             img_psnr_this_frame = None
             img_ssim_this_frame = None
             img_fid_this_frame = None
 
             d['inference_time'].append(inference_this_frame)
 
-            LR_img_this_frame = LR_data[0,:,int(LR_data.shape[2]/2),:,:].clone()
-            GT_img_this_frame = GT_data[0,:,int(GT_data.shape[2]/2),:,:].clone()
+            if(args['mode'] == '3D'):
+                LR_img_this_frame = LR_data[0,:,int(LR_data.shape[2]/2),:,:].clone()
+                GT_img_this_frame = GT_data[0,:,int(GT_data.shape[2]/2),:,:].clone()
+            elif(args['mode'] == '2D'):
+                LR_img_this_frame = LR_data[0,:,:,:].clone()
+                GT_img_this_frame = GT_data[0,:,:,:].clone()
 
             LR_img_this_frame -= GT_data.min()
             GT_img_this_frame -= GT_data.min()
@@ -481,25 +501,6 @@ if __name__ == '__main__':
                     print("Inner MRE: " + str(mre_item))
                 d['inner_mre'].append(mre_item)
 
-            if(args['test_mag']):
-                mag_item = mag_func(GT_data, LR_data, "cpu")
-                if(p):
-                    print("Mag: " + str(mag_item))
-                d['mag'].append(mag_item)
-
-            if(args['test_angle']):
-                angle_item = angle_func(GT_data, LR_data, "cpu")
-                if(p):
-                    print("Angle: " + str(angle_item))
-                d['angle'].append(angle_item)
-            
-            if(args['test_streamline']):
-                sl_avg, sl_std = streamline_func(GT_data, LR_data, "cpu")
-                if(p):
-                    print("Streamline average/std: " + str(sl_avg) + "/" + str(sl_std))
-                d['streamline_average'].append(sl_avg)
-                d['streamline_std'].append(sl_std)
-            
             '''
             if(args['test_img_psnr']):
                 psnr_item = img_psnr_func(GT_data, LR_data, "cpu")
