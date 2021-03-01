@@ -7,6 +7,11 @@ from utility_functions import *
 import time
 from typing import Dict, List, Tuple, Optional
 import h5py
+from spatial_models import load_models
+from options import load_options
+
+models = None
+options = None
 
 #@torch.jit.script
 class OctreeNode:
@@ -163,6 +168,17 @@ def bicubic_upscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
     return img
 
 #@torch.jit.script
+def model_upscale(input : torch.Tensor, scale_factor : int) -> torch.Tensor:
+    curr_scale_factor : int = scale_factor
+    final_out : torch.Tensor = input.clone()
+    while(curr_scale_factor > 1):
+        model_to_use = int(len(models) - log2(scale_factor))
+        with torch.no_grad():
+            final_out = models[model_to_use](final_out)
+        curr_scale_factor = int(curr_scale_factor / 2)
+    return final_out
+
+#@torch.jit.script
 def point_upscale2D(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
     upscaled_img = torch.zeros([img.shape[0], img.shape[1],
     int(img.shape[2]*scale_factor), 
@@ -221,7 +237,7 @@ def subsample_downscale2D(img : torch.Tensor, scale_factor : int) -> torch.Tenso
 def subsample_downscale3D(vol : torch.Tensor, scale_factor : int) -> torch.Tensor:
     vol = vol[:,:, ::2, ::2, ::2]
     return vol
-
+  
 #@torch.jit.script
 def upscale(method: str, img: torch.Tensor, scale_factor: int) -> torch.Tensor:
     up = torch.zeros([1])
@@ -237,6 +253,8 @@ def upscale(method: str, img: torch.Tensor, scale_factor: int) -> torch.Tensor:
         up = nearest_neighbor_upscale(img, scale_factor)
     elif(method == "trilinear"):
         up = trilinear_upscale(img, scale_factor)
+    elif(method == "model"):
+        up = model_upscale(img, scale_factor)
     else:
         print("No support for upscaling method: " + str(method))
     return up
@@ -573,6 +591,7 @@ def mixedLOD_octree_SR_compress(
     add_node_to_data_caches(nodes[0], full_shape, data_levels, mask_levels, mode)
 
     while(len(node_indices_to_check) > 0): 
+        print(nodes_checked)
         nodes_checked += 1
         i = node_indices_to_check.pop(0)
         n = nodes[i]
@@ -746,12 +765,13 @@ if __name__ == '__main__':
     max_LOD : int = 6
     min_chunk : int = 16
     device: str = "cuda"
-    upscaling_technique : str = "bicubic"
+    upscaling_technique : str = "model"
     downscaling_technique : str = "avgpool2D"
     criterion : str = "mre"
     criterion_value : float = 0.05
     load_existing = False
     mode : str = "2D"
+    model_name : str = "SSR_isomag2D"
 
     img_name : str = "4010"
     img_ext : str = "h5"
@@ -765,6 +785,13 @@ if __name__ == '__main__':
         f = h5py.File("TestingData/quadtree_images/"+img_name+"."+img_ext, 'r')
         img_gt : torch.Tensor = torch.from_numpy(np.array(f['data'])).unsqueeze(0).to(device)
         f.close()
+
+    if(upscaling_technique == "model"):
+        print("Loading models")
+        options = load_options("SavedModels/"+model_name)
+        models, _ = load_models(options, device)
+        for i in range(len(models)):
+            models[i] = models[i].to(device)
 
     full_shape : List[int] = list(img_gt.shape)
 

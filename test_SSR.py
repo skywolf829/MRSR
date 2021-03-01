@@ -496,13 +496,20 @@ if __name__ == '__main__':
                 d['mre'].append(mre_item)
             
             if(args['test_mre']):
-                mre_item = mre_func(
-                    GT_data[:,:,6:GT_data.shape[2]-6,
-                            6:GT_data.shape[3]-6,
-                            6:GT_data.shape[4]-6], 
-                            LR_data[:,:,6:LR_data.shape[2]-6,
-                            6:LR_data.shape[3]-6,
-                            6:LR_data.shape[4]-6], "cpu")
+                if(args['mode'] == '2D'):
+                    mre_item = mre_func(
+                        GT_data[:,:,6:GT_data.shape[2]-6,
+                                6:GT_data.shape[3]-6], 
+                                LR_data[:,:,6:LR_data.shape[2]-6,
+                                6:LR_data.shape[3]-6], "cpu")
+                elif(args['mode'] == '3D'):
+                    mre_item = mre_func(
+                        GT_data[:,:,6:GT_data.shape[2]-6,
+                                6:GT_data.shape[3]-6,
+                                6:GT_data.shape[4]-6], 
+                                LR_data[:,:,6:LR_data.shape[2]-6,
+                                6:LR_data.shape[3]-6,
+                                6:LR_data.shape[4]-6], "cpu")
                 if(p):
                     print("Inner MRE: " + str(mre_item))
                 d['inner_mre'].append(mre_item)
