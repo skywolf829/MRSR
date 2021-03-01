@@ -78,8 +78,7 @@ depth : int, index : int) -> Tuple[int, int]:
 
 #@torch.jit.script
 class OctreeNodeList:
-    def __init__(self, mode : str):
-
+    def __init__(self):
         self.node_list : List[OctreeNode] = []
     def append(self, n : OctreeNode):
         self.node_list.append(n)
@@ -163,14 +162,32 @@ def bicubic_upscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
     return img
 
 #@torch.jit.script
-def point_upscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
+def point_upscale2D(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
     upscaled_img = torch.zeros([img.shape[0], img.shape[1],
     int(img.shape[2]*scale_factor), 
     int(img.shape[3]*scale_factor)]).to(img.device)
+    
     for x in range(img.shape[2]):
         for y in range(img.shape[3]):
             upscaled_img[:,:,x*scale_factor:(x+1)*scale_factor, 
-            y*scale_factor:(y+1)*scale_factor] = img[:,:,x,y]
+            y*scale_factor:(y+1)*scale_factor] = img[:,:,x,y].view(img.shape[0], img.shape[1], 1, 1).repeat(1, 1, scale_factor, scale_factor)
+    return upscaled_img
+
+#@torch.jit.script
+def point_upscale3D(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
+    upscaled_img = torch.zeros([img.shape[0], img.shape[1],
+    int(img.shape[2]*scale_factor), 
+    int(img.shape[3]*scale_factor),
+    int(img.shape[4]*scale_factor)]).to(img.device)
+    
+    for x in range(img.shape[2]):
+        for y in range(img.shape[3]):
+            for z in range(img.shape[4]):
+                upscaled_img[:,:,
+                x*scale_factor:(x+1)*scale_factor, 
+                y*scale_factor:(y+1)*scale_factor,
+                z*scale_factor:(z+1)*scale_factor] = \
+                    img[:,:,x,y,z].view(img.shape[0], img.shape[1], 1, 1, 1).repeat(1, 1, scale_factor, scale_factor, scale_factor)
     return upscaled_img
 
 #@torch.jit.script
@@ -211,8 +228,10 @@ def upscale(method: str, img: torch.Tensor, scale_factor: int) -> torch.Tensor:
         up = bilinear_upscale(img, scale_factor)
     elif(method == "bicubic"):
         up = bicubic_upscale(img, scale_factor)
-    elif(method == "point"):
-        up = point_upscale(img, scale_factor)
+    elif(method == "point2D"):
+        up = point_upscale2D(img, scale_factor)
+    elif(method == "point3D"):
+        up = point_upscale3D(img, scale_factor)
     elif(method == "nearest"):
         up = nearest_neighbor_upscale(img, scale_factor)
     elif(method == "trilinear"):
@@ -254,7 +273,7 @@ a: torch.Tensor, b: torch.Tensor) -> bool:
 
 #@torch.jit.script
 def nodes_to_downscaled_levels(nodes : OctreeNodeList, full_shape : List[int],
-    max_downscaling_ratio : int, downscaling_technique: str, device : str, 
+    max_LOD : int, downscaling_technique: str, device : str, 
     data_levels: List[torch.Tensor], mask_levels:List[torch.Tensor],
     data_downscaled_levels: List[torch.Tensor], mask_downscaled_levels:List[torch.Tensor],
     mode : str):
@@ -287,25 +306,25 @@ def nodes_to_downscaled_levels(nodes : OctreeNodeList, full_shape : List[int],
         
 #@torch.jit.script
 def nodes_to_full_img(nodes: OctreeNodeList, full_shape: List[int], 
-    max_downscaling_ratio : int, upscaling_technique : str, 
+    max_LOD : int, upscaling_technique : str, 
     downscaling_technique : str, device : str, 
     data_levels: List[torch.Tensor], mask_levels:List[torch.Tensor],
     data_downscaled_levels: List[torch.Tensor], mask_downscaled_levels:List[torch.Tensor],
     mode : str) -> torch.Tensor:
 
     nodes_to_downscaled_levels(nodes, 
-    full_shape, max_downscaling_ratio, downscaling_technique,
+    full_shape, max_LOD, downscaling_technique,
     device, data_levels, mask_levels, data_downscaled_levels, 
     mask_downscaled_levels, mode)
     
-    curr_ds_ratio = max_downscaling_ratio
+    curr_LOD = max_LOD
     full_img = data_downscaled_levels[0]
     
     i = 0
-    while(curr_ds_ratio > 1):
+    while(curr_LOD > 0):
         
         full_img = upscale(upscaling_technique, full_img, 2)
-        curr_ds_ratio = int(curr_ds_ratio / 2)
+        curr_LOD -= 1
         i += 1
 
         full_img = full_img * (1-mask_downscaled_levels[i]) + \
@@ -314,68 +333,84 @@ def nodes_to_full_img(nodes: OctreeNodeList, full_shape: List[int],
 
 #@torch.jit.script
 def nodes_to_full_img_debug(nodes: OctreeNodeList, full_shape: List[int], 
-max_downscaling_ratio : int, upscaling_technique : str, 
+max_LOD : int, upscaling_technique : str, 
 downscaling_technique : str, device : str, mode : str) -> Tuple[torch.Tensor, torch.Tensor]:
-    
-    full_img = torch.zeros(full_shape).to(device)
+    full_img = torch.zeros([full_shape[0], 3, full_shape[2], full_shape[3]]).to(device)
+    if(mode == "3D"):
+        full_img = torch.zeros([full_shape[0], 3, full_shape[2], full_shape[3], full_shape[4]]).to(device)
     cmap : List[torch.Tensor] = [
-        torch.tensor([0, 0, 0], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([37, 15, 77], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([115, 30, 107], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([178, 52, 85], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([233, 112, 37], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([244, 189, 55], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([247, 251, 162], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([255, 255, 255], dtype=nodes[0].data.dtype, device=device)
+        torch.tensor([[0, 0, 0]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[37, 15, 77]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[115, 30, 107]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[178, 52, 85]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[233, 112, 37]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[244, 189, 55]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[247, 251, 162]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[255, 255, 255]], dtype=nodes[0].data.dtype, device=device)
     ]
+    for i in range(len(cmap)):
+        cmap[i] = cmap[i].unsqueeze(2).unsqueeze(3)
+        if(mode == "3D"):
+            cmap[i] = cmap[i].unsqueeze(4)
+
     for i in range(len(nodes)):
         curr_node = nodes[i]
         if(mode == "2D"):
             x_start, y_start = get_location2D(full_shape[2], full_shape[3], curr_node.depth, curr_node.index)
-            s : int = int(torch.log2(torch.tensor(float(curr_node.downscaling_ratio))))
+            s : int = curr_node.LOD
             full_img[:,:,
                 int(x_start): \
                 int(x_start)+ \
-                    int((curr_node.data.shape[2]*curr_node.downscaling_ratio)),
+                    int((curr_node.data.shape[2]*(2**curr_node.LOD))),
                 int(y_start): \
                 int(y_start)+ \
-                    int((curr_node.data.shape[3]*curr_node.downscaling_ratio)),
-            ] = torch.tensor([0, 0, 0], device=device, dtype=nodes[0].data.dtype,)
+                    int((curr_node.data.shape[3]*(2**curr_node.LOD)))
+            ] = torch.zeros([full_shape[0], 3, 
+            curr_node.data.shape[2]*(2**curr_node.LOD),
+            curr_node.data.shape[3]*(2**curr_node.LOD)])
             full_img[:,:,
                 int(x_start)+1: \
                 int(x_start)+ \
-                    int((curr_node.data.shape[2]*curr_node.downscaling_ratio))-1,
+                    int((curr_node.data.shape[2]*(2**curr_node.LOD)))-1,
                 int(y_start)+1: \
                 int(y_start)+ \
-                    int((curr_node.data.shape[3]*curr_node.downscaling_ratio))-1,
-            ] = cmap[-1 - s]
+                    int((curr_node.data.shape[3]*(2**curr_node.LOD)))-1
+            ] = cmap[s].repeat(full_shape[0], 1, 
+            int((curr_node.data.shape[2]*(2**curr_node.LOD)))-2, 
+            int((curr_node.data.shape[3]*(2**curr_node.LOD)))-2)
         elif(mode == "3D"):
             x_start, y_start, z_start = get_location3D(full_shape[2], full_shape[3], full_shape[4],
             curr_node.depth, curr_node.index)
-            s : int = int(torch.log2(torch.tensor(float(curr_node.downscaling_ratio))))
+            s : int = curr_node.LOD
             full_img[:,:,
                 int(x_start): \
                 int(x_start)+ \
-                    int((curr_node.data.shape[2]*curr_node.downscaling_ratio)),
+                    int((curr_node.data.shape[2]*(2**curr_node.LOD))),
                 int(y_start): \
                 int(y_start)+ \
-                    int((curr_node.data.shape[3]*curr_node.downscaling_ratio)),
+                    int((curr_node.data.shape[3]*(2**curr_node.LOD))),
                 int(z_start): \
                 int(z_start)+ \
-                    int((curr_node.data.shape[4]*curr_node.downscaling_ratio)),
-            ] = torch.tensor([0, 0, 0], device=device, dtype=nodes[0].data.dtype,)
+                    int((curr_node.data.shape[4]*(2**curr_node.LOD))),
+            ] = torch.zeros([full_shape[0], 3, 
+            curr_node.data.shape[2]*(2**curr_node.LOD),
+            curr_node.data.shape[3]*(2**curr_node.LOD),
+            curr_node.data.shape[4]*(2**curr_node.LOD)])
             full_img[
                 int(x_start)+1: \
                 int(x_start)+ \
-                    int((curr_node.data.shape[2]*curr_node.downscaling_ratio))-1,
+                    int((curr_node.data.shape[2]*(2**curr_node.LOD)))-1,
                 int(y_start)+1: \
                 int(y_start)+ \
-                    int((curr_node.data.shape[3]*curr_node.downscaling_ratio))-1,
+                    int((curr_node.data.shape[3]*(2**curr_node.LOD)))-1,
                 int(z_start)+1: \
                 int(z_start)+ \
-                    int((curr_node.data.shape[4]*curr_node.downscaling_ratio))-1,
+                    int((curr_node.data.shape[4]*(2**curr_node.LOD)))-1,
 
-            ] = cmap[-1 - s]
+            ] = cmap[s].repeat(full_shape[0], 1, 
+            int((curr_node.data.shape[2]*(2**curr_node.LOD)))-2, 
+            int((curr_node.data.shape[3]*(2**curr_node.LOD)))-2,
+            int((curr_node.data.shape[4]*(2**curr_node.LOD)))-2)
 
     cmap_img_height : int = 64
     cmap_img_width : int = 512
@@ -384,7 +419,7 @@ downscaling_technique : str, device : str, mode : str) -> Tuple[torch.Tensor, to
     for i in range(len(cmap)):
         y_start : int = i * y_len
         y_end : int = (i+1) * y_len
-        cmap_img[y_start:y_end, :, :] = cmap[i]
+        cmap_img[y_start:y_end, :, :] = torch.squeeze(cmap[i])
 
     return full_img, cmap_img
 
@@ -398,11 +433,11 @@ upscaling_technique : str, device: str, mode : str):
         curr_node = nodes[i]
         if(mode == "2D"):
             x_start, y_start = get_location2D(full_shape[2], full_shape[3], curr_node.depth, curr_node.index)
-            img_part = upscale(upscaling_technique, curr_node.data, curr_node.downscaling_ratio)
+            img_part = upscale(upscaling_technique, curr_node.data, (2**curr_node.LOD))
             full_img[:,:,x_start:x_start+img_part.shape[2],y_start:y_start+img_part.shape[3]] = img_part
         elif(mode == "3D"):
             x_start, y_start, z_start = get_location3D(full_shape[2], full_shape[3], full_shape[4], curr_node.depth, curr_node.index)
-            img_part = upscale(upscaling_technique, curr_node.data, curr_node.downscaling_ratio)
+            img_part = upscale(upscaling_technique, curr_node.data, (2**curr_node.LOD))
             full_img[:,:,x_start:x_start+img_part.shape[2],y_start:y_start+img_part.shape[3],z_start:z_start+img_part.shape[4]] = img_part
     
     return full_img
@@ -411,7 +446,7 @@ upscaling_technique : str, device: str, mode : str):
 def remove_node_from_data_caches(node: OctreeNode, full_shape: List[int],
 data_levels: List[torch.Tensor], mask_levels: List[torch.Tensor], mode : str):
 
-    curr_ds_ratio = node.downscaling_ratio
+    curr_ds_ratio = (2**node.LOD)
     if(mode == "2D"):
         x_start, y_start = get_location2D(full_shape[2], full_shape[3], node.depth, node.index)
         ind = len(data_levels) - 1 - int(torch.log2(torch.tensor(float(curr_ds_ratio))).item())
@@ -450,11 +485,10 @@ data_levels: List[torch.Tensor], mask_levels: List[torch.Tensor], mode : str):
 #@torch.jit.script
 def add_node_to_data_caches(node: OctreeNode, full_shape: List[int],
 data_levels: List[torch.Tensor], mask_levels: List[torch.Tensor], mode : str):
-
-    curr_ds_ratio = node.downscaling_ratio
+    curr_ds_ratio = (2**node.LOD)
     if(mode == "2D"):
         x_start, y_start = get_location2D(full_shape[2], full_shape[3], node.depth, node.index)
-        ind = len(data_levels) - 1 - int(torch.log2(torch.tensor(float(curr_ds_ratio))).item())
+        ind = len(data_levels) - node.LOD - 1
         data_levels[ind][:,:,
             int(x_start/curr_ds_ratio): \
             int(x_start/curr_ds_ratio)+node.data.shape[2],
@@ -469,7 +503,7 @@ data_levels: List[torch.Tensor], mask_levels: List[torch.Tensor], mode : str):
         ] = 1
     elif(mode == "3D"):
         x_start, y_start, z_start = get_location3D(full_shape[2], full_shape[3], full_shape[4], node.depth, node.index)
-        ind = len(data_levels) - 1 - int(torch.log2(torch.tensor(float(curr_ds_ratio))).item())
+        ind = len(data_levels) - node.LOD - 1
         data_levels[ind][:,:,
             int(x_start/curr_ds_ratio): \
             int(x_start/curr_ds_ratio)+node.data.shape[2],
@@ -489,19 +523,19 @@ data_levels: List[torch.Tensor], mask_levels: List[torch.Tensor], mode : str):
 
 #@torch.jit.script
 def create_caches_from_nodelist(nodes: OctreeNodeList, 
-full_shape : List[int], max_downscaling_ratio: int, device: str, mode : str) -> \
+full_shape : List[int], max_LOD: int, device: str, mode : str) -> \
 Tuple[List[torch.Tensor], List[torch.Tensor], 
 List[torch.Tensor], List[torch.Tensor]]:
     data_levels: List[torch.Tensor] = []
     mask_levels: List[torch.Tensor] = []
     data_downscaled_levels: List[torch.Tensor] = []
     mask_downscaled_levels: List[torch.Tensor] = []
-    curr_ds_ratio = 1
+    curr_LOD = 0
     
     curr_shape : List[int] = [full_shape[0], full_shape[1], full_shape[2], full_shape[3]]
     if(mode == "3D"):
         curr_shape : List[int] = [full_shape[0], full_shape[1], full_shape[2], full_shape[3], full_shape[4]]
-    while(curr_ds_ratio <= max_downscaling_ratio):
+    while(curr_LOD <= max_LOD):
         full_img = torch.zeros(curr_shape).to(device)
         mask = torch.zeros(curr_shape).to(device)
         data_levels.insert(0, full_img.clone())
@@ -512,7 +546,7 @@ List[torch.Tensor], List[torch.Tensor]]:
         curr_shape[3] = int(curr_shape[3] / 2)  
         if(mode == "3D"):
             curr_shape[4] = int(curr_shape[4] / 2)
-        curr_ds_ratio = int(curr_ds_ratio * 2)
+        curr_LOD += 1
     
     for i in range(len(nodes)):
         add_node_to_data_caches(nodes[i], full_shape,
@@ -525,15 +559,15 @@ def mixedLOD_octree_SR_compress(
     nodes : OctreeNodeList, GT_image : torch.Tensor, 
     criterion: str, criterion_value : float,
     upscaling_technique: str, downscaling_technique: str,
-    min_chunk_size : int, max_downscaling_ratio : int, 
+    min_chunk_size : int, max_LOD : int, 
     device : str, mode : str
     ) -> OctreeNodeList:
     node_indices_to_check = [ 0 ]
     nodes_checked = 0
     full_shape = nodes[0].data.shape
-
+    
     data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels = \
-        create_caches_from_nodelist(nodes, full_shape, max_downscaling_ratio, device, mode)
+        create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
     
     add_node_to_data_caches(nodes[0], full_shape, data_levels, mask_levels, mode)
 
@@ -544,17 +578,16 @@ def mixedLOD_octree_SR_compress(
 
         # Check if we can downsample this node
         remove_node_from_data_caches(n, full_shape, data_levels, mask_levels, mode)
-        n.downscaling_ratio = int(n.downscaling_ratio * 2)
+        n.LOD = n.LOD + 1
         original_data = n.data.clone()
         downsampled_data = downscale(downscaling_technique,n.data,2)
         n.data = downsampled_data
         add_node_to_data_caches(n, full_shape, data_levels, mask_levels, mode)
 
-        new_img = nodes_to_full_img(nodes, full_shape, max_downscaling_ratio, 
+        new_img = nodes_to_full_img(nodes, full_shape, max_LOD, 
         upscaling_technique, downscaling_technique,
         device, data_levels, mask_levels, data_downscaled_levels, 
         mask_downscaled_levels, mode)
-        
         # If criterion not met, reset data and stride, and see
         # if the node is large enough to split into subnodes
         # Otherwise, we keep the downsample, and add the node back as a 
@@ -562,9 +595,9 @@ def mixedLOD_octree_SR_compress(
         if(not criterion_met(criterion, criterion_value, GT_image, new_img)):
             remove_node_from_data_caches(n, full_shape, data_levels, mask_levels, mode)
             n.data = original_data
-            n.downscaling_ratio = int(n.downscaling_ratio / 2)
+            n.LOD = n.LOD - 1
             
-            if(n.min_width()*n.downscaling_ratio > min_chunk_size*2 and
+            if(n.min_width()*(2**n.LOD) > min_chunk_size*2 and
                 n.min_width() > 2):
                 k = 0
                 while k < len(node_indices_to_check):
@@ -587,7 +620,7 @@ def mixedLOD_octree_SR_compress(
                                         x_quad_start:x_quad_start+int(n.data.shape[2]/2),
                                         y_quad_start:y_quad_start+int(n.data.shape[3]/2),
                                         z_quad_start:z_quad_start+int(n.data.shape[4]/2)].clone(),
-                                    n.downscaling_ratio,
+                                    n.LOD,
                                     n.depth+1,
                                     n.index*8 + k
                                 )
@@ -600,7 +633,7 @@ def mixedLOD_octree_SR_compress(
                                 n.data[:,:,
                                     x_quad_start:x_quad_start+int(n.data.shape[2]/2),
                                     y_quad_start:y_quad_start+int(n.data.shape[3]/2)].clone(),
-                                n.downscaling_ratio,
+                                n.LOD,
                                 n.depth+1,
                                 n.index*4 + k
                             )
@@ -611,8 +644,8 @@ def mixedLOD_octree_SR_compress(
             else:
                 add_node_to_data_caches(n, full_shape, data_levels, mask_levels, mode)       
         else:
-            if(n.downscaling_ratio < max_downscaling_ratio and 
-                n.min_width()*n.downscaling_ratio > min_chunk_size and
+            if(n.LOD < max_LOD and 
+                n.min_width()*(2**n.LOD) > min_chunk_size and
                 n.min_width() > 1):
                 node_indices_to_check.append(i)
     
@@ -626,12 +659,12 @@ min_chunk_size: int, device : str, mode : str) -> OctreeNodeList:
         groups : Dict[int, Dict[int, Dict[int, OctreeNode]]] = {}
         for i in range(len(nodes)):
             if(nodes[i].depth == current_depth):
-                if(nodes[i].downscaling_ratio not in groups.keys()):
-                    groups[nodes[i].downscaling_ratio] : Dict[int, Dict[int, OctreeNode]] = {}
-                if(int(nodes[i].index/4) not in groups[nodes[i].downscaling_ratio].keys()):
-                    groups[nodes[i].downscaling_ratio][int(nodes[i].index/4)] : \
+                if(nodes[i].LOD not in groups.keys()):
+                    groups[nodes[i].LOD] : Dict[int, Dict[int, OctreeNode]] = {}
+                if(int(nodes[i].index/4) not in groups[nodes[i].LOD].keys()):
+                    groups[nodes[i].LOD][int(nodes[i].index/4)] : \
                     Dict[int, OctreeNode] = {}
-                groups[nodes[i].downscaling_ratio][int(nodes[i].index/4)][nodes[i].index%4] = nodes[i]
+                groups[nodes[i].LOD][int(nodes[i].index/4)][nodes[i].index%4] = nodes[i]
         # Go through each downscaling resolution
         for k in groups.keys():
             
@@ -658,7 +691,7 @@ min_chunk_size: int, device : str, mode : str) -> OctreeNodeList:
                             group[m][0].data.shape[1]:,:] = \
                         group[m][3].data
                     
-                    new_node = OctreeNode(new_data, group[m][0].downscaling_ratio, 
+                    new_node = OctreeNode(new_data, group[m][0].LOD, 
                     group[m][0].depth-1, int(group[m][0].index / 4))
                     nodes.append(new_node)
                     nodes.remove(group[m][0])
@@ -674,24 +707,24 @@ def to_img(input : torch.Tensor, mode : str):
     if(mode == "2D"):
         img = input[0].permute(1, 2, 0).cpu().numpy()
         img -= img.min()
-        img *= (255/img.max)
+        img *= (255/img.max())
         img = img.astype(np.uint8)
     elif(mode == "3D"):
         img = input[0,:,:,:,int(input.shape[4]/2)].permute(1, 2, 0).cpu().numpy()
         img -= img.min()
-        img *= (255/img.max)
+        img *= (255/img.max())
         img = img.astype(np.uint8)
     return img
 
 if __name__ == '__main__':
-    max_ds_ratio : int = 128
+    max_LOD : int = 6
     min_chunk : int = 16
     device: str = "cuda"
     upscaling_technique : str = "bicubic"
-    downscaling_technique : str = "avgpool"
+    downscaling_technique : str = "avgpool2D"
     criterion : str = "mre"
     criterion_value : float = 0.05
-    load_existing = True
+    load_existing = False
     mode : str = "2D"
 
     img_name : str = "mixing"
@@ -703,7 +736,7 @@ if __name__ == '__main__':
     full_shape : List[int] = list(img_gt.shape)
 
     if not load_existing:
-        root_node = OctreeNode(img_gt, 1, 0, 0)
+        root_node = OctreeNode(img_gt, 0, 0, 0)
         nodes : OctreeNodeList = OctreeNodeList()
         nodes.append(root_node)
         torch.save(nodes, './Output/'+img_name+'.torch')
@@ -714,7 +747,7 @@ if __name__ == '__main__':
         nodes : OctreeNodeList = mixedLOD_octree_SR_compress(
             nodes, img_gt, criterion, criterion_value,
             upscaling_technique, downscaling_technique,
-            min_chunk, max_ds_ratio, device, mode)
+            min_chunk, max_LOD, device, mode)
             
         end_time : float = time.time()
         print("Compression took %s seconds" % (str(end_time - start_time)))
@@ -728,66 +761,63 @@ if __name__ == '__main__':
 
         torch.save(nodes, "./Output/"+img_name+"_"+upscaling_technique+ \
             "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                "ds"+str(max_ds_ratio)+"_chunk"+str(min_chunk)+".torch")
+                "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".torch")
     
 
     nodes : OctreeNodeList = torch.load("./Output/"+img_name+"_"+upscaling_technique+ \
         "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-            "ds"+str(max_ds_ratio)+"_chunk"+str(min_chunk)+".torch")
+            "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".torch")
 
     data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels = \
-        create_caches_from_nodelist(nodes, full_shape, max_ds_ratio, device, mode)
+        create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
 
 
     img_upscaled = nodes_to_full_img(nodes, full_shape, 
-    max_ds_ratio, upscaling_technique, 
+    max_LOD, upscaling_technique, 
     downscaling_technique, device, data_levels, 
     mask_levels, data_downscaled_levels, 
     mask_downscaled_levels, mode)
 
-    img_upscaled = to_img(img_upscaled, mode)
     imageio.imwrite("./Output/"+img_name+"_"+upscaling_technique+ \
         "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-            "ds"+str(max_ds_ratio)+"_chunk"+str(min_chunk)+".jpg", 
-            img_upscaled)
+            "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".jpg", 
+            to_img(img_upscaled, mode))
 
             
 
 
     img_seams = nodes_to_full_img_seams(nodes, full_shape,
-    upscaling_technique, device)
-    img_seams = to_img(img_seams, mode)
+    upscaling_technique, device, mode)
+
     imageio.imwrite("./Output/"+img_name+"_"+upscaling_technique+ \
         "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-            "ds"+str(max_ds_ratio)+"_chunk"+str(min_chunk)+"_seams.jpg", 
-            img_seams)
+            "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_seams.jpg", 
+            to_img(img_seams, mode))
 
 
 
     img_upscaled_debug, cmap = nodes_to_full_img_debug(nodes, full_shape, 
-    max_ds_ratio, upscaling_technique, 
-    downscaling_technique, device)
-    img_upscaled_debug = to_img(img_upscaled_debug, mode)
+    max_LOD, upscaling_technique, 
+    downscaling_technique, device, mode)
+
     imageio.imwrite("./Output/"+img_name+"_"+upscaling_technique+ \
         "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-            "ds"+str(max_ds_ratio)+"_chunk"+str(min_chunk)+"_debug.jpg", 
-            img_upscaled_debug)
+            "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_debug.jpg", 
+            to_img(img_upscaled_debug, mode))
 
     imageio.imwrite("./Output/colormap.jpg", cmap.cpu().numpy().astype(np.uint8))
 
-
-
+    point_us = "point2D" if mode == "2D" else "point3D"
     img_upscaled_point = nodes_to_full_img(nodes, full_shape, 
-    max_ds_ratio, "point", 
+    max_LOD, point_us, 
     downscaling_technique, device, data_levels, 
     mask_levels, data_downscaled_levels, 
-    mask_downscaled_levels)
+    mask_downscaled_levels, mode)
     
-    img_upscaled_point = to_img(img_upscaled_point, mode)
     imageio.imwrite("./Output/"+img_name+"_"+upscaling_technique+ \
         "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-            "ds"+str(max_ds_ratio)+"_chunk"+str(min_chunk)+"_point.jpg", 
-            img_upscaled_point)
+            "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_point.jpg", 
+            to_img(img_upscaled_point, mode))
 
 
 

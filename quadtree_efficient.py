@@ -269,14 +269,14 @@ downscaling_technique : str, device : str) -> Tuple[torch.Tensor, torch.Tensor]:
     
     full_img = torch.zeros(full_shape).to(device)
     cmap : List[torch.Tensor] = [
-        torch.tensor([0, 0, 0], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([37, 15, 77], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([115, 30, 107], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([178, 52, 85], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([233, 112, 37], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([244, 189, 55], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([255, 255, 255], dtype=nodes[0].data.dtype, device=device),
         torch.tensor([247, 251, 162], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([255, 255, 255], dtype=nodes[0].data.dtype, device=device)
+        torch.tensor([244, 189, 55], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([233, 112, 37], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([178, 52, 85], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([115, 30, 107], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([37, 15, 77], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([0, 0, 0], dtype=nodes[0].data.dtype, device=device)    
     ]
     for i in range(len(nodes)):
         curr_node = nodes[i]
@@ -532,14 +532,14 @@ min_chunk_size: int, device : str) -> OctreeNodeList:
     return nodes
 
 if __name__ == '__main__':
-    max_ds_ratio : int = 128
-    min_chunk : int = 8
+    max_ds_ratio : int = 64
+    min_chunk : int = 16
     device: str = "cuda"
     upscaling_technique : str = "bicubic"
     downscaling_technique : str = "avgpool"
     criterion : str = "mre"
     criterion_value : float = 0.05
-    load_existing = True
+    load_existing = False
 
     img_name : str = "mixing"
     img_ext : str = "jpg"
