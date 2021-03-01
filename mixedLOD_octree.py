@@ -654,54 +654,79 @@ def mixedLOD_octree_SR_compress(
 
 def compress_nodelist(nodes: OctreeNodeList, full_size : List[int], 
 min_chunk_size: int, device : str, mode : str) -> OctreeNodeList:
-    current_depth : int = int(torch.log2(torch.tensor(full_size[0]/min_chunk_size)))
-    while(current_depth  > 0):
-        groups : Dict[int, Dict[int, Dict[int, OctreeNode]]] = {}
-        for i in range(len(nodes)):
-            if(nodes[i].depth == current_depth):
-                if(nodes[i].LOD not in groups.keys()):
-                    groups[nodes[i].LOD] : Dict[int, Dict[int, OctreeNode]] = {}
-                if(int(nodes[i].index/4) not in groups[nodes[i].LOD].keys()):
-                    groups[nodes[i].LOD][int(nodes[i].index/4)] : \
-                    Dict[int, OctreeNode] = {}
-                groups[nodes[i].LOD][int(nodes[i].index/4)][nodes[i].index%4] = nodes[i]
-        # Go through each downscaling resolution
-        for k in groups.keys():
+
+    min_width : int = full_size[2]
+    for i in range(3, len(full_size)):
+        min_width = min(min_width, full_size[i])
+
+    current_depth : int = int(torch.log2(torch.tensor(min_width/min_chunk_size)))
+
+    # dict[depth -> LOD -> group parent index -> list]
+    groups : Dict[int, Dict[int, Dict[int, Dict[int, OctreeNode]]]] = {}
+
+    magic_num : int = 4 if mode == "2D" else 8
+    for i in range(len(nodes)):
+        d : int = nodes[i].depth
+        l : int = nodes[i].LOD
+        group_parent_index : int = int(nodes[i].index / magic_num)
+        n_index : int = nodes[i].index % magic_num
+
+        if(d not in groups.keys()):
+            groups[d] = {}
+        if(l not in groups[d].keys()):
+            groups[d][l] = {}
+        if(group_parent_index not in groups[d][l].keys()):
+            groups[d][l][group_parent_index] = {}
+        groups[d][l][group_parent_index][n_index] = nodes[i]
+
             
-            group = groups[k]
-            # Go through each group in that downscaling ratio
-            for m in group.keys():
-                if(len(group[m]) == 4):
-                    new_data = torch.zeros([group[m][0].data.shape[0]*2, 
-                    group[m][0].data.shape[1]*2, 3], device=device, 
-                    dtype=group[m][0].data.dtype)
-                    new_data[:group[m][0].data.shape[0],
-                            :group[m][0].data.shape[1],:] = \
-                        group[m][0].data
+    while(current_depth  > 0):
+        if(current_depth in groups.keys()):
+            for lod in groups[current_depth].keys():
+                for parent in groups[current_depth][lod].keys():
+                    group = groups[current_depth][lod][parent]
+                    if(len(group) == magic_num):
+                        if(mode == "2D"):
+                            new_data = torch.zeros([
+                                group[0].data.shape[0],
+                                group[0].data.shape[1],
+                                group[0].data.shape[2]*2, 
+                                group[0].data.shape[3]*2], device=device, 
+                            dtype=group[0].data.dtype)
+                            new_data[:,:,:group[0].data.shape[2],
+                                    :group[0].data.shape[3]] = \
+                                group[0].data
 
-                    new_data[:group[m][0].data.shape[0],
-                            group[m][0].data.shape[1]:,:] = \
-                        group[m][1].data
+                            new_data[:,:,:group[0].data.shape[2],
+                                    group[0].data.shape[3]:] = \
+                                group[1].data
 
-                    new_data[group[m][0].data.shape[0]:,
-                            :group[m][0].data.shape[1],:] = \
-                        group[m][2].data
+                            new_data[:,:,group[0].data.shape[2]:,
+                                    :group[0].data.shape[3]] = \
+                                group[2].data
 
-                    new_data[group[m][0].data.shape[0]:,
-                            group[m][0].data.shape[1]:,:] = \
-                        group[m][3].data
-                    
-                    new_node = OctreeNode(new_data, group[m][0].LOD, 
-                    group[m][0].depth-1, int(group[m][0].index / 4))
-                    nodes.append(new_node)
-                    nodes.remove(group[m][0])
-                    nodes.remove(group[m][1])
-                    nodes.remove(group[m][2])
-                    nodes.remove(group[m][3])
-
+                            new_data[:,:,group[0].data.shape[2]:,
+                                    group[0].data.shape[3]:] = \
+                                group[3].data
+                            
+                            new_node = OctreeNode(new_data, group[0].LOD, 
+                            group[0].depth-1, int(group[0].index / 4))
+                            nodes.append(new_node)
+                            nodes.remove(group[0])
+                            nodes.remove(group[1])
+                            nodes.remove(group[2])
+                            nodes.remove(group[3])
+                            d = current_depth-1
+                            if(d not in groups.keys()):
+                                groups[d] = {}
+                            if(lod not in groups[d].keys()):
+                                groups[d][l] = {}
+                            if(int(parent/4) not in groups[d][l].keys()):
+                                groups[d][l][int(parent/4)] = {}
+                            groups[d][l][int(parent/4)][new_node.index % 4] = new_node
         current_depth -= 1
-
     return nodes
+
 
 def to_img(input : torch.Tensor, mode : str):
     if(mode == "2D"):
@@ -754,7 +779,7 @@ if __name__ == '__main__':
         
 
         num_nodes : int = len(nodes)
-        #nodes = compress_nodelist(nodes, full_shape, min_chunk, device)
+        nodes = compress_nodelist(nodes, full_shape, min_chunk, device, mode)
         concat_num_nodes : int = len(nodes)
 
         print("Concatenating blocks turned %s blocks into %s" % (str(num_nodes), str(concat_num_nodes)))
