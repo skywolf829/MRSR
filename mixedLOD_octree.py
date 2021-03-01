@@ -6,6 +6,7 @@ from math import log2
 from utility_functions import *
 import time
 from typing import Dict, List, Tuple, Optional
+import h5py
 
 #@torch.jit.script
 class OctreeNode:
@@ -122,12 +123,12 @@ def MSE(x, GT) -> float:
 
 #@torch.jit.script
 def PSNR(x, GT) -> float:
-    max_diff : float = 255.0
+    max_diff : float = GT.max() - GT.min()
     return 20 * torch.log(torch.tensor(max_diff)) - 10*torch.log(MSE(x, GT))
 
 #@torch.jit.script
 def relative_error(x, GT) -> float:
-    max_diff : float = 255.0
+    max_diff : float = GT.max() - GT.min()
     return torch.abs(GT-x).max() / max_diff
 
 #@torch.jit.script
@@ -752,11 +753,18 @@ if __name__ == '__main__':
     load_existing = False
     mode : str = "2D"
 
-    img_name : str = "mixing"
-    img_ext : str = "jpg"
-    img_gt : torch.Tensor = torch.from_numpy(imageio.imread(
-        "TestingData/quadtree_images/"+img_name+"."+img_ext).astype(np.float32)).to(device)
-    img_gt = img_gt.permute(2, 0, 1).unsqueeze(0)        
+    img_name : str = "4010"
+    img_ext : str = "h5"
+    img_type : str = "h5"
+
+    if(img_type == "image"):
+        img_gt : torch.Tensor = torch.from_numpy(imageio.imread(
+            "TestingData/quadtree_images/"+img_name+"."+img_ext).astype(np.float32)).to(device)
+        img_gt = img_gt.permute(2, 0, 1).unsqueeze(0)
+    elif(img_type == "h5"):
+        f = h5py.File("TestingData/quadtree_images/"+img_name+"."+img_ext, 'r')
+        img_gt : torch.Tensor = torch.from_numpy(np.array(f['data'])).unsqueeze(0).to(device)
+        f.close()
 
     full_shape : List[int] = list(img_gt.shape)
 

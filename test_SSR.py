@@ -281,14 +281,20 @@ def generate_by_patch_parallel(generator, input_volume, patch_size, receptive_fi
             for task in as_completed(threads):
                 result,z,z_stop,y,y_stop,x,x_stop,device = task.result()
                 result = result.to(devices[0])
-                x_offset = rf if x > 0 else 0
-                y_offset = rf if y > 0 else 0
-                z_offset = rf if z > 0 else 0
+                x_offset_start = rf if x > 0 else 0
+                y_offset_start = rf if y > 0 else 0
+                z_offset_start = rf if z > 0 else 0
+                x_offset_end = rf if x_stop < input_volume.shape[4] else 0
+                y_offset_end = rf if y_stop < input_volume.shape[3] else 0
+                z_offset_end = rf if z_stop < input_volume.shape[2] else 0
                 #print("%d, %d, %d" % (z, y, x))
                 final_volume[:,:,
-                2*z+z_offset:2*z+result.shape[2],
-                2*y+y_offset:2*y+result.shape[3],
-                2*x+x_offset:2*x+result.shape[4]] = result[:,:,z_offset:,y_offset:,x_offset:]
+                2*z+z_offset_start:2*z+result.shape[2] - z_offset_end,
+                2*y+y_offset_start:2*y+result.shape[3] - y_offset_end,
+                2*x+x_offset_start:2*x+result.shape[4] - x_offset_end] = result[:,:,
+                z_offset_start:result.shape[2]-z_offset_end,
+                y_offset_start:result.shape[3]-y_offset_end,
+                x_offset_start:result.shape[4]-x_offset_end]
                 available_gpus.add(device)
     
     return final_volume
@@ -409,11 +415,11 @@ if __name__ == '__main__':
                         if(p):
                             print("Upscaling in parallel on " + str(len(devices)) + " gpus")
                         LR_data = generate_by_patch_parallel(generators[gen_to_use], 
-                        LR_data, 140, 0, devices)
+                        LR_data, 140, 10, devices)
                     else:
                         if(args['mode'] == '3D'):
                             LR_data = generate_by_patch(generators[gen_to_use], 
-                            LR_data, 140, 0, args['device'])
+                            LR_data, 140, 10, args['device'])
                         elif(args['mode'] == '2D'):
                             with torch.no_grad():
                                 LR_data = generators[gen_to_use](LR_data)
