@@ -310,11 +310,6 @@ if __name__ == '__main__':
     parser.add_argument('--test_mse',default="True",type=str2bool,help='Enables tests for mse')
     parser.add_argument('--test_psnr',default="True",type=str2bool,help='Enables tests for mse')
     parser.add_argument('--test_mre',default="True",type=str2bool,help='Enables tests for maximum relative error')
-    parser.add_argument('--test_mag',default="True",type=str2bool,help='Enables tests for average magnitude difference')
-    parser.add_argument('--test_angle',default="True",type=str2bool,help='Enables tests for average angle difference')
-    parser.add_argument('--test_streamline',default="True",type=str2bool,help='Enables tests for streamline differences')
-
-    parser.add_argument('--test_energy_spectra',default="True",type=str2bool,help='Enables tests for energy spectra')
 
     parser.add_argument('--test_img_psnr',default="True",type=str2bool,help='Enables tests for image PSNR score')
     parser.add_argument('--test_img_ssim',default="True",type=str2bool,help='Enables tests for image SSIM score')
@@ -358,9 +353,6 @@ if __name__ == '__main__':
         "inner_mre": [],
         "mag": [],
         "angle": [],
-        "streamline_average": [],
-        "streamline_std": [],
-        "energy_spectra": [],
         "img_psnr": [],
         "img_ssim": [],
         "img_fid": []
