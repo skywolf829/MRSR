@@ -473,11 +473,11 @@ upscale : UpscalingMethod, device: str, mode : str):
         curr_node = nodes[i]
         if(mode == "2D"):
             x_start, y_start = get_location2D(full_shape[2], full_shape[3], curr_node.depth, curr_node.index)
-            img_part = upscale(curr_node.data, (2**curr_node.LOD))
+            img_part = upscale(curr_node.data, (2**curr_node.LOD), curr_node.LOD)
             full_img[:,:,x_start:x_start+img_part.shape[2],y_start:y_start+img_part.shape[3]] = img_part
         elif(mode == "3D"):
             x_start, y_start, z_start = get_location3D(full_shape[2], full_shape[3], full_shape[4], curr_node.depth, curr_node.index)
-            img_part = upscale(curr_node.data, (2**curr_node.LOD))
+            img_part = upscale(curr_node.data, (2**curr_node.LOD), curr_node.LOD)
             full_img[:,:,x_start:x_start+img_part.shape[2],y_start:y_start+img_part.shape[3],z_start:z_start+img_part.shape[4]] = img_part
     
     return full_img
@@ -809,7 +809,7 @@ if __name__ == '__main__':
     max_LOD : int = 6
     min_chunk : int = 16
     device: str = "cuda"
-    upscaling_technique : str = "model"
+    upscaling_technique : str = "bicubic"
     downscaling_technique : str = "avgpool2D"
     criterion : str = "mre"
     criterion_value : float = 0.05
