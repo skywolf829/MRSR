@@ -811,8 +811,8 @@ if __name__ == '__main__':
     device: str = "cuda"
     upscaling_technique : str = "model"
     downscaling_technique : str = "avgpool2D"
-    criterion : str = "psnr"
-    criterion_value : float = 90
+    criterion : str = "mre"
+    criterion_value : float = 0.05
     load_existing = False
     mode : str = "2D"
     model_name : str = "SSR_isomag2D"
@@ -907,8 +907,10 @@ if __name__ == '__main__':
     imageio.imwrite("./Output/colormap.jpg", cmap.cpu().numpy().astype(np.uint8))
 
     point_us = "point2D" if mode == "2D" else "point3D"
+    upscaling : UpscalingMethod = UpscalingMethod(point_us, 
+    device, model_name)
     img_upscaled_point = nodes_to_full_img(nodes, full_shape, 
-    max_LOD, point_us, 
+    max_LOD, upscaling, 
     downscaling_technique, device, data_levels, 
     mask_levels, data_downscaled_levels, 
     mask_downscaled_levels, mode)
