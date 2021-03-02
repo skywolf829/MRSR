@@ -1111,9 +1111,15 @@ class Generator(nn.Module):
 
     def forward(self, x):
         x = self.c1(x)
+        '''
         out = self.blocks[0](x)
         for i in range(1, len(self.blocks)):
             out = self.blocks[i](out)
+        '''
+        out = x.clone()
+        for i, mod in enumerate(self.blocks):
+            out = mod(out)
+            
         out = self.c2(out)
         out = x + out
 
