@@ -809,7 +809,7 @@ if __name__ == '__main__':
     max_LOD : int = 6
     min_chunk : int = 16
     device: str = "cuda"
-    upscaling_technique : str = "bicubic"
+    upscaling_technique : str = "model"
     downscaling_technique : str = "avgpool2D"
     criterion : str = "mre"
     criterion_value : float = 0.05
