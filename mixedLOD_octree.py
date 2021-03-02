@@ -179,7 +179,11 @@ def bicubic_upscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
 def model_upscale(input : torch.Tensor, scale_factor : int, 
     models, lod : int) -> torch.Tensor:
     with torch.no_grad():
-        final_out = models[len(models)-lod](input)
+        final_out = input
+        while(scale_factor > 1):
+            final_out = models[len(models)-lod](final_out)
+            scale_factor = int(scale_factor / 2)
+            lod -= 1
     return final_out
 
 @torch.jit.script
@@ -473,11 +477,11 @@ upscale : UpscalingMethod, device: str, mode : str):
         curr_node = nodes[i]
         if(mode == "2D"):
             x_start, y_start = get_location2D(full_shape[2], full_shape[3], curr_node.depth, curr_node.index)
-            img_part = upscale(curr_node.data, (2**curr_node.LOD), curr_node.LOD-1)
+            img_part = upscale(curr_node.data, 2**curr_node.LOD, curr_node.LOD)
             full_img[:,:,x_start:x_start+img_part.shape[2],y_start:y_start+img_part.shape[3]] = img_part
         elif(mode == "3D"):
             x_start, y_start, z_start = get_location3D(full_shape[2], full_shape[3], full_shape[4], curr_node.depth, curr_node.index)
-            img_part = upscale(curr_node.data, (2**curr_node.LOD), curr_node.LOD-1)
+            img_part = upscale(curr_node.data, 2**curr_node.LOD, curr_node.LOD)
             full_img[:,:,x_start:x_start+img_part.shape[2],y_start:y_start+img_part.shape[3],z_start:z_start+img_part.shape[4]] = img_part
     
     return full_img
@@ -610,7 +614,7 @@ def mixedLOD_octree_SR_compress(
         create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
     
     while(len(node_indices_to_check) > 0): 
-        print(nodes_checked)
+        #print(nodes_checked)
         nodes_checked += 1
         i = node_indices_to_check.pop(0)
         n = nodes[i]
@@ -625,7 +629,7 @@ def mixedLOD_octree_SR_compress(
         n.data = downsampled_data
         add_node_to_data_caches(n, full_shape, data_levels, mask_levels, mode)
         
-        print("Downscaling time : " + str(time.time() - t))
+        #print("Downscaling time : " + str(time.time() - t))
         t = time.time()
 
         new_img = nodes_to_full_img(nodes, full_shape, max_LOD, 
@@ -633,7 +637,7 @@ def mixedLOD_octree_SR_compress(
         device, data_levels, mask_levels, data_downscaled_levels, 
         mask_downscaled_levels, mode)
         torch.cuda.synchronize()
-        print("Upscaling time : " + str(time.time() - t))
+        #print("Upscaling time : " + str(time.time() - t))
         
         # If criterion not met, reset data and stride, and see
         # if the node is large enough to split into subnodes
@@ -643,20 +647,20 @@ def mixedLOD_octree_SR_compress(
 
         met = criterion_met(criterion, allowed_error, GT_image, new_img, max_diff)
 
-        print("Criteria time : " + str(time.time() - t))
+        #print("Criteria time : " + str(time.time() - t))
         t = time.time()
 
-        print("Print time : " + str(time.time() - t))
+        #print("Print time : " + str(time.time() - t))
         t = time.time()
 
         if(not met):
-            print("If statement : " + str(time.time() - t))
+            #print("If statement : " + str(time.time() - t))
             t = time.time()
             remove_node_from_data_caches(n, full_shape, data_levels, mask_levels, mode)
             n.data = original_data
             n.LOD = n.LOD - 1
 
-            print("Node removed time : " + str(time.time() - t))
+            #print("Node removed time : " + str(time.time() - t))
             t = time.time()
             if(n.min_width()*(2**n.LOD) > min_chunk_size*2 and
                 n.min_width() > 2):
@@ -705,7 +709,7 @@ def mixedLOD_octree_SR_compress(
             
             else:
                 add_node_to_data_caches(n, full_shape, data_levels, mask_levels, mode) 
-            print("Node split time : " + str(time.time() - t))
+            #print("Node split time : " + str(time.time() - t))
             t = time.time()      
         else:
             if(n.LOD < max_LOD and 
@@ -714,7 +718,7 @@ def mixedLOD_octree_SR_compress(
                 node_indices_to_check.append(i)
         
 
-    print("Nodes traversed: " + str(nodes_checked))
+    #print("Nodes traversed: " + str(nodes_checked))
     return nodes            
 
 def compress_nodelist(nodes: OctreeNodeList, full_size : List[int], 
@@ -811,8 +815,8 @@ if __name__ == '__main__':
     device: str = "cuda"
     upscaling_technique : str = "model"
     downscaling_technique : str = "avgpool2D"
-    criterion : str = "mre"
-    criterion_value : float = 0.05
+    criterion : str = "psnr"
+    criterion_value : float = 90
     load_existing = False
     mode : str = "2D"
     model_name : str = "SSR_isomag2D"
