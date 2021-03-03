@@ -13,9 +13,15 @@ import h5py
 from spatial_models import load_models
 from options import load_options
 import argparse
+import pickle
 
-models : List[nn.Module] = []
-options : Dict[str, str] = {}
+def save_obj(obj,location):
+    with open(location, 'wb') as f:
+        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+
+def load_obj(location):
+    with open(location, 'rb') as f:
+        return pickle.load(f)
 
 @torch.jit.script
 class OctreeNode:
@@ -852,7 +858,7 @@ if __name__ == '__main__':
     parser.add_argument('--upscaling_technique',default="bicubic",type=str)
     parser.add_argument('--downscaling_technique',default="avgpool2D",type=str)
     parser.add_argument('--criterion',default="psnr",type=str)
-    parser.add_argument('--load_existing',default="true",type=str2bool)
+    parser.add_argument('--load_existing',default="false",type=str2bool)
     parser.add_argument('--mode',default="2D",type=str)
     parser.add_argument('--model_name',default="SSR_isomag2D",type=str)
     parser.add_argument('--debug',default="false",type=str2bool)
@@ -925,18 +931,20 @@ if __name__ == '__main__':
 
             #print("Concatenating blocks turned %s blocks into %s" % (str(num_nodes), str(concat_num_nodes)))
 
-            torch.save(nodes, "./Output/"+img_name+"_"+upscaling_technique+ \
+            torch.save(nodes, os.path.join(save_folder,
+                img_name+"_"+upscaling_technique+ \
                 "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                    "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".torch")
+                    "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".torch"))
+            
             
             #nodelist_to_h5(nodes, "./Output/"+img_name+"_"+upscaling_technique+ \
             #    "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
             #        "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".h5")
-        
-
-        nodes : OctreeNodeList = torch.load("./Output/"+img_name+"_"+upscaling_technique+ \
-            "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".torch")
+        else:
+            nodes : OctreeNodeList = torch.load(os.path.join(save_folder,
+                img_name+"_"+upscaling_technique+ \
+                "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
+                    "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".torch"))
 
         data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels = \
             create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
@@ -948,55 +956,71 @@ if __name__ == '__main__':
         mask_levels, data_downscaled_levels, 
         mask_downscaled_levels, mode)
 
-        imageio.imwrite("./Output/"+img_name+"_"+upscaling_technique+ \
+        imageio.imwrite(os.path.join(save_folder, upscaling_technique+"_"+img_name+ \
             "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".jpg", 
+                "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".png"), 
                 to_img(img_upscaled, mode))
 
-                
-
-
-        img_seams = nodes_to_full_img_seams(nodes, full_shape,
-        upscaling, device, mode)
-
-        imageio.imwrite("./Output/"+img_name+"_"+upscaling_technique+ \
+        f_size_kb = os.path.getsize(os.path.join(save_folder,
+            img_name+"_"+upscaling_technique+ \
             "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_seams.jpg", 
-                to_img(img_seams, mode))
+                "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".torch")) / 1024
+
+        f_data_size_kb = nodes.total_size()
+        #final_psnr : float = PSNR(img_upscaled, img_gt)
+        #final_mse : float = MSE(img_upscaled, img_gt)
+        #final_mre : float = relative_error(img_upscaled, img_gt)
+
+        #print("Final stats:")
+        #print("PSNR: %0.02f, MSE: %0.02f, MRE: %0.04f" % (final_psnr, final_mse, final_mre))
+        #print("Saved data size: %f kb" % nodes.total_size())
+
+        results[criterion_value] = {}
+        results[criterion_value]['file_size'] = f_size_kb
+        results[criterion_value]['compression_time'] = compress_time 
+
+        if(args['debug']):
+            img_seams = nodes_to_full_img_seams(nodes, full_shape,
+            upscaling, device, mode)
+
+            imageio.imwrite("./Output/"+img_name+"_"+upscaling_technique+ \
+                "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
+                    "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_seams.jpg", 
+                    to_img(img_seams, mode))
 
 
 
-        img_upscaled_debug, cmap = nodes_to_full_img_debug(nodes, full_shape, 
-        max_LOD, upscaling, 
-        downscaling_technique, device, mode)
+            img_upscaled_debug, cmap = nodes_to_full_img_debug(nodes, full_shape, 
+            max_LOD, upscaling, 
+            downscaling_technique, device, mode)
 
-        imageio.imwrite("./Output/"+img_name+"_"+upscaling_technique+ \
-            "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_debug.jpg", 
-                to_img(img_upscaled_debug, mode))
+            imageio.imwrite("./Output/"+img_name+"_"+upscaling_technique+ \
+                "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
+                    "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_debug.jpg", 
+                    to_img(img_upscaled_debug, mode))
 
-        imageio.imwrite("./Output/colormap.jpg", cmap.cpu().numpy().astype(np.uint8))
+            imageio.imwrite("./Output/colormap.jpg", cmap.cpu().numpy().astype(np.uint8))
 
-        point_us = "point2D" if mode == "2D" else "point3D"
-        upscaling : UpscalingMethod = UpscalingMethod(point_us, 
-        device, model_name)
-        img_upscaled_point = nodes_to_full_img(nodes, full_shape, 
-        max_LOD, upscaling, 
-        downscaling_technique, device, data_levels, 
-        mask_levels, data_downscaled_levels, 
-        mask_downscaled_levels, mode)
+            point_us = "point2D" if mode == "2D" else "point3D"
+            upscaling : UpscalingMethod = UpscalingMethod(point_us, 
+            device, model_name)
+            img_upscaled_point = nodes_to_full_img(nodes, full_shape, 
+            max_LOD, upscaling, 
+            downscaling_technique, device, data_levels, 
+            mask_levels, data_downscaled_levels, 
+            mask_downscaled_levels, mode)
+            
+            imageio.imwrite("./Output/"+img_name+"_"+upscaling_technique+ \
+                "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
+                    "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_point.jpg", 
+                    to_img(img_upscaled_point, mode))
+
+    if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
+        all_data = load_obj(os.path.join(save_folder, "results.pkl"))
+    else:
+        all_data = {}
+
+    all_data[upscaling_technique] = results
+    save_obj(all_data, os.path.join(save_folder, "results.pkl"))
+
         
-        imageio.imwrite("./Output/"+img_name+"_"+upscaling_technique+ \
-            "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_point.jpg", 
-                to_img(img_upscaled_point, mode))
-
-
-
-        final_psnr : float = PSNR(img_upscaled, img_gt)
-        final_mse : float = MSE(img_upscaled, img_gt)
-        final_mre : float = relative_error(img_upscaled, img_gt)
-
-        print("Final stats:")
-        print("PSNR: %0.02f, MSE: %0.02f, MRE: %0.04f" % (final_psnr, final_mse, final_mre))
-        print("Saved data size: %f kb" % nodes.total_size())
