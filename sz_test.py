@@ -24,9 +24,9 @@ if __name__ == '__main__':
     parser.add_argument('--ny',default=1024,type=int,help='# y dimension')
     parser.add_argument('--nz',default=1024,type=int,help='# z dimension')
     parser.add_argument('--output_folder',default="mag2D_4010",type=str,help='Where to save results')
-    parser.add_argument('--start_value',default=10,type=int,help='PSNR to start tests at')
-    parser.add_argument('--end_value',default=100,type=int,help='PSNR to end tests at')
-    parser.add_argument('--value_skip',default=10,type=int,help='PSNR increment by')
+    parser.add_argument('--start_value',default=10,type=float,help='PSNR to start tests at')
+    parser.add_argument('--end_value',default=100,type=float,help='PSNR to end tests at')
+    parser.add_argument('--value_skip',default=10,type=float,help='PSNR increment by')
     parser.add_argument('--metric',default='psnr',type=str)
     
 
@@ -50,7 +50,8 @@ if __name__ == '__main__':
     d = np.array(f['data'][0])
     f.close()
     d.tofile(args['file'] + ".dat")
-    for value in range(args['start_value'], args['end_value'], args['value_skip']):
+    value = args['start_value']
+    while(value < args['end_value']):
         command = "sz -z -f -i " + args['file'] + ".dat -" + str(args['dims']) + " " + \
             str(args['nx']) + " " + str(args['ny'])
         if(args['dims'] == 3):
@@ -95,6 +96,7 @@ if __name__ == '__main__':
         results['psnrs'].append(value)
         results['file_size'].append(f_size_kb)
         results['compression_time'].append(compression_time)
+        value += args['value_skip']
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
         all_data = load_obj(os.path.join(save_folder, "results.pkl"))

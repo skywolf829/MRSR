@@ -920,8 +920,8 @@ if __name__ == '__main__':
 
     upscaling : UpscalingMethod = UpscalingMethod(upscaling_technique, device, model_name)
     full_shape : List[int] = list(img_gt.shape)
-    
-    for m in range(args['start_metric'], args['end_metric'], args['metric_skip']):
+    m = args['start_metric']
+    while(m < args['end_metric']):
         criterion_value = m
         if not load_existing:
             root_node = OctreeNode(img_gt, 0, 0, 0)
@@ -1028,7 +1028,8 @@ if __name__ == '__main__':
                 "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
                     "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_point.jpg", 
                     to_img(img_upscaled_point, mode))
-
+        m += args['metric_skip']
+        
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
         all_data = load_obj(os.path.join(save_folder, "results.pkl"))
     else:
