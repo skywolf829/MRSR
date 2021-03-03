@@ -974,10 +974,9 @@ if __name__ == '__main__':
         #print("Final stats:")
         #print("PSNR: %0.02f, MSE: %0.02f, MRE: %0.04f" % (final_psnr, final_mse, final_mre))
         #print("Saved data size: %f kb" % nodes.total_size())
-
-        results[criterion_value] = {}
-        results[criterion_value]['file_size'] = f_size_kb
-        results[criterion_value]['compression_time'] = compress_time 
+        results['psnrs'].append(criterion_value)
+        results['file_size'].append(f_size_kb)
+        results['compression_time'].append(compress_time)
 
         if(args['debug']):
             img_seams = nodes_to_full_img_seams(nodes, full_shape,

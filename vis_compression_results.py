@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-from test_compression import load_obj
+from test_SSR import load_obj
 import os
 
 if __name__ == '__main__':
@@ -23,21 +23,21 @@ if __name__ == '__main__':
 
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
-    
-    compression_names = list(results.keys())
-    psnrs = list(results[compression_names[0]].keys())
+    print(results)
+    compression_method_names = list(results.keys())
+    psnrs = list(results[compression_method_names[0]].keys())
+
+    figs = []
 
     for metric in psnrs:
         fig = plt.figure()
-
-        for method in method_names:
-            x = np.arange(args['start_ts'], 
-            args['start_ts'] + args['ts_skip']*len(results[method][metric]),
-            args['ts_skip'])
-            y = results[method][metric]
+        vals = []
+        for method in compression_method_names:
+            x = np.array(psnrs)
+            y = results[compression_method_names[0]][metric]
             plt.plot(x, y, label=method)
         plt.legend()
-        plt.xlabel("Simulation timestep")
+        plt.xlabel("PSNR")
         plt.ylabel(metric)
         plt.title(args['output_file_name'] + " - " + metric)
         plt.savefig(os.path.join(save_folder, metric+".png"))

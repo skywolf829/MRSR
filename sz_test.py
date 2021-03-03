@@ -41,6 +41,9 @@ if __name__ == '__main__':
     
     # psnr -> metrics
     results = {}
+    results['file_size'] = []
+    results['psnrs'] = []
+    results['compression_time'] = []
     f = h5py.File(os.path.join(input_folder, args['file']), "r")
     d = np.array(f['data'][0])
     f.close()
@@ -83,9 +86,9 @@ if __name__ == '__main__':
         command = "mv " + args['file']+".dat.sz " + save_folder +"/psnr_"+str(psnr)+"_"+args['file']+".sz"
         os.system(command)
 
-        results[psnr] = {}
-        results[psnr]['file_size'] = f_size_kb
-        results[psnr]['compression_time'] = compression_time
+        results['psnrs'].append(psnr)
+        results['file_size'].append(f_size_kb)
+        results['compression_time'].append(compression_time)
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
         all_data = load_obj(os.path.join(save_folder, "results.pkl"))
