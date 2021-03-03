@@ -893,7 +893,10 @@ if __name__ == '__main__':
     
     # psnr -> metrics
     results = {}
-
+    results['file_size'] = []
+    results['psnrs'] = []
+    results['compression_time'] = []
+    
     if(args['data_type'] == "image"):
         img_gt : torch.Tensor = torch.from_numpy(imageio.imread(
             "TestingData/quadtree_images/"+img_name+"."+img_ext).astype(np.float32)).to(device)
