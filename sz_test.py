@@ -24,10 +24,12 @@ if __name__ == '__main__':
     parser.add_argument('--ny',default=1024,type=int,help='# y dimension')
     parser.add_argument('--nz',default=1024,type=int,help='# z dimension')
     parser.add_argument('--output_folder',default="mag2D_4010",type=str,help='Where to save results')
-    parser.add_argument('--start_psnr',default=10,type=int,help='PSNR to start tests at')
-    parser.add_argument('--end_psnr',default=100,type=int,help='PSNR to end tests at')
-    parser.add_argument('--psnr_skip',default=10,type=int,help='PSNR increment by')
+    parser.add_argument('--start_value',default=10,type=int,help='PSNR to start tests at')
+    parser.add_argument('--end_value',default=100,type=int,help='PSNR to end tests at')
+    parser.add_argument('--value_skip',default=10,type=int,help='PSNR increment by')
+    parser.add_argument('--metric',default='psnr',type=str)
     
+
     args = vars(parser.parse_args())
 
     FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
@@ -48,13 +50,17 @@ if __name__ == '__main__':
     d = np.array(f['data'][0])
     f.close()
     d.tofile(args['file'] + ".dat")
-    for psnr in range(args['start_psnr'], args['end_psnr'], args['psnr_skip']):
+    for value in range(args['start_value'], args['end_value'], args['value_skip']):
         command = "sz -z -f -i " + args['file'] + ".dat -" + str(args['dims']) + " " + \
             str(args['nx']) + " " + str(args['ny'])
         if(args['dims'] == 3):
             command = command + " " + str(args['nz'])
-        command = command + " -S " + str(psnr)
-
+        if(args['metric'] == "psnr"):
+            command = command + " -S " + str(value)
+        elif(args['metric'] == "mre"):
+            command = command + " -R " + str(value)
+        elif(args['metric'] == "pw_mre"):
+            command = command + " -P " + str(value)
         start_t = time.time()
         os.system(command)
         compression_time = time.time() - start_t
@@ -65,7 +71,7 @@ if __name__ == '__main__':
             str(args['nx']) + " " + str(args['ny'])
         if(args['dims'] == 3):
             command = command + " " + str(args['nz'])
-        command = command + " -S " + str(psnr) 
+        command = command + " -S " + str(value) 
 
         os.system(command)
 
@@ -81,12 +87,12 @@ if __name__ == '__main__':
             im = dc - dc.min()
             im *= (255/dc.max())
             im = im.astype(np.uint8)[:,:,int(im.shape[2]/2)]
-        imageio.imwrite(os.path.join(save_folder, "sz_"+args['file']+"_"+str(psnr)+".png"), im)
+        imageio.imwrite(os.path.join(save_folder, "sz_"+args['file']+"_"+str(value)+".png"), im)
 
-        command = "mv " + args['file']+".dat.sz " + save_folder +"/psnr_"+str(psnr)+"_"+args['file']+".sz"
+        command = "mv " + args['file']+".dat.sz " + save_folder +"/psnr_"+str(value)+"_"+args['file']+".sz"
         os.system(command)
 
-        results['psnrs'].append(psnr)
+        results['psnrs'].append(value)
         results['file_size'].append(f_size_kb)
         results['compression_time'].append(compression_time)
 

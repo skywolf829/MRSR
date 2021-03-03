@@ -24,17 +24,18 @@ if __name__ == '__main__':
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
     print(results)
+
+    # results go compression_method -> metric -> list
+
     compression_method_names = list(results.keys())
-    psnrs = list(results[compression_method_names[0]].keys())
+    metrics = ['file_size']
 
-    figs = []
-
-    for metric in psnrs:
+    for metric in metrics:
         fig = plt.figure()
         vals = []
         for method in compression_method_names:
-            x = np.array(psnrs)
-            y = results[compression_method_names[0]][metric]
+            x = np.array(results[method]['psnrs'])
+            y = results[method][metric]
             plt.plot(x, y, label=method)
         plt.legend()
         plt.xlabel("PSNR")

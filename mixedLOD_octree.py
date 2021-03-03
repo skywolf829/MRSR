@@ -151,6 +151,12 @@ def relative_error(x, GT, max_diff : Optional[torch.Tensor] = None) -> torch.Ten
     return val
 
 @torch.jit.script
+def pw_relative_error(x, GT) -> torch.Tensor:
+    val = torch.abs(GT-x) / GT
+    return val.max()
+
+
+@torch.jit.script
 def psnr_criterion(GT_image, img, min_PSNR : torch.Tensor,
 max_diff : Optional[torch.Tensor] = None) -> torch.Tensor:
     return PSNR(img, GT_image, max_diff) > min_PSNR
@@ -163,6 +169,10 @@ def mse_criterion(GT_image, img, max_mse : torch.Tensor) -> torch.Tensor:
 def maximum_relative_error(GT_image, img, max_e : torch.Tensor, 
 max_diff : Optional[torch.Tensor] = None) -> torch.Tensor:
     return  relative_error(img, GT_image, max_diff) < max_e
+
+@torch.jit.script
+def maximum_pw_relative_error(GT_image, img, max_e : torch.Tensor) -> torch.Tensor:
+    return  relative_error(img, GT_image) < max_e
 
 @torch.jit.script
 def bilinear_upscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
@@ -322,6 +332,8 @@ a: torch.Tensor, b: torch.Tensor, max_diff : Optional[torch.Tensor] = None) -> t
         passed = mse_criterion(a, b, value)
     elif(method == "mre"):
         passed = maximum_relative_error(a, b, value, max_diff)
+    elif(method == "pw_mre"):
+        passed = maximum_pw_relative_error(a, b, value)
     else:
         print("No support for criterion: " + str(method))
     return passed
@@ -848,9 +860,9 @@ if __name__ == '__main__':
     parser.add_argument('--ny',default=1024,type=int,help='# y dimension')
     parser.add_argument('--nz',default=1024,type=int,help='# z dimension')
     parser.add_argument('--output_folder',default="mag2D_4010",type=str,help='Where to save results')
-    parser.add_argument('--start_metric',default=10,type=int,help='PSNR to start tests at')
-    parser.add_argument('--end_metric',default=100,type=int,help='PSNR to end tests at')
-    parser.add_argument('--metric_skip',default=10,type=int,help='PSNR increment by')
+    parser.add_argument('--start_metric',default=10,type=float,help='PSNR to start tests at')
+    parser.add_argument('--end_metric',default=100,type=float,help='PSNR to end tests at')
+    parser.add_argument('--metric_skip',default=10,type=float,help='PSNR increment by')
     
     parser.add_argument('--max_LOD',default=6,type=int)
     parser.add_argument('--min_chunk',default=16,type=int)
