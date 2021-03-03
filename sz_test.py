@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
         command = "mv " + args['file']+".dat.sz " + save_folder +"/psnr_"+str(psnr)+"_"+args['file']+".sz"
         os.system(command)
-        
+
         results[psnr] = {}
         results[psnr]['file_size'] = f_size_kb
         results[psnr]['compression_time'] = compression_time
@@ -96,5 +96,5 @@ if __name__ == '__main__':
     save_obj(all_data, os.path.join(save_folder, "results.pkl"))
 
     os.remove(args['file']+'.dat')    
-    os.remove(args['file']+'.dat.sz')
-    #os.remove(args['file']+'.dat.sz.out')
+    #os.remove(args['file']+'.dat.sz')
+    os.remove(args['file']+'.dat.sz.out')
