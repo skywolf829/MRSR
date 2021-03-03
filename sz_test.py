@@ -87,6 +87,9 @@ if __name__ == '__main__':
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
         all_data = load_obj(os.path.join(save_folder, "results.pkl"))
+    else:
+        all_data = {}
+        
     all_data['sz'] = results
     save_obj(all_data, os.path.join(save_folder, "results.pkl"))
 
