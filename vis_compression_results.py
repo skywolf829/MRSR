@@ -28,7 +28,7 @@ if __name__ == '__main__':
     # results go compression_method -> metric -> list
 
     compression_method_names = list(results.keys())
-    metrics = ['file_size']
+    metrics = ['file_size', 'compression_time']
 
     for metric in metrics:
         fig = plt.figure()

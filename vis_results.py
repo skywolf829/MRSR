@@ -7,9 +7,9 @@ import os
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
     
-    parser.add_argument('--save_folder',default="2x_results",
+    parser.add_argument('--save_folder',default="64x_results",
     type=str,help='Folder to save images to')
-    parser.add_argument('--output_file_name',default="isomag2D_2x",
+    parser.add_argument('--output_file_name',default="isomag2D_64x",
     type=str,help='filename to visualize in output folder')
     parser.add_argument('--start_ts', default=4000, type=int)
     parser.add_argument('--ts_skip', default=10, type=int)
@@ -22,7 +22,6 @@ if __name__ == '__main__':
     results_file = os.path.join(output_folder, args['output_file_name'])
     
     results = load_obj(results_file)
-
     save_folder = os.path.join(output_folder, args['save_folder'])
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
@@ -39,6 +38,8 @@ if __name__ == '__main__':
             args['start_ts'] + args['ts_skip']*len(results[method][metric]),
             args['ts_skip'])
             y = results[method][metric]
+            if(len(y) > 0):
+                print(method + " " + metric + " " + str(np.array(y).mean()))
             plt.plot(x, y, label=method)
         plt.legend()
         plt.xlabel("Simulation timestep")

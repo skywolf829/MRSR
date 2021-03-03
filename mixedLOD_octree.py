@@ -812,6 +812,82 @@ min_chunk_size: int, device : str, mode : str) -> OctreeNodeList:
                             if(int(parent/4) not in groups[d][l].keys()):
                                 groups[d][l][int(parent/4)] = {}
                             groups[d][l][int(parent/4)][new_node.index % 4] = new_node
+                        elif(mode == "3D"):
+                            new_data = torch.zeros([
+                                group[0].data.shape[0],
+                                group[0].data.shape[1],
+                                group[0].data.shape[2]*2, 
+                                group[0].data.shape[3]*2,
+                                group[0].data.shape[4]*2], device=device, 
+                            dtype=group[0].data.dtype)
+                            new_data[:,:,
+                                    :group[0].data.shape[2],
+                                    :group[0].data.shape[3],
+                                    :group[0].data.shape[4]] = \
+                                group[0].data
+
+                            new_data[:,:,
+                                    :group[0].data.shape[2],
+                                    :group[0].data.shape[3],
+                                    group[0].data.shape[4]:] = \
+                                group[1].data
+
+                            new_data[:,:,
+                                    :group[0].data.shape[2],
+                                    group[0].data.shape[3]:,
+                                    :group[0].data.shape[4]] = \
+                                group[2].data
+
+                            new_data[:,:,
+                                    :group[0].data.shape[2],
+                                    group[0].data.shape[3]:,
+                                    group[0].data.shape[4]:] = \
+                                group[3].data
+
+                            new_data[:,:,
+                                    group[4].data.shape[2]:,
+                                    :group[0].data.shape[3],
+                                    :group[0].data.shape[4]] = \
+                                group[0].data
+
+                            new_data[:,:,
+                                    group[0].data.shape[2]:,
+                                    :group[0].data.shape[3],
+                                    group[0].data.shape[4]:] = \
+                                group[5].data
+
+                            new_data[:,:,
+                                    group[0].data.shape[2]:,
+                                    group[0].data.shape[3]:,
+                                    :group[0].data.shape[4]] = \
+                                group[6].data
+
+                            new_data[:,:,
+                                    group[0].data.shape[2]:,
+                                    group[0].data.shape[3]:,
+                                    group[0].data.shape[4]:] = \
+                                group[7].data
+                            
+                            new_node = OctreeNode(new_data, group[0].LOD, 
+                            group[0].depth-1, int(group[0].index / 8))
+                            nodes.append(new_node)
+                            nodes.remove(group[0])
+                            nodes.remove(group[1])
+                            nodes.remove(group[2])
+                            nodes.remove(group[3])
+                            nodes.remove(group[4])
+                            nodes.remove(group[5])
+                            nodes.remove(group[6])
+                            nodes.remove(group[7])
+                            d = current_depth-1
+                            if(d not in groups.keys()):
+                                groups[d] = {}
+                            if(lod not in groups[d].keys()):
+                                groups[d][l] = {}
+                            if(int(parent/8) not in groups[d][l].keys()):
+                                groups[d][l][int(parent/8)] = {}
+                            groups[d][l][int(parent/8)][new_node.index % 8] = new_node
+                        
         current_depth -= 1
     return nodes
 
@@ -982,13 +1058,16 @@ if __name__ == '__main__':
                 "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".torch")) / 1024
 
         f_data_size_kb = nodes.total_size()
-        #final_psnr : float = PSNR(img_upscaled, img_gt)
-        #final_mse : float = MSE(img_upscaled, img_gt)
-        #final_mre : float = relative_error(img_upscaled, img_gt)
 
-        #print("Final stats:")
-        #print("PSNR: %0.02f, MSE: %0.02f, MRE: %0.04f" % (final_psnr, final_mse, final_mre))
-        #print("Saved data size: %f kb" % nodes.total_size())
+        final_psnr : float = PSNR(img_upscaled, img_gt)
+        final_mse : float = MSE(img_upscaled, img_gt)
+        final_mre : float = relative_error(img_upscaled, img_gt)
+
+        print("Final stats:")
+        print("PSNR: %0.02f, MSE: %0.02f, MRE: %0.04f" % \
+            (final_psnr, final_mse, final_mre))
+        print("Saved data size: %f kb" % nodes.total_size())
+        print("Saved file size: %f kb" % f_data_size_kb)
         results['psnrs'].append(criterion_value)
         results['file_size'].append(f_size_kb)
         results['compression_time'].append(compress_time)
@@ -1008,12 +1087,13 @@ if __name__ == '__main__':
             max_LOD, upscaling, 
             downscaling_technique, device, mode)
 
-            imageio.imwrite("./Output/"+img_name+"_"+upscaling_technique+ \
+            imageio.imwrite(os.path.join(save_folder,img_name+"_"+upscaling_technique+ \
                 "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                    "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_debug.jpg", 
+                    "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_debug.jpg"), 
                     to_img(img_upscaled_debug, mode))
 
-            imageio.imwrite("./Output/colormap.jpg", cmap.cpu().numpy().astype(np.uint8))
+            imageio.imwrite(os.path.join(save_folder,"colormap.jpg"), 
+            cmap.cpu().numpy().astype(np.uint8))
 
             point_us = "point2D" if mode == "2D" else "point3D"
             upscaling : UpscalingMethod = UpscalingMethod(point_us, 
@@ -1024,12 +1104,12 @@ if __name__ == '__main__':
             mask_levels, data_downscaled_levels, 
             mask_downscaled_levels, mode)
             
-            imageio.imwrite("./Output/"+img_name+"_"+upscaling_technique+ \
+            imageio.imwrite(os.path.join(save_folder,img_name+"_"+upscaling_technique+ \
                 "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                    "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_point.jpg", 
+                    "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_point.jpg"), 
                     to_img(img_upscaled_point, mode))
         m += args['metric_skip']
-        
+
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
         all_data = load_obj(os.path.join(save_folder, "results.pkl"))
     else:
