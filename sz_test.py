@@ -89,9 +89,10 @@ if __name__ == '__main__':
         all_data = load_obj(os.path.join(save_folder, "results.pkl"))
     else:
         all_data = {}
-        
+
     all_data['sz'] = results
     save_obj(all_data, os.path.join(save_folder, "results.pkl"))
 
     os.remove(args['file']+'.dat')    
     os.remove(args['file']+'.dat.sz')
+    os.remove(args['file']+'.dat.sz.out')
