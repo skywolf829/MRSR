@@ -78,7 +78,7 @@ if __name__ == '__main__':
             im = dc - dc.min()
             im *= (255/dc.max())
             im = im.astype(np.uint8)[:,:,int(im.shape[2]/2)]
-        imageio.imwrite(os.path.join(save_folder, args['file']+"_"+str(psnr)+".png"), im)
+        imageio.imwrite(os.path.join(save_folder, "sz_"+args['file']+"_"+str(psnr)+".png"), im)
 
         command = "mv " + args['file']+".dat.sz " + save_folder +"/psnr_"+str(psnr)+"_"+args['file']+".sz"
         os.system(command)
