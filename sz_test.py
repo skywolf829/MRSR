@@ -57,9 +57,9 @@ if __name__ == '__main__':
         os.system(command)
         compression_time = time.time() - start_t
 
-        f_size_kb = os.path.gersize(args['file'] + ".dat.sz") / 1024
+        f_size_kb = os.path.getsize(args['file'] + ".dat.sz") / 1024
 
-        command = "sz -x -f -s " + args['file'] + ".dat.sz" = str(args['dims']) + " " + \
+        command = "sz -x -f -s " + args['file'] + ".dat.sz" + str(args['dims']) + " " + \
             str(args['nx']) + " " + str(args['ny'])
         if(args['dims'] == 3):
             command = command + " " + str(args['nz'])
