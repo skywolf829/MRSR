@@ -28,7 +28,6 @@ if __name__ == '__main__':
     parser.add_argument('--end_psnr',default=100,type=int,help='PSNR to end tests at')
     parser.add_argument('--psnr_skip',default=10,type=int,help='PSNR increment by')
     
-
     args = vars(parser.parse_args())
 
     FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
@@ -81,6 +80,8 @@ if __name__ == '__main__':
             im = im.astype(np.uint8)[:,:,int(im.shape[2]/2)]
         imageio.imwrite(os.path.join(save_folder, args['file']+"_"+str(psnr)+".png"), im)
 
+        command = "mv " + args['file']+".dat.sz " + save_folder +"/psnr_"+psnr+"_"+args['file']+".sz"
+
         results[psnr] = {}
         results[psnr]['file_size'] = f_size_kb
         results[psnr]['compression_time'] = compression_time
@@ -95,4 +96,4 @@ if __name__ == '__main__':
 
     os.remove(args['file']+'.dat')    
     os.remove(args['file']+'.dat.sz')
-    os.remove(args['file']+'.dat.sz.out')
+    #os.remove(args['file']+'.dat.sz.out')
