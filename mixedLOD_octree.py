@@ -133,7 +133,7 @@ def MSE(x, GT) -> torch.Tensor:
 def PSNR(x, GT, max_diff : Optional[torch.Tensor] = None) -> torch.Tensor:
     if(max_diff is None):
         max_diff = GT.max() - GT.min()
-    p = 20 * torch.log(torch.tensor(max_diff)) - 10*torch.log(MSE(x, GT))
+    p = 20 * torch.log10(torch.tensor(max_diff)) - 10*torch.log10(MSE(x, GT))
     return p
 
 @torch.jit.script
@@ -809,11 +809,33 @@ def to_img(input : torch.Tensor, mode : str):
         img = img.astype(np.uint8)
     return img
 
+def nodelist_to_h5(nodes : OctreeNodeList, name : str):
+    f = h5py.File(name, "w")
+    for i in range(len(nodes)):
+        d = f.create_dataset(str(i), data=nodes[i].data.cpu().numpy(),
+        compression="gzip", compression_opts=9)
+        d.attrs['index'] = nodes[i].index
+        d.attrs['depth'] = nodes[i].depth
+        d.attrs['LOD'] = nodes[i].LOD
+    f.close()
+
+def h5_to_nodelist(name: str, device : str):
+    f = h5py.File(name, 'r')
+    nodes : OctreeNodeList = OctreeNodeList()
+    for k in f.keys():
+        n : OctreeNode = OctreeNode(
+            torch.Tensor(f[k], device=device),
+            f[k].attrs['LOD'],
+            f[k].attrs['depth'],
+            f[k].attrs['index']
+        )
+    return nodes
+
 if __name__ == '__main__':
     max_LOD : int = 6
     min_chunk : int = 16
     device: str = "cuda"
-    upscaling_technique : str = "model"
+    upscaling_technique : str = "bicubic"
     downscaling_technique : str = "avgpool2D"
     criterion : str = "psnr"
     criterion_value : float = 90
@@ -843,7 +865,7 @@ if __name__ == '__main__':
         nodes : OctreeNodeList = OctreeNodeList()
         nodes.append(root_node)
         torch.save(nodes, './Output/'+img_name+'.torch')
-
+        nodelist_to_h5(nodes, './Output/'+img_name+'.h5')
         ##############################################
         nodes : OctreeNodeList = torch.load('./Output/'+img_name+'.torch')
         start_time : float = time.time()
@@ -865,6 +887,10 @@ if __name__ == '__main__':
         torch.save(nodes, "./Output/"+img_name+"_"+upscaling_technique+ \
             "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
                 "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".torch")
+        
+        nodelist_to_h5(nodes, "./Output/"+img_name+"_"+upscaling_technique+ \
+            "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
+                "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".h5")
     
 
     nodes : OctreeNodeList = torch.load("./Output/"+img_name+"_"+upscaling_technique+ \
