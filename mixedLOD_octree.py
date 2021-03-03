@@ -838,7 +838,7 @@ if __name__ == '__main__':
     upscaling_technique : str = "model"
     downscaling_technique : str = "avgpool2D"
     criterion : str = "psnr"
-    criterion_value : float = 40
+    criterion_value : float = 30
     load_existing = False
     mode : str = "2D"
     model_name : str = "SSR_isomag2D"
