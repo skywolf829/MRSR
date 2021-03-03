@@ -80,8 +80,9 @@ if __name__ == '__main__':
             im = im.astype(np.uint8)[:,:,int(im.shape[2]/2)]
         imageio.imwrite(os.path.join(save_folder, args['file']+"_"+str(psnr)+".png"), im)
 
-        command = "mv " + args['file']+".dat.sz " + save_folder +"/psnr_"+psnr+"_"+args['file']+".sz"
-
+        command = "mv " + args['file']+".dat.sz " + save_folder +"/psnr_"+str(psnr)+"_"+args['file']+".sz"
+        os.system(command)
+        
         results[psnr] = {}
         results[psnr]['file_size'] = f_size_kb
         results[psnr]['compression_time'] = compression_time
