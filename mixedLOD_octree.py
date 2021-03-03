@@ -455,12 +455,12 @@ downscaling_technique : str, device : str, mode : str) -> Tuple[torch.Tensor, to
                     int((curr_node.data.shape[3]*(2**curr_node.LOD))),
                 int(z_start): \
                 int(z_start)+ \
-                    int((curr_node.data.shape[4]*(2**curr_node.LOD))),
+                    int((curr_node.data.shape[4]*(2**curr_node.LOD)))
             ] = torch.zeros([full_shape[0], 3, 
             curr_node.data.shape[2]*(2**curr_node.LOD),
             curr_node.data.shape[3]*(2**curr_node.LOD),
             curr_node.data.shape[4]*(2**curr_node.LOD)])
-            full_img[
+            full_img[:,:,
                 int(x_start)+1: \
                 int(x_start)+ \
                     int((curr_node.data.shape[2]*(2**curr_node.LOD)))-1,
@@ -469,13 +469,11 @@ downscaling_technique : str, device : str, mode : str) -> Tuple[torch.Tensor, to
                     int((curr_node.data.shape[3]*(2**curr_node.LOD)))-1,
                 int(z_start)+1: \
                 int(z_start)+ \
-                    int((curr_node.data.shape[4]*(2**curr_node.LOD)))-1,
-
+                    int((curr_node.data.shape[4]*(2**curr_node.LOD)))-1
             ] = cmap[s].repeat(full_shape[0], 1, 
             int((curr_node.data.shape[2]*(2**curr_node.LOD)))-2, 
             int((curr_node.data.shape[3]*(2**curr_node.LOD)))-2,
             int((curr_node.data.shape[4]*(2**curr_node.LOD)))-2)
-
     cmap_img_height : int = 64
     cmap_img_width : int = 512
     cmap_img = torch.zeros([cmap_img_width, cmap_img_height, 3], dtype=torch.float, device=device)
@@ -633,7 +631,7 @@ def mixedLOD_octree_SR_compress(
         create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
     
     while(len(node_indices_to_check) > 0): 
-        #print(nodes_checked)
+        print(nodes_checked)
         nodes_checked += 1
         i = node_indices_to_check.pop(0)
         n = nodes[i]
@@ -848,7 +846,7 @@ min_chunk_size: int, device : str, mode : str) -> OctreeNodeList:
                                     group[4].data.shape[2]:,
                                     :group[0].data.shape[3],
                                     :group[0].data.shape[4]] = \
-                                group[0].data
+                                group[4].data
 
                             new_data[:,:,
                                     group[0].data.shape[2]:,
@@ -895,12 +893,12 @@ def to_img(input : torch.Tensor, mode : str):
     if(mode == "2D"):
         img = input[0].permute(1, 2, 0).cpu().numpy()
         img -= img.min()
-        img *= (255/img.max())
+        img *= (255/(img.max()+1e-6))
         img = img.astype(np.uint8)
     elif(mode == "3D"):
         img = input[0,:,:,:,int(input.shape[4]/2)].permute(1, 2, 0).cpu().numpy()
         img -= img.min()
-        img *= (255/img.max())
+        img *= (255/(img.max()+1e-6))
         img = img.astype(np.uint8)
     return img
 
@@ -996,6 +994,7 @@ if __name__ == '__main__':
 
     upscaling : UpscalingMethod = UpscalingMethod(upscaling_technique, device, model_name)
     full_shape : List[int] = list(img_gt.shape)
+    print(full_shape)
     m = args['start_metric']
     while(m < args['end_metric']):
         criterion_value = m
@@ -1086,17 +1085,22 @@ if __name__ == '__main__':
             img_upscaled_debug, cmap = nodes_to_full_img_debug(nodes, full_shape, 
             max_LOD, upscaling, 
             downscaling_technique, device, mode)
-
+            img_upscaled_debug = img_upscaled_debug.cpu().numpy().astype(np.uint8)
+            if(mode == "3D"):
+                img_upscaled_debug = img_upscaled_debug[:,:,:,
+                :,int(img_upscaled_debug.shape[4]/2)+1]
+            img_upscaled_debug = img_upscaled_debug[0]
+            img_upscaled_debug = np.transpose(img_upscaled_debug, (1, 2, 0))
             imageio.imwrite(os.path.join(save_folder,img_name+"_"+upscaling_technique+ \
                 "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
                     "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_debug.jpg"), 
-                    to_img(img_upscaled_debug, mode))
+                    img_upscaled_debug)
 
             imageio.imwrite(os.path.join(save_folder,"colormap.jpg"), 
             cmap.cpu().numpy().astype(np.uint8))
 
             point_us = "point2D" if mode == "2D" else "point3D"
-            upscaling : UpscalingMethod = UpscalingMethod(point_us, 
+            upscaling : UpscalingMethod = UpscalingMethod('nearest', 
             device, model_name)
             img_upscaled_point = nodes_to_full_img(nodes, full_shape, 
             max_LOD, upscaling, 
