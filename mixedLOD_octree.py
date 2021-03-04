@@ -1074,7 +1074,7 @@ def h5_to_nodelist(name: str, device : str):
         )
     return nodes
 
-def sz_compress_nodelist(nodes: OctreeNodeList, full_shape,
+def sz_compress_nodelist1(nodes: OctreeNodeList, full_shape,
 folder : str, name : str):
     
     temp_folder_path = os.path.join(folder, "Temp")
@@ -1211,6 +1211,7 @@ if __name__ == '__main__':
     parser.add_argument('--debug',default="false",type=str2bool)
     parser.add_argument('--distributed',default="false",type=str2bool)
     parser.add_argument('--sz_compress',default="false",type=str2bool)    
+    parser.add_argument('--sz_mode',default=1,type=int)    
 
     parser.add_argument('--data_type',default="h5",type=str)
 
@@ -1290,9 +1291,11 @@ if __name__ == '__main__':
                 "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
                     "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)
             if(args['sz_compress']):
-                #sz_compress_nodelist(nodes, full_shape, save_folder, save_name)
-                sz_compress_nodelist2(nodes, full_shape, max_LOD, 
-                downscaling_technique, device, mode, save_folder, save_name)
+                if(args['sz_mode'] == 1):
+                    sz_compress_nodelist1(nodes, full_shape, save_folder, save_name)
+                elif(args['sz_mode'] == 2):
+                    sz_compress_nodelist2(nodes, full_shape, max_LOD, 
+                    downscaling_technique, device, mode, save_folder, save_name)
             else:
                 torch.save(nodes, os.path.join(save_folder,
                     save_name+".torch"))
