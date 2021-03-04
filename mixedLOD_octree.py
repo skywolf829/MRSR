@@ -1246,6 +1246,7 @@ if __name__ == '__main__':
     results['file_size'] = []
     results['psnrs'] = []
     results['compression_time'] = []
+    results['num_nodes'] = []
     
     if(args['data_type'] == "image"):
         img_gt : torch.Tensor = torch.from_numpy(imageio.imread(
@@ -1289,9 +1290,9 @@ if __name__ == '__main__':
                 "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
                     "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)
             if(args['sz_compress']):
-                #sz_compress_nodelist(nodes, full_shape, save_folder, save_name)
-                sz_compress_nodelist2(nodes, full_shape, max_LOD, 
-                downscaling_technique, device, mode, save_folder, save_name)
+                sz_compress_nodelist(nodes, full_shape, save_folder, save_name)
+                #sz_compress_nodelist2(nodes, full_shape, max_LOD, 
+                #downscaling_technique, device, mode, save_folder, save_name)
             else:
                 torch.save(nodes, os.path.join(save_folder,
                     save_name+".torch"))
@@ -1345,6 +1346,7 @@ if __name__ == '__main__':
         results['psnrs'].append(criterion_value)
         results['file_size'].append(f_size_kb)
         results['compression_time'].append(compress_time)
+        results['num_nodes'].append(len(nodes))
 
         if(args['debug']):
             img_seams = nodes_to_full_img_seams(nodes, full_shape,
