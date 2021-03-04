@@ -443,11 +443,12 @@ class UpscalingMethod(nn.Module):
         elif(self.method == "model"):
             up = in_frame
             while(scale_factor > 1):
-                if not self.distributed:
-                    up = self.models[len(self.models)-lod](up)
-                else:
-                    up = generate_by_patch_parallel(self.models[len(self.models)-lod], 
-                        up, 140, 10, self.devices)
+                with torch.no_grad:
+                    if not self.distributed:
+                        up = self.models[len(self.models)-lod](up)
+                    else:
+                        up = generate_by_patch_parallel(self.models[len(self.models)-lod], 
+                            up, 140, 10, self.devices)
                 scale_factor = int(scale_factor / 2)
                 lod -= 1
         else:
