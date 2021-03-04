@@ -1105,6 +1105,44 @@ folder : str, name : str):
         metadata.append(nodes[i].LOD)
     metadata = np.array(metadata, dtype=int)
     metadata.tofile(os.path.join(temp_folder_path, "metadata"))
+    os.system("tar -cjvf " + save_location + " -C " + folder + " Temp")
+    os.system("rm -r " + temp_folder_path)
+
+def sz_compress_nodelist2(nodes: OctreeNodeList, full_shape, max_LOD,
+downscaling_technique, device,
+folder : str, name : str):
+    
+    nearest_upscale = UpscalingMethod("nearest", nodes[0].device)
+    nodes_to_full_img(nodes, full_shape, max_LOD, nearest_upscale,
+    )
+    temp_folder_path = os.path.join(folder, "Temp")
+    save_location = os.path.join(folder, name +".tar.gz")
+    if(not os.path.exists(temp_folder_path)):
+        os.makedirs(temp_folder_path)
+    
+    metadata : List[int] = []
+    metadata.append(len(full_shape))
+    for i in range(len(full_shape)):
+        metadata.append(full_shape[i])
+
+    for i in range(len(nodes)):
+        d = nodes[i].data.cpu().numpy()[0,0]
+        d_loc = os.path.join(temp_folder_path, str(i)+".dat")
+        ndims = len(d.shape)
+        d.tofile(d_loc)
+        command = "sz -z -f -i " + d_loc + " -" + str(ndims) + " " + \
+            str(d.shape[0]) + " " + str(d.shape[1])
+        if(ndims == 3):
+            command = command + " " + str(d.shape[2])
+        command = command + " -P " + str(0.01)
+        #print(command)
+        os.system(command)
+        os.system("rm " + d_loc)
+        metadata.append(nodes[i].depth)
+        metadata.append(nodes[i].index)
+        metadata.append(nodes[i].LOD)
+    metadata = np.array(metadata, dtype=int)
+    metadata.tofile(os.path.join(temp_folder_path, "metadata"))
     os.system("tar -cjvf " + save_location + " -C " + temp_folder_path + " .")
     os.system("rm -r " + temp_folder_path)
 
