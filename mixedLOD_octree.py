@@ -1234,7 +1234,7 @@ def sz_decompress_nodelist2(filename : str):
         n = OctreeNode(data, lod, depth, index)
         nodes.append(n)
     os.system("rm -r " + temp_folder)
-
+    print("Finished decompressing, " + str(len(nodes)) + " blocks recovered")
     return nodes
 
 if __name__ == '__main__':
@@ -1341,7 +1341,7 @@ if __name__ == '__main__':
             nodes = compress_nodelist(nodes, full_shape, min_chunk, device, mode)
             concat_num_nodes : int = len(nodes)
 
-            #print("Concatenating blocks turned %s blocks into %s" % (str(num_nodes), str(concat_num_nodes)))
+            print("Concatenating blocks turned %s blocks into %s" % (str(num_nodes), str(concat_num_nodes)))
             
             if(args['sz_compress']):
                 if(args['sz_mode'] == 1):
