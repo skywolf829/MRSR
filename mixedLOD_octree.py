@@ -1084,7 +1084,7 @@ folder : str, name : str):
     
     metadata : List[int] = []
     for i in range(len(nodes)):
-        d = nodes[i].data.cpu().numpy()[0]
+        d = nodes[i].data.cpu().numpy()[0,0]
         d_loc = os.path.join(temp_folder_path, str(i)+".dat")
         ndims = len(d.shape)
         d.tofile(d_loc)
