@@ -1411,6 +1411,19 @@ if __name__ == '__main__':
             else:
                 nodes = torch.load(os.path.join(save_folder,
                     save_name+".torch"))
+            img_upscaled = nodes_to_full_img(nodes, full_shape, 
+                max_LOD, upscaling, 
+                downscaling_technique, device, data_levels, 
+                mask_levels, data_downscaled_levels, 
+                mask_downscaled_levels, mode)
+
+            final_psnr : float = PSNR(img_upscaled, img_gt)
+            final_mse : float = MSE(img_upscaled, img_gt)
+            final_mre : float = relative_error(img_upscaled, img_gt)
+
+            print("Decompressed final stats:")
+            print("PSNR: %0.02f, MSE: %0.02f, MRE: %0.04f" % \
+                (final_psnr, final_mse, final_mre))
 
             img_seams = nodes_to_full_img_seams(nodes, full_shape,
             upscaling, device, mode)
