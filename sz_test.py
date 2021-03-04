@@ -63,6 +63,7 @@ if __name__ == '__main__':
         elif(args['metric'] == "pw_mre"):
             command = command + " -P " + str(value)
         start_t = time.time()
+        print("Running: " + command)
         os.system(command)
         compression_time = time.time() - start_t
 
