@@ -1096,7 +1096,7 @@ folder : str, name : str):
             str(d.shape[0]) + " " + str(d.shape[1])
         if(ndims == 3):
             command = command + " " + str(d.shape[2])
-        command = command + " -P " + str(0.01)
+        command = command + " -R " + str(0.01)
         #print(command)
         os.system(command)
         os.system("rm " + d_loc)
@@ -1135,7 +1135,7 @@ folder : str, name : str):
         str(d.shape[0]) + " " + str(d.shape[1])
     if(ndims == 3):
         command = command + " " + str(d.shape[2])
-    command = command + " -P " + str(0.01)
+    command = command + " -R " + str(0.01)
     #print(command)
     os.system(command)
     os.system("rm " + d_loc)
