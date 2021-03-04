@@ -1088,12 +1088,12 @@ folder : str, name : str):
         d_loc = os.path.join(temp_folder_path, str(i)+".dat")
         ndims = len(d.shape)
         d.tofile(d_loc)
-        command = "sz -z -f -i " + d_loc + " " + str(ndims) + " " + \
+        command = "sz -z -f -i " + d_loc + " -" + str(ndims) + " " + \
             str(d.shape[0]) + " " + str(d.shape[1])
         if(ndims == 3):
             command = command + " " + str(d.shape[2])
         command = command + " -P " + str(0.01)
-        print(command)
+        #print(command)
         os.system(command)
         os.system("rm " + d_loc)
         metadata.append(nodes[i].depth)
