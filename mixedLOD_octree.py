@@ -1348,7 +1348,7 @@ if __name__ == '__main__':
                 elif(args['sz_mode'] == 2):
                     sz_compress_nodelist2(nodes, full_shape, max_LOD, 
                     downscaling_technique, device, mode, save_folder, save_name,
-                    'pw_mre', 0.01)
+                    'pw_mre', 0.001)
             else:
                 torch.save(nodes, os.path.join(save_folder,
                     save_name+".torch"))
