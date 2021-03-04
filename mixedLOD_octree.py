@@ -443,7 +443,7 @@ class UpscalingMethod(nn.Module):
         elif(self.method == "model"):
             up = in_frame
             while(scale_factor > 1):
-                with torch.no_grad:
+                with torch.no_grad():
                     if not self.distributed:
                         up = self.models[len(self.models)-lod](up)
                     else:
