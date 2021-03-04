@@ -15,6 +15,10 @@ from options import load_options
 import argparse
 import pickle
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
+import copy
+
 def save_obj(obj,location):
     with open(location, 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
@@ -263,12 +267,146 @@ def subsample_downscale3D(vol : torch.Tensor, scale_factor : int) -> torch.Tenso
     vol = vol[:,:, ::2, ::2, ::2]
     return vol
 
+class SharedList(object):  
+    def __init__(self, items, generators, input_volumes):
+        self.lock = threading.Lock()
+        self.list = items
+        self.generators = generators
+        self.input_volumes = input_volumes
+        
+    def get_next_available(self):
+        #print("Waiting for a lock")
+        self.lock.acquire()
+        item = None
+        generator = None
+        input_volume = None
+        try:
+            #print('Acquired a lock, counter value: ', self.counter)
+            if(len(self.list) > 0):                    
+                item = self.list.pop(0)
+                generator = self.generators[item]
+                input_volume = self.input_volumes[item]
+        finally:
+            #print('Released a lock, counter value: ', self.counter)
+            self.lock.release()
+        return item, generator, input_volume
+    
+    def add(self, item):
+        #print("Waiting for a lock")
+        self.lock.acquire()
+        try:
+            #print('Acquired a lock, counter value: ', self.counter)
+            self.list.append(item)
+        finally:
+            #print('Released a lock, counter value: ', self.counter)
+            self.lock.release()
+
+def generate_by_patch_parallel(generator, input_volume, patch_size, receptive_field, devices):
+    with torch.no_grad():
+        final_volume = torch.zeros(
+            [input_volume.shape[0], input_volume.shape[1], input_volume.shape[2]*2, 
+            input_volume.shape[3]*2, input_volume.shape[4]*2]
+            ).to(devices[0])
+        
+        rf = receptive_field
+
+        available_gpus = []
+        generators = {}
+        input_volumes = {}
+
+        for i in range(1, len(devices)):
+            available_gpus.append(devices[i])
+            g = copy.deepcopy(generator).to(devices[i])
+            iv = input_volume.clone().to(devices[i])
+            generators[devices[i]] = g
+            input_volumes[devices[i]] = iv
+            torch.cuda.empty_cache()
+
+        available_gpus = SharedList(available_gpus, generators, input_volumes)
+
+        threads= []
+        with ThreadPoolExecutor(max_workers=len(devices)-1) as executor:
+            z_done = False
+            z = 0
+            z_stop = min(input_volume.shape[2], z + patch_size)
+            while(not z_done):
+                if(z_stop == input_volume.shape[2]):
+                    z_done = True
+                y_done = False
+                y = 0
+                y_stop = min(input_volume.shape[3], y + patch_size)
+                while(not y_done):
+                    if(y_stop == input_volume.shape[3]):
+                        y_done = True
+                    x_done = False
+                    x = 0
+                    x_stop = min(input_volume.shape[4], x + patch_size)
+                    while(not x_done):                        
+                        if(x_stop == input_volume.shape[4]):
+                            x_done = True
+                        
+                        
+                        threads.append(
+                            executor.submit(
+                                generate_patch,
+                                z,z_stop,
+                                y,y_stop,
+                                x,x_stop,
+                                available_gpus
+                            )
+                        )
+                        
+                        x += patch_size - 2*rf
+                        x = min(x, max(0, input_volume.shape[4] - patch_size))
+                        x_stop = min(input_volume.shape[4], x + patch_size)
+                    y += patch_size - 2*rf
+                    y = min(y, max(0, input_volume.shape[3] - patch_size))
+                    y_stop = min(input_volume.shape[3], y + patch_size)
+                z += patch_size - 2*rf
+                z = min(z, max(0, input_volume.shape[2] - patch_size))
+                z_stop = min(input_volume.shape[2], z + patch_size)
+
+            for task in as_completed(threads):
+                result,z,z_stop,y,y_stop,x,x_stop,device = task.result()
+                result = result.to(devices[0])
+                x_offset_start = rf if x > 0 else 0
+                y_offset_start = rf if y > 0 else 0
+                z_offset_start = rf if z > 0 else 0
+                x_offset_end = rf if x_stop < input_volume.shape[4] else 0
+                y_offset_end = rf if y_stop < input_volume.shape[3] else 0
+                z_offset_end = rf if z_stop < input_volume.shape[2] else 0
+                #print("%d, %d, %d" % (z, y, x))
+                final_volume[:,:,
+                2*z+z_offset_start:2*z+result.shape[2] - z_offset_end,
+                2*y+y_offset_start:2*y+result.shape[3] - y_offset_end,
+                2*x+x_offset_start:2*x+result.shape[4] - x_offset_end] = result[:,:,
+                z_offset_start:result.shape[2]-z_offset_end,
+                y_offset_start:result.shape[3]-y_offset_end,
+                x_offset_start:result.shape[4]-x_offset_end]
+                available_gpus.add(device)
+    
+    return final_volume
+
+def generate_patch(z,z_stop,y,y_stop,x,x_stop,available_gpus):
+
+    device = None
+    while(device is None):        
+        device, generator, input_volume = available_gpus.get_next_available()
+        time.sleep(1)
+    #print("Starting SR on device " + device)
+    with torch.no_grad():
+        result = generator(input_volume[:,:,z:z_stop,y:y_stop,x:x_stop])
+    return result,z,z_stop,y,y_stop,x,x_stop,device
+
 class UpscalingMethod(nn.Module):
-    def __init__(self, method : str, device : str, model_name : Optional[str]):
+    def __init__(self, method : str, device : str, model_name : Optional[str],
+        distributed : Optional[bool] = False):
         super(UpscalingMethod, self).__init__()
         self.method : str = method
         self.device : str = device
         self.models = []
+        self.distributed = distributed
+        self.devices = []
         if(self.method == "model"):            
             with torch.no_grad():
                 options = load_options("SavedModels/"+model_name)
@@ -280,9 +418,12 @@ class UpscalingMethod(nn.Module):
                     
                     print("Tracing model " + str(i) + " with input size " + str(torch_models[i].get_input_shape()))
                     self.models.append(torch.jit.trace(torch_models[i], 
-                    torch.zeros(torch_models[i].get_input_shape()).to(device)))
+                    torch.zeros(torch_models[0].get_input_shape()).to(device)))
                     
             torch.cuda.empty_cache()
+        if(distributed and torch.cuda.device_count() > 1):
+            for i in range(torch.cuda.device_count()):
+                self.devices.append("cuda:"+str(i))
 
     def forward(self, in_frame : torch.Tensor, scale_factor : float,
     lod : Optional[int] = None) -> torch.Tensor:
@@ -300,7 +441,15 @@ class UpscalingMethod(nn.Module):
         elif(self.method == "trilinear"):
             up = trilinear_upscale(in_frame, scale_factor)
         elif(self.method == "model"):
-            up = model_upscale(in_frame, scale_factor, self.models, lod)
+            up = in_frame
+            while(scale_factor > 1):
+                if not self.distributed:
+                    up = self.models[len(self.models)-lod](up)
+                else:
+                    up = generate_by_patch_parallel(self.models[len(self.models)-lod], 
+                        up, 140, 10, self.devices)
+                scale_factor = int(scale_factor / 2)
+                lod -= 1
         else:
             print("No support for upscaling method: " + str(self.method))
         return up
