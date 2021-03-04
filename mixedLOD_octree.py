@@ -1075,7 +1075,7 @@ def h5_to_nodelist(name: str, device : str):
     return nodes
 
 def sz_compress_nodelist1(nodes: OctreeNodeList, full_shape,
-folder : str, name : str):
+folder : str, name : str, metric : str, value : float):
     
     temp_folder_path = os.path.join(folder, "Temp")
     save_location = os.path.join(folder, name +".tar.gz")
@@ -1096,7 +1096,12 @@ folder : str, name : str):
             str(d.shape[0]) + " " + str(d.shape[1])
         if(ndims == 3):
             command = command + " " + str(d.shape[2])
-        command = command + " -R " + str(0.01)
+        if(metric == "psnr"):
+            command = command + " -S " + str(value)
+        elif(metric == "mre"):
+            command = command + " -R " + str(value)
+        elif(metric == "pw_mre"):
+            command = command + " -P " + str(value)
         #print(command)
         os.system(command)
         os.system("rm " + d_loc)
@@ -1110,7 +1115,7 @@ folder : str, name : str):
 
 def sz_compress_nodelist2(nodes: OctreeNodeList, full_shape, max_LOD,
 downscaling_technique, device, mode,
-folder : str, name : str):
+folder : str, name : str, metric : str, value : float):
     
 
     nearest_upscale = UpscalingMethod("nearest", device)
@@ -1135,7 +1140,12 @@ folder : str, name : str):
         str(d.shape[0]) + " " + str(d.shape[1])
     if(ndims == 3):
         command = command + " " + str(d.shape[2])
-    command = command + " -R " + str(0.01)
+    if(metric == "psnr"):
+        command = command + " -S " + str(value)
+    elif(metric == "mre"):
+        command = command + " -R " + str(value)
+    elif(metric == "pw_mre"):
+        command = command + " -P " + str(value)
     #print(command)
     os.system(command)
     os.system("rm " + d_loc)
@@ -1157,33 +1167,74 @@ folder : str, name : str):
     os.system("rm -r " + temp_folder_path)
 
 
-def sz_decompress_nodelist(filename : str):
+def sz_decompress_nodelist1(filename : str):
+    folder_path = os.path.dirname(os.path.abspath(__file__))
+    temp_folder = os.path.join(folder_path, "Temp")
+    if(not os.path.exists(temp_folder)):
+        os.makedirs(temp_folder)
     
-    temp_folder_path = os.path.join(folder, "Temp")
-    save_location = os.path.join(temp_folder_path, name +".tar.gz")
-    if(not os.path.exists(temp_folder_path)):
-        os.makedirs(temp_folder_path)
+    nodes = OctreeNodeList()
+
+    os.system("tar -xvf " + filename)
+    os.system("sz -x -f -s " + os.path.join(temp_folder, ""))
+
+
+
+    return nodes
+
+def sz_decompress_nodelist2(filename : str):
     
-    metadata : List[int] = []
-    for i in range(len(nodes)):
-        d = nodes[i].data.cpu().numpy()[0]
-        d_loc = os.path.join(temp_folder_path, str(i)+".dat")
-        ndims = len(d.shape)
-        d.tofile(d_loc)
-        command = "sz -z -f -i " + d_loc + " " + str(ndims) + " " + \
-            str(args['nx']) + " " + str(args['ny'])
-        if(ndims == 3):
-            command = command + " " + str(args['nz'])
-        command = command + " -P " + str(0.01)
-        os.system(command)
-        os.system("rm " + d_loc)
-        metadata.append(nodes[i].depth)
-        metadata.append(nodes[i].index)
-        metadata.append(nodes[i].LOD)
-    metadata = np.array(metadata, dtype=int)
-    metadata.tofile(os.path.join(temp_folder_path, metadata))
-    os.system("tar -zcvf " + save_location + " " + temp_folder_path)
-    os.system("rm -r" + temp_folder_path)
+    folder_path = os.path.dirname(os.path.abspath(__file__))
+    temp_folder = os.path.join(folder_path, "Temp")
+    if(not os.path.exists(temp_folder)):
+        os.makedirs(temp_folder)
+    
+    nodes = OctreeNodeList()
+
+    os.system("tar -xvf " + filename)
+    metadata = np.fromfile(os.path.join(temp_folder, "metadata"), dtype=int)
+    full_shape = []
+    for i in range(1, metadata[0]+1):
+        full_shape.append(metadata[i])
+    metadata = metadata[metadata[0]+1:]
+    command = "sz -x -f -s " + os.path.join(temp_folder, "nn_data.dat.sz") + " -" + \
+        str(len(full_shape[2:])) + " " + str(full_shape[2]) + " " + str(full_shape[3])
+
+    if(len(full_shape) == 5):
+        command = command + " " + full_shape[4]
+    print(command)
+    os.system(command)
+
+    full_data = np.fromfile(os.path.join(temp_folder, "nn_data.dat.sz.out"), dtype=np.float32)
+    full_data = np.reshape(full_data, full_shape[2:])
+
+    full_data = torch.Tensor(full_data).unsqueeze(0).unsqueeze(0)
+    for i in range(0, int(len(metadata)/3), 3):
+        depth = metadata[i]
+        index = metadata[i+1]
+        lod = metadata[i+2]
+        if(len(full_shape) == 4):
+            x, y = get_location2D(full_data.shape[2], full_data.shape[3], 
+            depth, index)
+            width = int(full_data.shape[2] / (2**depth))
+            height = int(full_data.shape[3] / (2**depth))
+            data = full_data[:,:,x:x+width,y:y+height]
+            data = avgpool_downscale2D(data, int(2**lod))
+
+        elif(len(full_shape) == 5):
+            x, y, z = get_location2D(full_data.shape[2], full_data.shape[3], full_data.shape[4], 
+            depth, index)
+            width = int(full_data.shape[2] / (2**depth))
+            height = int(full_data.shape[3] / (2**depth))
+            depth = int(full_data.shape[4] / (2**depth))
+            data = full_data[:,:,x:x+width,y:y+height,z:z+depth]
+            data = avgpool_downscale3D(data, int(2**lod))
+        
+        n = OctreeNode(data, lod, depth, index)
+        nodes.append(n)
+    os.system("rm -r " + temp_folder)
+
+    return nodes
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
@@ -1263,6 +1314,9 @@ if __name__ == '__main__':
     m = args['start_metric']
     while(m < args['end_metric']):
         criterion_value = m
+        save_name = img_name+"_"+upscaling_technique+ \
+            "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
+            "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)
         if not load_existing:
             root_node = OctreeNode(img_gt, 0, 0, 0)
             nodes : OctreeNodeList = OctreeNodeList()
@@ -1287,15 +1341,15 @@ if __name__ == '__main__':
             concat_num_nodes : int = len(nodes)
 
             #print("Concatenating blocks turned %s blocks into %s" % (str(num_nodes), str(concat_num_nodes)))
-            save_name = img_name+"_"+upscaling_technique+ \
-                "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                    "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)
+            
             if(args['sz_compress']):
                 if(args['sz_mode'] == 1):
-                    sz_compress_nodelist1(nodes, full_shape, save_folder, save_name)
+                    sz_compress_nodelist1(nodes, full_shape, save_folder, save_name,
+                    criterion, m)
                 elif(args['sz_mode'] == 2):
                     sz_compress_nodelist2(nodes, full_shape, max_LOD, 
-                    downscaling_technique, device, mode, save_folder, save_name)
+                    downscaling_technique, device, mode, save_folder, save_name,
+                    criterion, m)
             else:
                 torch.save(nodes, os.path.join(save_folder,
                     save_name+".torch"))
@@ -1309,9 +1363,7 @@ if __name__ == '__main__':
                 print("TBI")
             else:
                 nodes : OctreeNodeList = torch.load(os.path.join(save_folder,
-                    img_name+"_"+upscaling_technique+ \
-                    "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                        "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".torch"))
+                    save_name+".torch"))
 
         data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels = \
             create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
@@ -1323,9 +1375,7 @@ if __name__ == '__main__':
         mask_levels, data_downscaled_levels, 
         mask_downscaled_levels, mode)
 
-        imageio.imwrite(os.path.join(save_folder, upscaling_technique+"_"+img_name+ \
-            "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".png"), 
+        imageio.imwrite(os.path.join(save_folder, save_name+".png"), 
                 to_img(img_upscaled, mode))
 
         if(args['sz_compress']):
@@ -1352,15 +1402,21 @@ if __name__ == '__main__':
         results['num_nodes'].append(len(nodes))
 
         if(args['debug']):
+            
+            if(args['sz_compress']):
+                if(args['sz_mode'] == 1):
+                    nodes = sz_decompress_nodelist1(os.path.join(save_folder,save_name + ".tar.gz"))
+                elif(args['sz_mode'] == 2):
+                    nodes = sz_decompress_nodelist2(os.path.join(save_folder,save_name + ".tar.gz"))
+            else:
+                nodes = torch.load(os.path.join(save_folder,
+                    save_name+".torch"))
+
             img_seams = nodes_to_full_img_seams(nodes, full_shape,
             upscaling, device, mode)
 
-            imageio.imwrite("./Output/"+img_name+"_"+upscaling_technique+ \
-                "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                    "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_seams.jpg", 
+            imageio.imwrite(os.path.join(save_folder, save_name+"_seams.png"), 
                     to_img(img_seams, mode))
-
-
 
             img_upscaled_debug, cmap = nodes_to_full_img_debug(nodes, full_shape, 
             max_LOD, upscaling, 
@@ -1371,12 +1427,10 @@ if __name__ == '__main__':
                 :,int(img_upscaled_debug.shape[4]/2)+1]
             img_upscaled_debug = img_upscaled_debug[0]
             img_upscaled_debug = np.transpose(img_upscaled_debug, (1, 2, 0))
-            imageio.imwrite(os.path.join(save_folder,img_name+"_"+upscaling_technique+ \
-                "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                    "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_debug.jpg"), 
+            imageio.imwrite(os.path.join(save_folder, save_name+"_debug.png"), 
                     img_upscaled_debug)
 
-            imageio.imwrite(os.path.join(save_folder,"colormap.jpg"), 
+            imageio.imwrite(os.path.join(save_folder,"colormap.png"), 
             cmap.cpu().numpy().astype(np.uint8))
 
             point_us = "point2D" if mode == "2D" else "point3D"
@@ -1388,9 +1442,7 @@ if __name__ == '__main__':
             mask_levels, data_downscaled_levels, 
             mask_downscaled_levels, mode)
             
-            imageio.imwrite(os.path.join(save_folder,img_name+"_"+upscaling_technique+ \
-                "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                    "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_point.jpg"), 
+            imageio.imwrite(os.path.join(save_folder, save_name+"_point.png"), 
                     to_img(img_upscaled_point, mode))
         m += args['metric_skip']
 
