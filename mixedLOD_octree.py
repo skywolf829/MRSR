@@ -1078,7 +1078,7 @@ def sz_compress_nodelist(nodes: OctreeNodeList, full_shape,
 folder : str, name : str):
     
     temp_folder_path = os.path.join(folder, "Temp")
-    save_location = os.path.join(temp_folder_path, name +".tar.gz")
+    save_location = os.path.join(folder, name +".tar.gz")
     if(not os.path.exists(temp_folder_path)):
         os.makedirs(temp_folder_path)
     
@@ -1102,7 +1102,7 @@ folder : str, name : str):
     metadata = np.array(metadata, dtype=int)
     metadata.tofile(os.path.join(temp_folder_path, "metadata"))
     os.system("tar -zcvf " + save_location + " " + temp_folder_path)
-    os.system("rm -r" + temp_folder_path)
+    os.system("rm -r " + temp_folder_path)
 
 def sz_decompress_nodelist(nodes: OctreeNodeList, folder : str, name : str):
     
