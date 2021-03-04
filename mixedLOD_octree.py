@@ -1144,8 +1144,6 @@ if __name__ == '__main__':
         img_gt : torch.Tensor = torch.from_numpy(np.array(f['data'])).unsqueeze(0).to(device)
         f.close()
 
-    upscaling : UpscalingMethod = UpscalingMethod(upscaling_technique, device, 
-    model_name, distributed)
     full_shape : List[int] = list(img_gt.shape)
     print(full_shape)
     m = args['start_metric']
@@ -1160,10 +1158,12 @@ if __name__ == '__main__':
             ##############################################
             #nodes : OctreeNodeList = torch.load('./Output/'+img_name+'.torch')
             start_time : float = time.time()
+            upscaling : UpscalingMethod = UpscalingMethod(upscaling_technique, device, 
+            model_name, distributed)
             nodes : OctreeNodeList = mixedLOD_octree_SR_compress(
                 nodes, img_gt, criterion, criterion_value,
                 upscaling, downscaling_technique,
-                min_chunk, max_LOD, device, mode)  
+                min_chunk, max_LOD, device, mode)
             end_time : float = time.time()
             compress_time = end_time - start_time
             #print("Compression took %s seconds" % (str(end_time - start_time)))
