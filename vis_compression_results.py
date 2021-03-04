@@ -7,7 +7,7 @@ import os
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
     
-    parser.add_argument('--save_folder',default="mixing3D_1010_psnr",
+    parser.add_argument('--save_folder',default="mag2D_4010_mre",
     type=str,help='Folder to save images to')
     parser.add_argument('--output_file_name',default="results.pkl",
     type=str,help='filename to visualize in output folder')    
@@ -38,7 +38,7 @@ if __name__ == '__main__':
             y = results[method][metric]
             plt.plot(x, y, label=method)
         plt.legend()
-        plt.xlabel("PSNR")
+        plt.xlabel("metric")
         plt.ylabel(metric)
         plt.title(args['output_file_name'] + " - " + metric)
         plt.savefig(os.path.join(save_folder, metric+".png"))

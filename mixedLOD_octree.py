@@ -1074,7 +1074,8 @@ def h5_to_nodelist(name: str, device : str):
         )
     return nodes
 
-def sz_compress_nodelist(nodes: OctreeNodeList, folder : str, name : str):
+def sz_compress_nodelist(nodes: OctreeNodeList, full_shape,
+folder : str, name : str):
     
     temp_folder_path = os.path.join(folder, "Temp")
     save_location = os.path.join(temp_folder_path, name +".tar.gz")
@@ -1088,9 +1089,9 @@ def sz_compress_nodelist(nodes: OctreeNodeList, folder : str, name : str):
         ndims = len(d.shape)
         d.tofile(d_loc)
         command = "sz -z -f -i " + d_loc + " " + str(ndims) + " " + \
-            str(args['nx']) + " " + str(args['ny'])
+            str(d.shape[0]) + " " + str(d.shape[1])
         if(ndims == 3):
-            command = command + " " + str(args['nz'])
+            command = command + " " + str(d.shape[2])
         command = command + " -P " + str(0.01)
         os.system(command)
         os.system("rm " + d_loc)
@@ -1098,7 +1099,7 @@ def sz_compress_nodelist(nodes: OctreeNodeList, folder : str, name : str):
         metadata.append(nodes[i].index)
         metadata.append(nodes[i].LOD)
     metadata = np.array(metadata, dtype=int)
-    metadata.tofile(os.path.join(temp_folder_path, metadata))
+    metadata.tofile(os.path.join(temp_folder_path, "metadata"))
     os.system("tar -zcvf " + save_location + " " + temp_folder_path)
     os.system("rm -r" + temp_folder_path)
 
@@ -1235,7 +1236,7 @@ if __name__ == '__main__':
                 "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
                     "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)
             if(args['sz_compress']):
-                sz_compress_nodelist(nodes, save_folder, save_name)
+                sz_compress_nodelist(nodes, full_shape, save_folder, save_name)
             else:
                 torch.save(nodes, os.path.join(save_folder,
                     save_name+".torch"))
