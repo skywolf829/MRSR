@@ -1141,11 +1141,11 @@ folder : str, name : str, metric : str, value : float):
     if(ndims == 3):
         command = command + " " + str(d.shape[2])
     if(metric == "psnr"):
-        command = command + " -S " + str(value)
+        command = command + " -M PSNR -S " + str(value)
     elif(metric == "mre"):
-        command = command + " -R " + str(value)
+        command = command + " -M REL -R " + str(value)
     elif(metric == "pw_mre"):
-        command = command + " -P " + str(value)
+        command = command + " -M PW_REL -P " + str(value)
     print(command)
     os.system(command)
     os.system("rm " + d_loc)
