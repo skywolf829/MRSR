@@ -781,7 +781,7 @@ def mixedLOD_octree_SR_compress(
         create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
     
     while(len(node_indices_to_check) > 0): 
-        print(nodes_checked)
+        #print(nodes_checked)
         nodes_checked += 1
         i = node_indices_to_check.pop(0)
         n = nodes[i]
@@ -1166,7 +1166,6 @@ folder : str, name : str, metric : str, value : float):
     os.system("tar -cjvf " + save_location + " -C " + folder + " Temp")
     os.system("rm -r " + temp_folder_path)
 
-
 def sz_decompress_nodelist1(filename : str):
     print("Decompressing " + filename + " with sz method 1")
     folder_path = os.path.dirname(os.path.abspath(__file__))
@@ -1349,7 +1348,7 @@ if __name__ == '__main__':
                 elif(args['sz_mode'] == 2):
                     sz_compress_nodelist2(nodes, full_shape, max_LOD, 
                     downscaling_technique, device, mode, save_folder, save_name,
-                    'mre', 0.05)
+                    'mre', 0.1)
             else:
                 torch.save(nodes, os.path.join(save_folder,
                     save_name+".torch"))
