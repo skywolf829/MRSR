@@ -1097,11 +1097,11 @@ folder : str, name : str, metric : str, value : float):
         if(ndims == 3):
             command = command + " " + str(d.shape[2])
         if(metric == "psnr"):
-            command = command + " -S " + str(value)
+            command = command + " -M PSNR -S " + str(value)
         elif(metric == "mre"):
-            command = command + " -R " + str(value)
+            command = command + " -M REL -R " + str(value)
         elif(metric == "pw_mre"):
-            command = command + " -P " + str(value)
+            command = command + " -M PW_REL -P " + str(value)
         #print(command)
         os.system(command)
         os.system("rm " + d_loc)
@@ -1344,7 +1344,7 @@ if __name__ == '__main__':
             if(args['sz_compress']):
                 if(args['sz_mode'] == 1):
                     sz_compress_nodelist1(nodes, full_shape, save_folder, save_name,
-                    criterion, m)
+                    'pw_mre', 0.001)
                 elif(args['sz_mode'] == 2):
                     sz_compress_nodelist2(nodes, full_shape, max_LOD, 
                     downscaling_technique, device, mode, save_folder, save_name,

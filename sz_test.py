@@ -57,11 +57,11 @@ if __name__ == '__main__':
         if(args['dims'] == 3):
             command = command + " " + str(args['nz'])
         if(args['metric'] == "psnr"):
-            command = command + " -S " + str(value)
+            command = command + " -M PSNR -S " + str(value)
         elif(args['metric'] == "mre"):
-            command = command + " -R " + str(value)
+            command = command + " -M REL -R " + str(value)
         elif(args['metric'] == "pw_mre"):
-            command = command + " -P " + str(value)
+            command = command + " -M PW_REL -P " + str(value)
         start_t = time.time()
         print("Running: " + command)
         os.system(command)
