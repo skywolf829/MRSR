@@ -1168,6 +1168,7 @@ folder : str, name : str, metric : str, value : float):
 
 
 def sz_decompress_nodelist1(filename : str):
+    print("Decompressing with sz method 1")
     folder_path = os.path.dirname(os.path.abspath(__file__))
     temp_folder = os.path.join(folder_path, "Temp")
     if(not os.path.exists(temp_folder)):
@@ -1183,7 +1184,7 @@ def sz_decompress_nodelist1(filename : str):
     return nodes
 
 def sz_decompress_nodelist2(filename : str):
-    
+    print("Decompressing with sz method 2")
     folder_path = os.path.dirname(os.path.abspath(__file__))
     temp_folder = os.path.join(folder_path, "Temp")
     if(not os.path.exists(temp_folder)):
