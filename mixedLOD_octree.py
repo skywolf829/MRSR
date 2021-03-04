@@ -1083,6 +1083,10 @@ folder : str, name : str):
         os.makedirs(temp_folder_path)
     
     metadata : List[int] = []
+    metadata.append(len(full_shape))
+    for i in range(len(full_shape)):
+        metadata.append(full_shape[i])
+
     for i in range(len(nodes)):
         d = nodes[i].data.cpu().numpy()[0,0]
         d_loc = os.path.join(temp_folder_path, str(i)+".dat")
@@ -1101,10 +1105,10 @@ folder : str, name : str):
         metadata.append(nodes[i].LOD)
     metadata = np.array(metadata, dtype=int)
     metadata.tofile(os.path.join(temp_folder_path, "metadata"))
-    os.system("tar -zcvf " + save_location + " " + temp_folder_path)
+    os.system("tar -cjvf " + save_location + " -C " + temp_folder_path + " .")
     os.system("rm -r " + temp_folder_path)
 
-def sz_decompress_nodelist(nodes: OctreeNodeList, folder : str, name : str):
+def sz_decompress_nodelist(filename : str):
     
     temp_folder_path = os.path.join(folder, "Temp")
     save_location = os.path.join(temp_folder_path, name +".tar.gz")
