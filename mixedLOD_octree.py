@@ -399,7 +399,7 @@ def generate_patch(z,z_stop,y,y_stop,x,x_stop,available_gpus):
     return result,z,z_stop,y,y_stop,x,x_stop,device
 
 class UpscalingMethod(nn.Module):
-    def __init__(self, method : str, device : str, model_name : Optional[str],
+    def __init__(self, method : str, device : str, model_name : Optional[str] = None,
         distributed : Optional[bool] = False):
         super(UpscalingMethod, self).__init__()
         self.method : str = method
