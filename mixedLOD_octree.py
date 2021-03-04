@@ -987,7 +987,7 @@ if __name__ == '__main__':
         img_gt : torch.Tensor = torch.from_numpy(imageio.imread(
             "TestingData/quadtree_images/"+img_name+"."+img_ext).astype(np.float32)).to(device)
         img_gt = img_gt.permute(2, 0, 1).unsqueeze(0)
-    elif(args['data_type']):
+    elif(args['data_type'] == "h5"):
         f = h5py.File(os.path.join(input_folder, args['file']), "r")
         img_gt : torch.Tensor = torch.from_numpy(np.array(f['data'])).unsqueeze(0).to(device)
         f.close()
