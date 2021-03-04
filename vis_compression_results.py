@@ -7,7 +7,7 @@ import os
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
     
-    parser.add_argument('--save_folder',default="mag2D_4010_mre",
+    parser.add_argument('--save_folder',default="mag2D_4010_psnr_sz",
     type=str,help='Folder to save images to')
     parser.add_argument('--output_file_name',default="results.pkl",
     type=str,help='filename to visualize in output folder')    
@@ -28,15 +28,16 @@ if __name__ == '__main__':
     # results go compression_method -> metric -> list
 
     compression_method_names = list(results.keys())
-    metrics = ['file_size', 'compression_time']
+    metrics = ['file_size', 'compression_time', 'num_nodes']
 
     for metric in metrics:
         fig = plt.figure()
         vals = []
         for method in compression_method_names:
-            x = np.array(results[method]['psnrs'])
-            y = results[method][metric]
-            plt.plot(x, y, label=method)
+            if(metric in results[method].keys()):
+                x = np.array(results[method]['psnrs'])
+                y = results[method][metric]
+                plt.plot(x, y, label=method)
         plt.legend()
         plt.xlabel("metric")
         plt.ylabel(metric)
