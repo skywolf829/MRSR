@@ -7,12 +7,12 @@ import os
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
     
-    parser.add_argument('--save_folder',default="64x_results",
+    parser.add_argument('--save_folder',default="2x_results",
     type=str,help='Folder to save images to')
-    parser.add_argument('--output_file_name',default="isomag2D_64x",
+    parser.add_argument('--output_file_name',default="mixing3D_2x",
     type=str,help='filename to visualize in output folder')
-    parser.add_argument('--start_ts', default=4000, type=int)
-    parser.add_argument('--ts_skip', default=10, type=int)
+    parser.add_argument('--start_ts', default=1000, type=int)
+    parser.add_argument('--ts_skip', default=1, type=int)
     
     
     args = vars(parser.parse_args())
