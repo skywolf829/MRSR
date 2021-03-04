@@ -1113,7 +1113,7 @@ downscaling_technique, device, mode,
 folder : str, name : str):
     
 
-    nearest_upscale = UpscalingMethod("nearest", nodes[0].device)
+    nearest_upscale = UpscalingMethod("nearest", device)
     data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels = \
             create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
 
