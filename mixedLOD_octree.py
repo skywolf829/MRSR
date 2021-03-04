@@ -14,7 +14,7 @@ from spatial_models import load_models
 from options import load_options
 import argparse
 import pickle
-
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 import copy
@@ -1074,6 +1074,62 @@ def h5_to_nodelist(name: str, device : str):
         )
     return nodes
 
+def sz_compress_nodelist(nodes: OctreeNodeList, folder : str, name : str):
+    
+    temp_folder_path = os.path.join(folder, "Temp")
+    save_location = os.path.join(temp_folder_path, name +".tar.gz")
+    if(not os.path.exists(temp_folder_path)):
+        os.makedirs(temp_folder_path)
+    
+    metadata : List[int] = []
+    for i in range(len(nodes)):
+        d = nodes[i].data.cpu().numpy()[0]
+        d_loc = os.path.join(temp_folder_path, str(i)+".dat")
+        ndims = len(d.shape)
+        d.tofile(d_loc)
+        command = "sz -z -f -i " + d_loc + " " + str(ndims) + " " + \
+            str(args['nx']) + " " + str(args['ny'])
+        if(ndims == 3):
+            command = command + " " + str(args['nz'])
+        command = command + " -P " + str(0.01)
+        os.system(command)
+        os.system("rm " + d_loc)
+        metadata.append(nodes[i].depth)
+        metadata.append(nodes[i].index)
+        metadata.append(nodes[i].LOD)
+    metadata = np.array(metadata, dtype=int)
+    metadata.tofile(os.path.join(temp_folder_path, metadata))
+    os.system("tar -zcvf " + save_location + " " + temp_folder_path)
+    os.system("rm -r" + temp_folder_path)
+
+def sz_decompress_nodelist(nodes: OctreeNodeList, folder : str, name : str):
+    
+    temp_folder_path = os.path.join(folder, "Temp")
+    save_location = os.path.join(temp_folder_path, name +".tar.gz")
+    if(not os.path.exists(temp_folder_path)):
+        os.makedirs(temp_folder_path)
+    
+    metadata : List[int] = []
+    for i in range(len(nodes)):
+        d = nodes[i].data.cpu().numpy()[0]
+        d_loc = os.path.join(temp_folder_path, str(i)+".dat")
+        ndims = len(d.shape)
+        d.tofile(d_loc)
+        command = "sz -z -f -i " + d_loc + " " + str(ndims) + " " + \
+            str(args['nx']) + " " + str(args['ny'])
+        if(ndims == 3):
+            command = command + " " + str(args['nz'])
+        command = command + " -P " + str(0.01)
+        os.system(command)
+        os.system("rm " + d_loc)
+        metadata.append(nodes[i].depth)
+        metadata.append(nodes[i].index)
+        metadata.append(nodes[i].LOD)
+    metadata = np.array(metadata, dtype=int)
+    metadata.tofile(os.path.join(temp_folder_path, metadata))
+    os.system("tar -zcvf " + save_location + " " + temp_folder_path)
+    os.system("rm -r" + temp_folder_path)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
 
@@ -1099,6 +1155,8 @@ if __name__ == '__main__':
     parser.add_argument('--model_name',default="SSR_isomag2D",type=str)
     parser.add_argument('--debug',default="false",type=str2bool)
     parser.add_argument('--distributed',default="false",type=str2bool)
+    parser.add_argument('--sz_compress',default="false",type=str2bool)
+    
 
     parser.add_argument('--data_type',default="h5",type=str)
 
@@ -1173,21 +1231,27 @@ if __name__ == '__main__':
             concat_num_nodes : int = len(nodes)
 
             #print("Concatenating blocks turned %s blocks into %s" % (str(num_nodes), str(concat_num_nodes)))
-
-            torch.save(nodes, os.path.join(save_folder,
-                img_name+"_"+upscaling_technique+ \
+            save_name = img_name+"_"+upscaling_technique+ \
                 "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                    "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".torch"))
+                    "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)
+            if(args['sz_compress']):
+                sz_compress_nodelist(nodes, save_folder, save_name)
+            else:
+                torch.save(nodes, os.path.join(save_folder,
+                    save_name+".torch"))
             
             
             #nodelist_to_h5(nodes, "./Output/"+img_name+"_"+upscaling_technique+ \
             #    "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
             #        "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".h5")
         else:
-            nodes : OctreeNodeList = torch.load(os.path.join(save_folder,
-                img_name+"_"+upscaling_technique+ \
-                "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                    "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".torch"))
+            if(args['sz_compress']):
+                print("TBI")
+            else:
+                nodes : OctreeNodeList = torch.load(os.path.join(save_folder,
+                    img_name+"_"+upscaling_technique+ \
+                    "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
+                        "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".torch"))
 
         data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels = \
             create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
