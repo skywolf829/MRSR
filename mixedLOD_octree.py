@@ -1098,6 +1098,7 @@ if __name__ == '__main__':
     parser.add_argument('--mode',default="2D",type=str)
     parser.add_argument('--model_name',default="SSR_isomag2D",type=str)
     parser.add_argument('--debug',default="false",type=str2bool)
+    parser.add_argument('--distributed',default="false",type=str2bool)
 
     parser.add_argument('--data_type',default="h5",type=str)
 
@@ -1113,6 +1114,7 @@ if __name__ == '__main__':
     mode : str = args['mode']
     model_name : str = args['model_name']
     debug : bool = args['debug']
+    distributed : bool = args['distributed']
 
     img_name : str = "4010"
     img_ext : str = "h5"
@@ -1142,7 +1144,8 @@ if __name__ == '__main__':
         img_gt : torch.Tensor = torch.from_numpy(np.array(f['data'])).unsqueeze(0).to(device)
         f.close()
 
-    upscaling : UpscalingMethod = UpscalingMethod(upscaling_technique, device, model_name)
+    upscaling : UpscalingMethod = UpscalingMethod(upscaling_technique, device, 
+    model_name, distributed)
     full_shape : List[int] = list(img_gt.shape)
     print(full_shape)
     m = args['start_metric']
