@@ -1146,7 +1146,7 @@ folder : str, name : str, metric : str, value : float):
         command = command + " -R " + str(value)
     elif(metric == "pw_mre"):
         command = command + " -P " + str(value)
-    #print(command)
+    print(command)
     os.system(command)
     os.system("rm " + d_loc)
     
@@ -1360,7 +1360,10 @@ if __name__ == '__main__':
             #        "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".h5")
         else:
             if(args['sz_compress']):
-                print("TBI")
+                if(args['sz_mode'] == 1):
+                    nodes = sz_decompress_nodelist1(os.path.join(save_folder,save_name + ".tar.gz"))
+                elif(args['sz_mode'] == 2):
+                    nodes = sz_decompress_nodelist2(os.path.join(save_folder,save_name + ".tar.gz"))
             else:
                 nodes : OctreeNodeList = torch.load(os.path.join(save_folder,
                     save_name+".torch"))
@@ -1411,6 +1414,9 @@ if __name__ == '__main__':
             else:
                 nodes = torch.load(os.path.join(save_folder,
                     save_name+".torch"))
+            data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels = \
+                create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
+
             img_upscaled = nodes_to_full_img(nodes, full_shape, 
                 max_LOD, upscaling, 
                 downscaling_technique, device, data_levels, 
@@ -1422,7 +1428,7 @@ if __name__ == '__main__':
             final_mre : float = relative_error(img_upscaled, img_gt)
 
             print("Decompressed final stats:")
-            print("PSNR: %0.02f, MSE: %0.02f, MRE: %0.04f" % \
+            print("PSNR: %0.02f, MSE: %0.05f, MRE: %0.05f" % \
                 (final_psnr, final_mse, final_mre))
 
             img_seams = nodes_to_full_img_seams(nodes, full_shape,
