@@ -1093,6 +1093,7 @@ folder : str, name : str):
         if(ndims == 3):
             command = command + " " + str(d.shape[2])
         command = command + " -P " + str(0.01)
+        print(command)
         os.system(command)
         os.system("rm " + d_loc)
         metadata.append(nodes[i].depth)
@@ -1269,10 +1270,12 @@ if __name__ == '__main__':
                 "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".png"), 
                 to_img(img_upscaled, mode))
 
-        f_size_kb = os.path.getsize(os.path.join(save_folder,
-            img_name+"_"+upscaling_technique+ \
-            "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".torch")) / 1024
+        if(args['sz_compress']):
+            f_size_kb = os.path.getsize(os.path.join(save_folder,
+            save_name+".tar.gz")) / 1024
+        else:
+            f_size_kb = os.path.getsize(os.path.join(save_folder,
+                save_name+".torch")) / 1024
 
         f_data_size_kb = nodes.total_size()
 
@@ -1284,7 +1287,7 @@ if __name__ == '__main__':
         print("PSNR: %0.02f, MSE: %0.02f, MRE: %0.04f" % \
             (final_psnr, final_mse, final_mre))
         print("Saved data size: %f kb" % nodes.total_size())
-        print("Saved file size: %f kb" % f_data_size_kb)
+        print("Saved file size: %f kb" % f_size_kb)
         results['psnrs'].append(criterion_value)
         results['file_size'].append(f_size_kb)
         results['compression_time'].append(compress_time)
