@@ -1161,7 +1161,6 @@ folder : str, name : str, metric : str, value : float):
         metadata.append(nodes[i].LOD)
 
     metadata = np.array(metadata, dtype=int)
-    print(metadata.shape)
     metadata.tofile(os.path.join(temp_folder_path, "metadata"))
 
     os.system("tar -cjvf " + save_location + " -C " + folder + " Temp")
@@ -1195,7 +1194,6 @@ def sz_decompress_nodelist2(filename : str):
 
     os.system("tar -xvf " + filename)
     metadata = np.fromfile(os.path.join(temp_folder, "metadata"), dtype=int)
-    print(metadata.shape)
     full_shape = []
     for i in range(1, metadata[0]+1):
         full_shape.append(metadata[i])
@@ -1205,14 +1203,13 @@ def sz_decompress_nodelist2(filename : str):
 
     if(len(full_shape) == 5):
         command = command + " " + full_shape[4]
-    print(command)
     os.system(command)
 
     full_data = np.fromfile(os.path.join(temp_folder, "nn_data.dat.sz.out"), dtype=np.float32)
     full_data = np.reshape(full_data, full_shape[2:])
 
     full_data = torch.Tensor(full_data).unsqueeze(0).unsqueeze(0)
-    for i in range(0, int(len(metadata)/3), 3):
+    for i in range(0, len(metadata), 3):
         depth = metadata[i]
         index = metadata[i+1]
         lod = metadata[i+2]
