@@ -1290,9 +1290,9 @@ if __name__ == '__main__':
                 "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
                     "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)
             if(args['sz_compress']):
-                sz_compress_nodelist(nodes, full_shape, save_folder, save_name)
-                #sz_compress_nodelist2(nodes, full_shape, max_LOD, 
-                #downscaling_technique, device, mode, save_folder, save_name)
+                #sz_compress_nodelist(nodes, full_shape, save_folder, save_name)
+                sz_compress_nodelist2(nodes, full_shape, max_LOD, 
+                downscaling_technique, device, mode, save_folder, save_name)
             else:
                 torch.save(nodes, os.path.join(save_folder,
                     save_name+".torch"))
