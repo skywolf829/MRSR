@@ -1122,8 +1122,10 @@ folder : str, name : str, metric : str, value : float):
     metadata : List[int] = []
     metadata.append(min_LOD)
     metadata.append(len(full_shape))
-    for i in range(len(full_shape)):
-        metadata.append(full_shape[i])
+    metadata.append(full_shape[0])
+    metadata.append(full_shape[1])
+    for i in range(2,len(full_shape)):
+        metadata.append(int(full_shape[i]/(2**min_LOD)))
     for i in range(len(nodes)):
         metadata.append(nodes[i].depth)
         metadata.append(nodes[i].index)
