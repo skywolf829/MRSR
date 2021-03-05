@@ -1126,6 +1126,15 @@ folder : str, name : str, metric : str, value : float):
     downscaling_technique, device, data_levels, mask_levels,
     data_downscaled_levels, mask_downscaled_levels, mode)
     
+    min_LOD = 0
+    for i in range(len(nodes)):
+        min_LOD = min(nodes[i].LOD, min_LOD)
+    
+    if(mode == "2D"):
+        full_im = subsample_downscale2D(full_im)
+    elif(mode == "3D"):
+        full_im = subsample_downscale3D(full_im)
+
     temp_folder_path = os.path.join(folder, "Temp")
     save_location = os.path.join(folder, name +".tar.gz")
     if(not os.path.exists(temp_folder_path)):
@@ -1152,6 +1161,7 @@ folder : str, name : str, metric : str, value : float):
     
     
     metadata : List[int] = []
+    metadata.append(min_LOD)
     metadata.append(len(full_shape))
     for i in range(len(full_shape)):
         metadata.append(full_shape[i])
@@ -1193,10 +1203,11 @@ def sz_decompress_nodelist2(filename : str, device : str):
 
     os.system("tar -xvf " + filename)
     metadata = np.fromfile(os.path.join(temp_folder, "metadata"), dtype=int)
+    min_LOD = metadata[0]
     full_shape = []
-    for i in range(1, metadata[0]+1):
+    for i in range(2, metadata[1]+2):
         full_shape.append(metadata[i])
-    metadata = metadata[metadata[0]+1:]
+    metadata = metadata[metadata[1]+2:]
     command = "sz -x -f -s " + os.path.join(temp_folder, "nn_data.dat.sz") + " -" + \
         str(len(full_shape[2:])) + " " + str(full_shape[2]) + " " + str(full_shape[3])
 
@@ -1208,6 +1219,8 @@ def sz_decompress_nodelist2(filename : str, device : str):
     full_data = np.reshape(full_data, full_shape[2:])
 
     full_data = torch.Tensor(full_data).unsqueeze(0).unsqueeze(0)
+    nearest_upscale = UpscalingMethod("nearest", device)
+    full_data = nearest_upscale(full_data, int(2**min_LOD))
     for i in range(0, len(metadata), 3):
         depth = metadata[i]
         index = metadata[i+1]
