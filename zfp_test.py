@@ -86,7 +86,8 @@ if __name__ == '__main__':
 
         f_size_kb = os.path.getsize(args['file'] + ".dat.zfp") / 1024
 
-        command = "zfp -f -z " + args['file'] + ".dat.zfp -" + str(args['dims']) + " " + \
+        command = "zfp -f -z " + args['file'] + ".dat.zfp -o " + \
+            args['file'] + ".dat.zfp.out -" + str(args['dims']) + " " + \
             str(args['nx']) + " " + str(args['ny'])
         if(args['dims'] == 3):
             command = command + " " + str(args['nz'])
