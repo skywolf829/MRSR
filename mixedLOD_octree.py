@@ -1662,7 +1662,7 @@ if __name__ == '__main__':
     else:
         all_data = {}
 
-    all_data[upscaling_technique] = results
+    all_data[upscaling_technique+"_"+args['compressor']] = results
     save_obj(all_data, os.path.join(save_folder, "results.pkl"))
 
         
