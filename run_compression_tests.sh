@@ -2,6 +2,7 @@
 cd /lus/theta-fs0/projects/DL4VIS/FlowSTSR
 export PATH="$HOME/sz/bin:$PATH"
 export PATH="$HOME/zfp/bin:$PATH"
+export PATH="$HOME/fpzip/bin:$PATH"
 python3 mixedLOD_octree.py --downscaling_technique avgpool2D --upscaling_technique bilinear --criterion psnr --start_metric 20 --end_metric 100 --metric_skip 5 --output_folder mag2D_4010_psnr_compression --sz_compress true --mode 2D --file 4010.h5 --dims 2 --nx 1024 --ny 1024 --sz_mode 2 --debug true
 python3 mixedLOD_octree.py --downscaling_technique avgpool2D --upscaling_technique bicubic --criterion psnr --start_metric 20 --end_metric 100 --metric_skip 5 --output_folder mag2D_4010_psnr_compression --sz_compress true --mode 2D --file 4010.h5 --dims 2 --nx 1024 --ny 1024 --sz_mode 2 --debug true
 python3 mixedLOD_octree.py --downscaling_technique avgpool2D --upscaling_technique model --criterion psnr --start_metric 20 --end_metric 100 --metric_skip 5 --output_folder mag2D_4010_psnr_compression --sz_compress true --mode 2D --file 4010.h5 --dims 2 --nx 1024 --ny 1024 --sz_mode 2 --debug true --model_name SSR_isomag2D
