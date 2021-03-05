@@ -1600,6 +1600,7 @@ if __name__ == '__main__':
         final_mre : float = relative_error(img_upscaled, img_gt)
 
         print("Final stats:")
+        print("Target - " + criterion + " " + str(criterion_value))
         print("PSNR: %0.02f, MSE: %0.02f, MRE: %0.04f" % \
             (final_psnr, final_mse, final_mre))
         print("Pre-compressed data size: %f kb" % nodes.total_size())
