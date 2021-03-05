@@ -39,8 +39,22 @@ if __name__ == '__main__':
                 y = results[method][metric]
                 plt.plot(x, y, label=method)
         plt.legend()
-        plt.xlabel("metric")
+        plt.xlabel("(De)compressed PSNR")
         plt.ylabel(metric)
-        plt.title(args['output_file_name'] + " - " + metric)
-        plt.savefig(os.path.join(save_folder, metric+".png"))
+        plt.title(args['output_file_name'] + "psnr vs - " + metric)
+        plt.savefig(os.path.join(save_folder, metric+"_psnr.png"))
+        plt.clf()
+    for metric in metrics:
+        fig = plt.figure()
+        vals = []
+        for method in compression_method_names:
+            if(metric in results[method].keys() and len(results[method][metric]) > 0):
+                x = np.array(results[method]['rec_ssim'])
+                y = results[method][metric]
+                plt.plot(x, y, label=method)
+        plt.legend()
+        plt.xlabel("(De)compressed SSIM")
+        plt.ylabel(metric)
+        plt.title(args['output_file_name'] + "ssim vs - " + metric)
+        plt.savefig(os.path.join(save_folder, metric+"_ssim.png"))
         plt.clf()

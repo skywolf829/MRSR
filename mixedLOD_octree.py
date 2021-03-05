@@ -542,7 +542,6 @@ def downscale(method: str, img: torch.Tensor, scale_factor: int) -> torch.Tensor
         print("No support for downscaling method: " + str(method))
     return down
 
-@torch.jit.script
 def criterion_met(method: str, value: torch.Tensor, 
 a: torch.Tensor, b: torch.Tensor, max_diff : Optional[torch.Tensor] = None) -> torch.Tensor:
     passed : torch.Tensor = torch.empty([1],device=a.device)
