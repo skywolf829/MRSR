@@ -91,7 +91,7 @@ if __name__ == '__main__':
             str(args['nx']) + " " + str(args['ny'])
         if(args['dims'] == 3):
             command = command + " " + str(args['nz'])
-        command = command + " -S " + str(value) 
+        command = command + " -r " + str(value) 
 
         os.system(command)
 
