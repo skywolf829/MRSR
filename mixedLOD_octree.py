@@ -1317,6 +1317,7 @@ if __name__ == '__main__':
         save_name = img_name+"_"+upscaling_technique+ \
             "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
             "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)
+        compress_time = 0
         if not load_existing:
             root_node = OctreeNode(img_gt, 0, 0, 0)
             nodes : OctreeNodeList = OctreeNodeList()
@@ -1373,7 +1374,7 @@ if __name__ == '__main__':
 
         upscaling : UpscalingMethod = UpscalingMethod(upscaling_technique, device, 
             model_name, distributed)
-            
+
         img_upscaled = nodes_to_full_img(nodes, full_shape, 
         max_LOD, upscaling, 
         downscaling_technique, device, data_levels, 
