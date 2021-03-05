@@ -1089,8 +1089,9 @@ folder : str, name : str, metric : str, value : float):
     min_LOD = max_LOD
     for i in range(len(nodes)):
         min_LOD = min(nodes[i].LOD, min_LOD)
-    
+    print("Min LOD found: " + str(min_LOD))
     if(min_LOD > 0):
+        print("Subsampling by " + str(int(2**min_LOD)))
         if(mode == "2D"):
             full_im = subsample_downscale2D(full_im, int(2**min_LOD))
         elif(mode == "3D"):
