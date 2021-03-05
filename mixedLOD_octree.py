@@ -1102,9 +1102,10 @@ folder : str, name : str, metric : str, value : float):
         os.makedirs(temp_folder_path)
     
 
-    d = full_im.data.cpu().numpy()[0,0]
+    d = full_im.cpu().numpy()[0,0]
     d_loc = os.path.join(temp_folder_path,"nn_data.dat")
     ndims = len(d.shape)
+    print(d.shape)
     d.tofile(d_loc)
     command = "sz -z -f -i " + d_loc + " -" + str(ndims) + " " + \
         str(d.shape[0]) + " " + str(d.shape[1])
