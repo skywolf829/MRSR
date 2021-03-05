@@ -1327,7 +1327,7 @@ def zfp_decompress_nodelist(filename : str, device : str):
         full_shape.append(metadata[i])
         
     metadata = metadata[metadata[1]+2:]
-    command = "zfp -f -z " + os.path.join(temp_folder, "nn_data.dat.zfp") + " -o " + \
+    command = "zfp -f -z -R" + os.path.join(temp_folder, "nn_data.dat.zfp") + " -o " + \
         os.path.join(temp_folder, "nn_data.dat.zfp.out")+ " -" + \
         str(len(full_shape[2:])) + " " + str(full_shape[2]) + " " + str(full_shape[3])
 
@@ -1337,12 +1337,14 @@ def zfp_decompress_nodelist(filename : str, device : str):
     os.system(command)
 
     full_data = np.fromfile(os.path.join(temp_folder, "nn_data.dat.zfp.out"), dtype=np.float32)
+    print(full_data.shape)
     full_data = np.reshape(full_data, full_shape[2:])
-    
+    print(full_data.shape)
     full_data = torch.Tensor(full_data).unsqueeze(0).unsqueeze(0)
     nearest_upscale = UpscalingMethod("nearest", device)
 
     full_data = nearest_upscale(full_data, int(2**min_LOD))
+    print(full_data.shape)
     for i in range(0, len(metadata), 3):
         depth = metadata[i]
         index = metadata[i+1]
