@@ -1148,26 +1148,24 @@ folder : str, name : str):
     full_im = nodes_to_full_img(nodes, full_shape, max_LOD, nearest_upscale,
     downscaling_technique, device, data_levels, mask_levels,
     data_downscaled_levels, mask_downscaled_levels, mode)
-    
     min_LOD = max_LOD
     for i in range(len(nodes)):
         min_LOD = min(nodes[i].LOD, min_LOD)
-    
     if(min_LOD > 0):
         if(mode == "2D"):
             full_im = subsample_downscale2D(full_im, int(2**min_LOD))
         elif(mode == "3D"):
             full_im = subsample_downscale3D(full_im, int(2**min_LOD))
-
     temp_folder_path = os.path.join(folder, "Temp")
     save_location = os.path.join(folder, name +".tar.gz")
     if(not os.path.exists(temp_folder_path)):
         os.makedirs(temp_folder_path)
     
 
-    d = full_im.data.cpu().numpy()[0,0]
+    d = full_im.cpu().numpy()[0,0]
     d_loc = os.path.join(temp_folder_path,"nn_data.dat")
     ndims = len(d.shape)
+    print(d.shape)
     d.tofile(d_loc)
     command = "zfp -f -R -i " + d_loc + " -o " +\
         d_loc + ".zfp" + " -" + str(ndims) + " " + \
@@ -1181,8 +1179,10 @@ folder : str, name : str):
     metadata : List[int] = []
     metadata.append(min_LOD)
     metadata.append(len(full_shape))
-    for i in range(len(full_shape)):
-        metadata.append(full_shape[i])
+    metadata.append(full_shape[0])
+    metadata.append(full_shape[1])
+    for i in range(2,len(full_shape)):
+        metadata.append(int(full_shape[i]/(2**min_LOD)))
     for i in range(len(nodes)):
         metadata.append(nodes[i].depth)
         metadata.append(nodes[i].index)
@@ -1205,26 +1205,24 @@ folder : str, name : str):
     full_im = nodes_to_full_img(nodes, full_shape, max_LOD, nearest_upscale,
     downscaling_technique, device, data_levels, mask_levels,
     data_downscaled_levels, mask_downscaled_levels, mode)
-    
     min_LOD = max_LOD
     for i in range(len(nodes)):
         min_LOD = min(nodes[i].LOD, min_LOD)
-    
     if(min_LOD > 0):
         if(mode == "2D"):
             full_im = subsample_downscale2D(full_im, int(2**min_LOD))
         elif(mode == "3D"):
             full_im = subsample_downscale3D(full_im, int(2**min_LOD))
-
     temp_folder_path = os.path.join(folder, "Temp")
     save_location = os.path.join(folder, name +".tar.gz")
     if(not os.path.exists(temp_folder_path)):
         os.makedirs(temp_folder_path)
     
 
-    d = full_im.data.cpu().numpy()[0,0]
+    d = full_im.cpu().numpy()[0,0]
     d_loc = os.path.join(temp_folder_path,"nn_data.dat")
     ndims = len(d.shape)
+    print(d.shape)
     d.tofile(d_loc)
     command = "fpzip -t float -i " + d_loc + " -o " +\
         d_loc + ".fpzip" + " -" + str(ndims) + " " + \
@@ -1238,8 +1236,10 @@ folder : str, name : str):
     metadata : List[int] = []
     metadata.append(min_LOD)
     metadata.append(len(full_shape))
-    for i in range(len(full_shape)):
-        metadata.append(full_shape[i])
+    metadata.append(full_shape[0])
+    metadata.append(full_shape[1])
+    for i in range(2,len(full_shape)):
+        metadata.append(int(full_shape[i]/(2**min_LOD)))
     for i in range(len(nodes)):
         metadata.append(nodes[i].depth)
         metadata.append(nodes[i].index)
@@ -1263,12 +1263,10 @@ def sz_decompress_nodelist(filename : str, device : str):
     os.system("tar -xvf " + filename)
     metadata = np.fromfile(os.path.join(temp_folder, "metadata"), dtype=int)
     min_LOD = metadata[0]
-    print("Min LOD :"+str(min_LOD))
     full_shape = []
     for i in range(2, metadata[1]+2):
         full_shape.append(metadata[i])
         
-    print("Full shape :"+str(full_shape))
     metadata = metadata[metadata[1]+2:]
     command = "sz -x -f -s " + os.path.join(temp_folder, "nn_data.dat.sz") + " -" + \
         str(len(full_shape[2:])) + " " + str(full_shape[2]) + " " + str(full_shape[3])
@@ -1281,12 +1279,10 @@ def sz_decompress_nodelist(filename : str, device : str):
     full_data = np.fromfile(os.path.join(temp_folder, "nn_data.dat.sz.out"), dtype=np.float32)
     full_data = np.reshape(full_data, full_shape[2:])
     
-    print("Data shape :"+str(full_data.shape))
     full_data = torch.Tensor(full_data).unsqueeze(0).unsqueeze(0)
     nearest_upscale = UpscalingMethod("nearest", device)
 
     full_data = nearest_upscale(full_data, int(2**min_LOD))
-    print(full_data.shape)
     for i in range(0, len(metadata), 3):
         depth = metadata[i]
         index = metadata[i+1]
@@ -1309,7 +1305,6 @@ def sz_decompress_nodelist(filename : str, device : str):
             data = avgpool_downscale3D(data, int(2**lod))
         
         n = OctreeNode(data.to(device), lod, depth, index)
-        print(str(n))
         nodes.append(n)
     os.system("rm -r " + temp_folder)
     print("Finished decompressing, " + str(len(nodes)) + " blocks recovered")
@@ -1330,6 +1325,7 @@ def zfp_decompress_nodelist(filename : str, device : str):
     full_shape = []
     for i in range(2, metadata[1]+2):
         full_shape.append(metadata[i])
+        
     metadata = metadata[metadata[1]+2:]
     command = "zfp -f -R -z " + os.path.join(temp_folder, "nn_data.dat.zfp") + " -o" + \
         os.path.join(temp_folder, "nn_data.dat.zfp.out")+ " -" + \
@@ -1340,11 +1336,12 @@ def zfp_decompress_nodelist(filename : str, device : str):
     print(command)
     os.system(command)
 
-    full_data = np.fromfile(os.path.join(temp_folder, "nn_data.dat.zfp.out"), dtype=np.float32)
+    full_data = np.fromfile(os.path.join(temp_folder, "nn_data.dat.sz.out"), dtype=np.float32)
     full_data = np.reshape(full_data, full_shape[2:])
-
+    
     full_data = torch.Tensor(full_data).unsqueeze(0).unsqueeze(0)
     nearest_upscale = UpscalingMethod("nearest", device)
+
     full_data = nearest_upscale(full_data, int(2**min_LOD))
     for i in range(0, len(metadata), 3):
         depth = metadata[i]
@@ -1388,6 +1385,7 @@ def fpzip_decompress_nodelist(filename : str, device : str):
     full_shape = []
     for i in range(2, metadata[1]+2):
         full_shape.append(metadata[i])
+        
     metadata = metadata[metadata[1]+2:]
     command = "fpzip -d -t float -i " + os.path.join(temp_folder, "nn_data.dat.fpzip") + " -o" + \
         os.path.join(temp_folder, "nn_data.dat.fpzip.out")+ " -" + \
@@ -1398,11 +1396,12 @@ def fpzip_decompress_nodelist(filename : str, device : str):
     print(command)
     os.system(command)
 
-    full_data = np.fromfile(os.path.join(temp_folder, "nn_data.dat.fpzip.out"), dtype=np.float32)
+    full_data = np.fromfile(os.path.join(temp_folder, "nn_data.dat.sz.out"), dtype=np.float32)
     full_data = np.reshape(full_data, full_shape[2:])
-
+    
     full_data = torch.Tensor(full_data).unsqueeze(0).unsqueeze(0)
     nearest_upscale = UpscalingMethod("nearest", device)
+
     full_data = nearest_upscale(full_data, int(2**min_LOD))
     for i in range(0, len(metadata), 3):
         depth = metadata[i]
