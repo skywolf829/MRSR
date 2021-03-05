@@ -28,13 +28,13 @@ if __name__ == '__main__':
     # results go compression_method -> metric -> list
 
     compression_method_names = list(results.keys())
-    metrics = ['file_size', 'compression_time', 'num_nodes']
+    metrics = ['file_size', 'compression_time', 'num_nodes', 'rec_psnr']
 
     for metric in metrics:
         fig = plt.figure()
         vals = []
         for method in compression_method_names:
-            if(metric in results[method].keys()):
+            if(metric in results[method].keys() and len(results[method][metric]) > 0):
                 x = np.array(results[method]['psnrs'])
                 y = results[method][metric]
                 plt.plot(x, y, label=method)

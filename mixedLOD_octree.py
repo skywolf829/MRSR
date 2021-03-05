@@ -1434,7 +1434,7 @@ if __name__ == '__main__':
             print("PSNR: %0.02f, MSE: %0.05f, MRE: %0.05f" % \
                 (final_psnr, final_mse, final_mre))
             
-            results['rec_psnr'].append(len(final_psnr))
+            results['rec_psnr'].append(final_psnr)
 
             img_seams = nodes_to_full_img_seams(nodes, full_shape,
             upscaling, device, mode)
