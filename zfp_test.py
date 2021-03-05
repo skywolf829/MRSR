@@ -123,7 +123,7 @@ if __name__ == '__main__':
         results['file_size'].append(f_size_kb)
         results['compression_time'].append(compression_time)
         results['rec_psnr'].append(rec_psnr)
-        value += args['bvp_skip']
+        value += args['bpv_skip']
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
         all_data = load_obj(os.path.join(save_folder, "results.pkl"))
