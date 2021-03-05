@@ -14,6 +14,26 @@ def load_obj(location):
     with open(location, 'rb') as f:
         return pickle.load(f)
 
+def MSE(x, GT):
+    return ((x-GT)**2).mean()
+
+def PSNR(x, GT, max_diff = None):
+    if(max_diff is None):
+        max_diff = GT.max() - GT.min()
+    p = 20 * np.log10(max_diff) - 10*np.log10(MSE(x, GT))
+    return p
+
+def relative_error(x, GT, max_diff = None):
+    if(max_diff is None):
+        max_diff = GT.max() - GT.min()
+    val = np.abs(GT-x).max() / max_diff
+    return val
+
+def pw_relative_error(x, GT):
+    val = np.abs(GT-x) / GT
+    return val.max()
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
 
@@ -82,14 +102,20 @@ if __name__ == '__main__':
         dc.dtype = np.float32
         if(args['dims'] == 2):
             dc = dc.reshape(args['nx'], args['ny'])
+        elif(args['dims'] == 3):
+            dc = dc.reshape(args['nx'], args['ny'], args['nz'])    
+
+        rec_psnr = PSNR(dc,d)
+                
+        if(args['dims'] == 2):
             im = dc - dc.min()
             im *= (255/dc.max())
             im = im.astype(np.uint8)
-        elif(args['dims'] == 3):
-            dc = dc.reshape(args['nx'], args['ny'], args['nz'])            
+        elif(args['dims'] == 3):      
             im = dc - dc.min()
             im *= (255/dc.max())
             im = im.astype(np.uint8)[:,:,int(im.shape[2]/2)]
+        
         imageio.imwrite(os.path.join(save_folder, "sz_"+args['file']+"_"+str(value)+".png"), im)
 
         command = "mv " + args['file']+".dat.sz " + save_folder +"/psnr_"+str(value)+"_"+args['file']+".sz"
@@ -98,7 +124,7 @@ if __name__ == '__main__':
         results['psnrs'].append(value)
         results['file_size'].append(f_size_kb)
         results['compression_time'].append(compression_time)
-        results['rec_psnr'].append(value)
+        results['rec_psnr'].append(rec_psnr)
         value += args['value_skip']
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):

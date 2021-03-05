@@ -35,7 +35,7 @@ if __name__ == '__main__':
         vals = []
         for method in compression_method_names:
             if(metric in results[method].keys() and len(results[method][metric]) > 0):
-                x = np.array(results[method]['psnrs'])
+                x = np.array(results[method]['rec_psnr'])
                 y = results[method][metric]
                 plt.plot(x, y, label=method)
         plt.legend()
