@@ -70,8 +70,8 @@ if __name__ == '__main__':
     d = np.array(f['data'][0])
     f.close()
     d.tofile(args['file'] + ".dat")
-    value = args['start_value']
-    while(value < args['end_value']):
+    value = args['start_bpv']
+    while(value < args['end_bpv']):
         command = "zfp -f -i " + args['file'] + ".dat -z " + \
             args['file']+".dat.zfp -o " + \
             args['file']+".dat.zfp.out -" + str(args['dims']) + " " + \
@@ -121,7 +121,7 @@ if __name__ == '__main__':
         results['file_size'].append(f_size_kb)
         results['compression_time'].append(compression_time)
         results['rec_psnr'].append(rec_psnr)
-        value += args['value_skip']
+        value += args['bvp_skip']
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
         all_data = load_obj(os.path.join(save_folder, "results.pkl"))
