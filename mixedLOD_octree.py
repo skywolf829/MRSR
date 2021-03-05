@@ -1362,9 +1362,9 @@ if __name__ == '__main__':
         else:
             if(args['sz_compress']):
                 if(args['sz_mode'] == 1):
-                    nodes = sz_decompress_nodelist1(os.path.join(save_folder,save_name + ".tar.gz"))
+                    nodes = sz_decompress_nodelist1(os.path.join(save_folder,save_name + ".tar.gz"), device)
                 elif(args['sz_mode'] == 2):
-                    nodes = sz_decompress_nodelist2(os.path.join(save_folder,save_name + ".tar.gz"))
+                    nodes = sz_decompress_nodelist2(os.path.join(save_folder,save_name + ".tar.gz"), device)
             else:
                 nodes : OctreeNodeList = torch.load(os.path.join(save_folder,
                     save_name+".torch"))
