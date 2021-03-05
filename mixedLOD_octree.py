@@ -1261,9 +1261,12 @@ def sz_decompress_nodelist(filename : str, device : str):
     os.system("tar -xvf " + filename)
     metadata = np.fromfile(os.path.join(temp_folder, "metadata"), dtype=int)
     min_LOD = metadata[0]
+    print("Min LOD :"+str(min_LOD))
     full_shape = []
     for i in range(2, metadata[1]+2):
         full_shape.append(metadata[i])
+        
+    print("Full shape :"+str(full_shape))
     metadata = metadata[metadata[1]+2:]
     command = "sz -x -f -s " + os.path.join(temp_folder, "nn_data.dat.sz") + " -" + \
         str(len(full_shape[2:])) + " " + str(full_shape[2]) + " " + str(full_shape[3])
@@ -1275,9 +1278,11 @@ def sz_decompress_nodelist(filename : str, device : str):
 
     full_data = np.fromfile(os.path.join(temp_folder, "nn_data.dat.sz.out"), dtype=np.float32)
     full_data = np.reshape(full_data, full_shape[2:])
-
+    
+    print("Data shape :"+str(full_data.shape))
     full_data = torch.Tensor(full_data).unsqueeze(0).unsqueeze(0)
     nearest_upscale = UpscalingMethod("nearest", device)
+
     full_data = nearest_upscale(full_data, int(2**min_LOD))
     print(full_data.shape)
     for i in range(0, len(metadata), 3):
