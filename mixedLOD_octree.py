@@ -259,12 +259,12 @@ def avgpool_downscale3D(vol : torch.Tensor, scale_factor : int) -> torch.Tensor:
 
 @torch.jit.script
 def subsample_downscale2D(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
-    img = img[:,:, ::2, ::2]
+    img = img[:,:, ::scale_factor, ::scale_factor]
     return img
 
 @torch.jit.script
 def subsample_downscale3D(vol : torch.Tensor, scale_factor : int) -> torch.Tensor:
-    vol = vol[:,:, ::2, ::2, ::2]
+    vol = vol[:,:, ::scale_factor, ::scale_factor, ::scale_factor]
     return vol
 
 class SharedList(object):  
