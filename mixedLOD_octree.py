@@ -1096,7 +1096,7 @@ folder : str, name : str, metric : str, value : float):
             full_im = subsample_downscale2D(full_im, int(2**min_LOD))
         elif(mode == "3D"):
             full_im = subsample_downscale3D(full_im, int(2**min_LOD))
-
+    print(full_im.shape)
     temp_folder_path = os.path.join(folder, "Temp")
     save_location = os.path.join(folder, name +".tar.gz")
     if(not os.path.exists(temp_folder_path)):
