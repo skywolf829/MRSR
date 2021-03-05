@@ -36,13 +36,13 @@ if __name__ == '__main__':
         for method in compression_method_names:
             if('rec_psnr' in results[method].keys() and \
                 metric in results[method].keys() and len(results[method][metric]) > 0):
-                x = np.array(results[method]['rec_psnr'])
-                y = results[method][metric]
+                x = np.array(results[method]['rec_psnr'][2:7])
+                y = results[method][metric][2:7]
                 plt.plot(x, y, label=method)
         plt.legend()
         plt.xlabel("(De)compressed PSNR")
         plt.ylabel(metric)
-        plt.title(args['output_file_name'] + "psnr vs - " + metric)
+        plt.title(args['output_file_name'] + " psnr vs - " + metric)
         plt.savefig(os.path.join(save_folder, metric+"_psnr.png"))
         plt.clf()
     for metric in metrics:
@@ -51,12 +51,12 @@ if __name__ == '__main__':
         for method in compression_method_names:
             if('rec_ssim' in results[method].keys() and \
                 metric in results[method].keys() and len(results[method][metric]) > 0):
-                x = np.array(results[method]['rec_ssim'])
-                y = results[method][metric]
+                x = np.array(results[method]['rec_ssim'][2:7])
+                y = results[method][metric][2:7]
                 plt.plot(x, y, label=method)
         plt.legend()
         plt.xlabel("(De)compressed SSIM")
         plt.ylabel(metric)
-        plt.title(args['output_file_name'] + "ssim vs - " + metric)
+        plt.title(args['output_file_name'] + " ssim vs - " + metric)
         plt.savefig(os.path.join(save_folder, metric+"_ssim.png"))
         plt.clf()
