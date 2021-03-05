@@ -1279,6 +1279,7 @@ def sz_decompress_nodelist(filename : str, device : str):
     full_data = torch.Tensor(full_data).unsqueeze(0).unsqueeze(0)
     nearest_upscale = UpscalingMethod("nearest", device)
     full_data = nearest_upscale(full_data, int(2**min_LOD))
+    print(full_data.shape)
     for i in range(0, len(metadata), 3):
         depth = metadata[i]
         index = metadata[i+1]
@@ -1301,6 +1302,7 @@ def sz_decompress_nodelist(filename : str, device : str):
             data = avgpool_downscale3D(data, int(2**lod))
         
         n = OctreeNode(data.to(device), lod, depth, index)
+        print(str(n))
         nodes.append(n)
     os.system("rm -r " + temp_folder)
     print("Finished decompressing, " + str(len(nodes)) + " blocks recovered")
