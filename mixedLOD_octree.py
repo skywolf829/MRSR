@@ -1085,7 +1085,7 @@ folder : str, name : str, metric : str, value : float):
     full_im = nodes_to_full_img(nodes, full_shape, max_LOD, nearest_upscale,
     downscaling_technique, device, data_levels, mask_levels,
     data_downscaled_levels, mask_downscaled_levels, mode)
-    
+    print(full_im.shape)
     min_LOD = max_LOD
     for i in range(len(nodes)):
         min_LOD = min(nodes[i].LOD, min_LOD)
