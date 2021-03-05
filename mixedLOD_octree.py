@@ -1336,7 +1336,7 @@ def zfp_decompress_nodelist(filename : str, device : str):
     print(command)
     os.system(command)
 
-    full_data = np.fromfile(os.path.join(temp_folder, "nn_data.dat.sz.out"), dtype=np.float32)
+    full_data = np.fromfile(os.path.join(temp_folder, "nn_data.dat.zfp.out"), dtype=np.float32)
     full_data = np.reshape(full_data, full_shape[2:])
     
     full_data = torch.Tensor(full_data).unsqueeze(0).unsqueeze(0)
@@ -1396,7 +1396,7 @@ def fpzip_decompress_nodelist(filename : str, device : str):
     print(command)
     os.system(command)
 
-    full_data = np.fromfile(os.path.join(temp_folder, "nn_data.dat.sz.out"), dtype=np.float32)
+    full_data = np.fromfile(os.path.join(temp_folder, "nn_data.dat.fpzip.out"), dtype=np.float32)
     full_data = np.reshape(full_data, full_shape[2:])
     
     full_data = torch.Tensor(full_data).unsqueeze(0).unsqueeze(0)
