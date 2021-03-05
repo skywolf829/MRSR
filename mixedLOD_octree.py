@@ -1567,6 +1567,7 @@ if __name__ == '__main__':
     results['compression_time'] = []
     results['num_nodes'] = []
     results['rec_psnr'] = []
+    results['rec_ssim'] = []
     
     if(args['data_type'] == "image"):
         img_gt : torch.Tensor = torch.from_numpy(imageio.imread(

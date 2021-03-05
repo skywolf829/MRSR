@@ -34,7 +34,8 @@ if __name__ == '__main__':
         fig = plt.figure()
         vals = []
         for method in compression_method_names:
-            if(metric in results[method].keys() and len(results[method][metric]) > 0):
+            if('rec_psnr' in results[method].keys() and \
+                metric in results[method].keys() and len(results[method][metric]) > 0):
                 x = np.array(results[method]['rec_psnr'])
                 y = results[method][metric]
                 plt.plot(x, y, label=method)
@@ -48,7 +49,8 @@ if __name__ == '__main__':
         fig = plt.figure()
         vals = []
         for method in compression_method_names:
-            if(metric in results[method].keys() and len(results[method][metric]) > 0):
+            if('rec_ssim' in results[method].keys() and \
+                metric in results[method].keys() and len(results[method][metric]) > 0):
                 x = np.array(results[method]['rec_ssim'])
                 y = results[method][metric]
                 plt.plot(x, y, label=method)
