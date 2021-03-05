@@ -7,7 +7,7 @@ import os
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
     
-    parser.add_argument('--save_folder',default="mag2D_4010_psnr_sz",
+    parser.add_argument('--save_folder',default="mag2D_4010_psnr_compression",
     type=str,help='Folder to save images to')
     parser.add_argument('--output_file_name',default="results.pkl",
     type=str,help='filename to visualize in output folder')    
