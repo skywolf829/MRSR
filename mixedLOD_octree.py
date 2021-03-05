@@ -133,8 +133,79 @@ class OctreeNodeList:
             nbytes += self.node_list[i].size()
         return nbytes 
 
+def gaussian(window_size : int, sigma : float) -> torch.Tensor:
+    gauss : torch.Tensor = torch.Tensor([exp(-(x - window_size//2)**2/float(2*sigma**2)) for x in range(window_size)])
+    return gauss/gauss.sum()
+
+def create_window(window_size : torch.Tensor, channel : int) -> torch.Tensor:
+    _1D_window : torch.Tensor = gaussian(window_size, 1.5).unsqueeze(1)
+    _2D_window : torch.Tensor = _1D_window.mm(_1D_window.t()).float().unsqueeze(0).unsqueeze(0)
+    window : torch.Tensor = torch.Tensor(_2D_window.expand(channel, 1, window_size, window_size).contiguous())
+    return window
+
+def _ssim(img1 : torch.Tensor, img2 : torch.Tensor, window : torch.Tensor, 
+window_size : torch.Tensor, channel : int, size_average : Optional[bool] = True):
+    mu1 : torch.Tensor = F.conv2d(img1, window, padding = window_size//2, groups = channel)
+    mu2 : torch.Tensor = F.conv2d(img2, window, padding = window_size//2, groups = channel)
+
+    mu1_sq : torch.Tensor = mu1.pow(2)
+    mu2_sq : torch.Tensor = mu2.pow(2)
+    mu1_mu2 : torch.Tensor = mu1*mu2
+
+    sigma1_sq : torch.Tensor = F.conv2d(img1*img1, window, padding = window_size//2, groups = channel) - mu1_sq
+    sigma2_sq : torch.Tensor = F.conv2d(img2*img2, window, padding = window_size//2, groups = channel) - mu2_sq
+    sigma12 : torch.Tensor = F.conv2d(img1*img2, window, padding = window_size//2, groups = channel) - mu1_mu2
+
+    C1 : float = 0.01**2
+    C2 : float= 0.03**2
+
+    ssim_map : torch.Tensor = ((2*mu1_mu2 + C1)*(2*sigma12 + C2))/((mu1_sq + mu2_sq + C1)*(sigma1_sq + sigma2_sq + C2))
+
+    ans : torch.Tensor = torch.Tensor([0])
+    if size_average:
+        ans = ssim_map.mean()
+    else:
+        ans = ssim_map.mean(1).mean(1).mean(1)
+    return ans
+
+class SSIM(torch.nn.Module):
+    def __init__(self, window_size = 11, size_average = True):
+        super(SSIM, self).__init__()
+        self.window_size = window_size
+        self.size_average = size_average
+        self.channel = 1
+        self.window = create_window(window_size, self.channel)
+
+    def forward(self, img1, img2):
+        (_, channel, _, _) = img1.size()
+
+        if channel == self.channel and self.window.data.type() == img1.data.type():
+            window = self.window
+        else:
+            window = create_window(self.window_size, channel)
+            
+            if img1.is_cuda:
+                window = window.cuda(img1.get_device())
+            window = window.type_as(img1)
+            
+            self.window = window
+            self.channel = channel
+
+
+        return _ssim(img1, img2, window, self.window_size, channel, self.size_average)
+
+def ssim(img1, img2, window_size = 11, size_average = True):
+    (_, channel, _, _) = img1.size()
+    window = create_window(window_size, channel)
+    
+    if img1.is_cuda:
+        window = window.cuda(img1.get_device())
+    window = window.type_as(img1)
+    
+    return _ssim(img1, img2, window, window_size, channel, size_average)
+
 def ssim_criterion(GT_image, img, min_ssim=0.6) -> float:
-    return ssim(img.permute(2, 0, 1).unsqueeze(0), GT_image.permute(2, 0, 1).unsqueeze(0)) > min_ssim
+    return ssim(GT_image, img) > min_ssim
 
 @torch.jit.script
 def MSE(x, GT) -> torch.Tensor:
@@ -158,7 +229,6 @@ def relative_error(x, GT, max_diff : Optional[torch.Tensor] = None) -> torch.Ten
 def pw_relative_error(x, GT) -> torch.Tensor:
     val = torch.abs(GT-x) / GT
     return val.max()
-
 
 @torch.jit.script
 def psnr_criterion(GT_image, img, min_PSNR : torch.Tensor,
@@ -484,6 +554,8 @@ a: torch.Tensor, b: torch.Tensor, max_diff : Optional[torch.Tensor] = None) -> t
         passed = maximum_relative_error(a, b, value, max_diff)
     elif(method == "pw_mre"):
         passed = maximum_pw_relative_error(a, b, value)
+    elif(method == "ssim"):
+        passed = ssim_criterion(a, b, value)
     else:
         print("No support for criterion: " + str(method))
     return passed
@@ -1600,11 +1672,12 @@ if __name__ == '__main__':
         final_psnr : float = PSNR(img_upscaled, img_gt)
         final_mse : float = MSE(img_upscaled, img_gt)
         final_mre : float = relative_error(img_upscaled, img_gt)
+        final_ssim : float = ssim(img_upscaled, img_gt)
 
         print("Final stats:")
         print("Target - " + criterion + " " + str(criterion_value))
-        print("PSNR: %0.02f, MSE: %0.02f, MRE: %0.04f" % \
-            (final_psnr, final_mse, final_mre))
+        print("PSNR: %0.02f, SSIM: %0.02f, MSE: %0.02f, MRE: %0.04f" % \
+            (final_psnr, final_ssim, final_mse, final_mre))
         print("Pre-compressed data size: %f kb" % nodes.total_size())
         print("Saved file size: %f kb" % f_size_kb)
         results['psnrs'].append(criterion_value)
@@ -1612,6 +1685,7 @@ if __name__ == '__main__':
         results['compression_time'].append(compress_time)
         results['num_nodes'].append(len(nodes))
         results['rec_psnr'].append(final_psnr)
+        results['rec_ssim'].append(final_ssim)
 
         if(args['debug']):           
 

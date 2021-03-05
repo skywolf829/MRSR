@@ -5,6 +5,7 @@ import argparse
 import h5py
 import time
 import pickle
+from skimage.metrics import structural_similarity as ssim
 
 def save_obj(obj,location):
     with open(location, 'wb') as f:
@@ -65,6 +66,7 @@ if __name__ == '__main__':
     results = {}
     results['file_size'] = []
     results['rec_psnr'] = []
+    results['rec_ssim'] = []
     results['psnrs'] = []
     results['compression_time'] = []
     f = h5py.File(os.path.join(input_folder, args['file']), "r")
@@ -104,7 +106,7 @@ if __name__ == '__main__':
             dc = dc.reshape(args['nx'], args['ny'], args['nz'])    
 
         rec_psnr = PSNR(dc,d)
-                
+        rec_ssim = ssim(d, dc)
         if(args['dims'] == 2):
             im = dc - dc.min()
             im *= (255/dc.max())
@@ -123,6 +125,7 @@ if __name__ == '__main__':
         results['file_size'].append(f_size_kb)
         results['compression_time'].append(compression_time)
         results['rec_psnr'].append(rec_psnr)
+        results['rec_ssim'].append(rec_ssim)
         value += args['bpv_skip']
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
