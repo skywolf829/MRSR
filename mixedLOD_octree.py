@@ -1166,7 +1166,7 @@ folder : str, name : str, metric : str, value : float):
     os.system("tar -cjvf " + save_location + " -C " + folder + " Temp")
     os.system("rm -r " + temp_folder_path)
 
-def sz_decompress_nodelist1(filename : str):
+def sz_decompress_nodelist1(filename : str, device : str):
     print("Decompressing " + filename + " with sz method 1")
     folder_path = os.path.dirname(os.path.abspath(__file__))
     temp_folder = os.path.join(folder_path, "Temp")
@@ -1182,7 +1182,7 @@ def sz_decompress_nodelist1(filename : str):
 
     return nodes
 
-def sz_decompress_nodelist2(filename : str):
+def sz_decompress_nodelist2(filename : str, device : str):
     print("Decompressing " + filename + " with sz method 2")
     folder_path = os.path.dirname(os.path.abspath(__file__))
     temp_folder = os.path.join(folder_path, "Temp")
@@ -1229,7 +1229,7 @@ def sz_decompress_nodelist2(filename : str):
             data = full_data[:,:,x:x+width,y:y+height,z:z+depth]
             data = avgpool_downscale3D(data, int(2**lod))
         
-        n = OctreeNode(data, lod, depth, index)
+        n = OctreeNode(data.to(device), lod, depth, index)
         nodes.append(n)
     os.system("rm -r " + temp_folder)
     print("Finished decompressing, " + str(len(nodes)) + " blocks recovered")
@@ -1411,9 +1411,9 @@ if __name__ == '__main__':
             
             if(args['sz_compress']):
                 if(args['sz_mode'] == 1):
-                    nodes = sz_decompress_nodelist1(os.path.join(save_folder,save_name + ".tar.gz"))
+                    nodes = sz_decompress_nodelist1(os.path.join(save_folder,save_name + ".tar.gz"), device)
                 elif(args['sz_mode'] == 2):
-                    nodes = sz_decompress_nodelist2(os.path.join(save_folder,save_name + ".tar.gz"))
+                    nodes = sz_decompress_nodelist2(os.path.join(save_folder,save_name + ".tar.gz"), device)
             else:
                 nodes = torch.load(os.path.join(save_folder,
                     save_name+".torch"))
