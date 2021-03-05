@@ -45,6 +45,7 @@ if __name__ == '__main__':
     results = {}
     results['file_size'] = []
     results['psnrs'] = []
+    results['rec_psnr'] = []
     results['compression_time'] = []
     f = h5py.File(os.path.join(input_folder, args['file']), "r")
     d = np.array(f['data'][0])
@@ -97,6 +98,7 @@ if __name__ == '__main__':
         results['psnrs'].append(value)
         results['file_size'].append(f_size_kb)
         results['compression_time'].append(compression_time)
+        results['rec_psnr'].append(value)
         value += args['value_skip']
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):

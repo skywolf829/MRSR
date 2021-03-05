@@ -1298,6 +1298,7 @@ if __name__ == '__main__':
     results['psnrs'] = []
     results['compression_time'] = []
     results['num_nodes'] = []
+    results['rec_psnr'] = []
     
     if(args['data_type'] == "image"):
         img_gt : torch.Tensor = torch.from_numpy(imageio.imread(
@@ -1429,6 +1430,8 @@ if __name__ == '__main__':
             print("Decompressed final stats:")
             print("PSNR: %0.02f, MSE: %0.05f, MRE: %0.05f" % \
                 (final_psnr, final_mse, final_mre))
+            
+            results['rec_psnr'].append(len(final_psnr))
 
             img_seams = nodes_to_full_img_seams(nodes, full_shape,
             upscaling, device, mode)
