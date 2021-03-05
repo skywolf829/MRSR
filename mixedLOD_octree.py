@@ -1528,12 +1528,18 @@ if __name__ == '__main__':
             
             if(args['use_compressor']):
                 if(args['compressor'] == "sz"):
-                    sz_compress_nodelist(nodes, full_shape, save_folder, save_name,
+                    sz_compress_nodelist(nodes, full_shape, max_LOD,
+                        downscaling_technique, device, mode,
+                        save_folder, save_name,
                         'pw_mre', 0.001)
                 elif(args['compressor'] == "zfp"):
-                    zfp_compress_nodelist(nodes, full_shape, save_folder, save_name)
+                    zfp_compress_nodelist(nodes, full_shape, max_LOD,
+                        downscaling_technique, device, mode,
+                        save_folder, save_name)
                 elif(args['compressor'] == "fpzip"):
-                    fpzip_compress_nodelist(nodes, full_shape, save_folder, save_name)
+                    fpzip_compress_nodelist(nodes, full_shape, max_LOD,
+                        downscaling_technique, device, mode,
+                        save_folder, save_name)
             else:
                 torch.save(nodes, os.path.join(save_folder,
                     save_name+".torch"))
