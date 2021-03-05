@@ -1131,9 +1131,9 @@ folder : str, name : str, metric : str, value : float):
         min_LOD = min(nodes[i].LOD, min_LOD)
     
     if(mode == "2D"):
-        full_im = subsample_downscale2D(full_im)
+        full_im = subsample_downscale2D(full_im, int(2**min_LOD))
     elif(mode == "3D"):
-        full_im = subsample_downscale3D(full_im)
+        full_im = subsample_downscale3D(full_im, int(2**min_LOD))
 
     temp_folder_path = os.path.join(folder, "Temp")
     save_location = os.path.join(folder, name +".tar.gz")
