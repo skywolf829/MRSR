@@ -1269,6 +1269,7 @@ def sz_decompress_nodelist(filename : str, device : str):
 
     if(len(full_shape) == 5):
         command = command + " " + full_shape[4]
+    print(command)
     os.system(command)
 
     full_data = np.fromfile(os.path.join(temp_folder, "nn_data.dat.sz.out"), dtype=np.float32)
@@ -1326,6 +1327,7 @@ def zfp_decompress_nodelist(filename : str, device : str):
 
     if(len(full_shape) == 5):
         command = command + " " + full_shape[4]
+    print(command)
     os.system(command)
 
     full_data = np.fromfile(os.path.join(temp_folder, "nn_data.dat.zfp.out"), dtype=np.float32)
@@ -1383,6 +1385,7 @@ def fpzip_decompress_nodelist(filename : str, device : str):
 
     if(len(full_shape) == 5):
         command = command + " " + full_shape[4]
+    print(command)
     os.system(command)
 
     full_data = np.fromfile(os.path.join(temp_folder, "nn_data.dat.fpzip.out"), dtype=np.float32)
