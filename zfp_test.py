@@ -65,6 +65,7 @@ if __name__ == '__main__':
     results = {}
     results['file_size'] = []
     results['rec_psnr'] = []
+    results['psnrs'] = []
     results['compression_time'] = []
     f = h5py.File(os.path.join(input_folder, args['file']), "r")
     d = np.array(f['data'][0])
