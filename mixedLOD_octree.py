@@ -1327,7 +1327,7 @@ def zfp_decompress_nodelist(filename : str, device : str):
         full_shape.append(metadata[i])
         
     metadata = metadata[metadata[1]+2:]
-    command = "zfp -f -z -R" + os.path.join(temp_folder, "nn_data.dat.zfp") + " -o " + \
+    command = "zfp -f -z -R " + os.path.join(temp_folder, "nn_data.dat.zfp") + " -o " + \
         os.path.join(temp_folder, "nn_data.dat.zfp.out")+ " -" + \
         str(len(full_shape[2:])) + " " + str(full_shape[2]) + " " + str(full_shape[3])
 
