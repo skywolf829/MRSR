@@ -1085,18 +1085,14 @@ folder : str, name : str, metric : str, value : float):
     full_im = nodes_to_full_img(nodes, full_shape, max_LOD, nearest_upscale,
     downscaling_technique, device, data_levels, mask_levels,
     data_downscaled_levels, mask_downscaled_levels, mode)
-    print(full_im.shape)
     min_LOD = max_LOD
     for i in range(len(nodes)):
         min_LOD = min(nodes[i].LOD, min_LOD)
-    print("Min LOD found: " + str(min_LOD))
     if(min_LOD > 0):
-        print("Subsampling by " + str(int(2**min_LOD)))
         if(mode == "2D"):
             full_im = subsample_downscale2D(full_im, int(2**min_LOD))
         elif(mode == "3D"):
             full_im = subsample_downscale3D(full_im, int(2**min_LOD))
-    print(full_im.shape)
     temp_folder_path = os.path.join(folder, "Temp")
     save_location = os.path.join(folder, name +".tar.gz")
     if(not os.path.exists(temp_folder_path)):
