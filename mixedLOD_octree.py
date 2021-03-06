@@ -1343,7 +1343,7 @@ def sz_decompress_nodelist(filename : str, device : str):
         str(len(full_shape[2:])) + " " + str(full_shape[2]) + " " + str(full_shape[3])
 
     if(len(full_shape) == 5):
-        command = command + " " + full_shape[4]
+        command = command + " " + str(full_shape[4])
     print(command)
     os.system(command)
 
@@ -1403,7 +1403,7 @@ def zfp_decompress_nodelist(filename : str, device : str):
         str(len(full_shape[2:])) + " " + str(full_shape[2]) + " " + str(full_shape[3])
 
     if(len(full_shape) == 5):
-        command = command + " " + full_shape[4]
+        command = command + " " + str(full_shape[4])
     print(command)
     os.system(command)
 
@@ -1465,7 +1465,7 @@ def fpzip_decompress_nodelist(filename : str, device : str):
         str(len(full_shape[2:])) + " " + str(full_shape[2]) + " " + str(full_shape[3])
 
     if(len(full_shape) == 5):
-        command = command + " " + full_shape[4]
+        command = command + " " + str(full_shape[4])
     print(command)
     os.system(command)
 
