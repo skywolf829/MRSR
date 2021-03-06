@@ -76,7 +76,7 @@ class Options():
 
         opt["adaptive_streamlines"]    = False
         opt['streamline_res']          = 100
-        opt['streamline_length']       = 20
+        opt['streamline_length']       = 5
 
         opt['periodic']                = False
         opt["generator_steps"]         = 1
