@@ -1690,7 +1690,10 @@ if __name__ == '__main__':
         final_psnr : float = PSNR(img_upscaled, img_gt)
         final_mse : float = MSE(img_upscaled, img_gt)
         final_mre : float = relative_error(img_upscaled, img_gt)
-        final_ssim : float = ssim(img_upscaled, img_gt)
+        if(len(img_upscaled.shape) == 4):
+            final_ssim : float = ssim(img_upscaled, img_gt)
+        elif(len(img_upscaled.shape) == 5):
+            final_ssim : float = ssim3D(img_upscaled, img_gt)
 
         print("Final stats:")
         print("Target - " + criterion + " " + str(criterion_value))
