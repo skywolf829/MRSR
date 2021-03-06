@@ -1389,8 +1389,8 @@ def sz_decompress_nodelist(filename : str, device : str):
             depth, index)
             width = int(full_data.shape[2] / (2**depth))
             height = int(full_data.shape[3] / (2**depth))
-            depth = int(full_data.shape[4] / (2**depth))
-            data = full_data[:,:,x:x+width,y:y+height,z:z+depth]
+            d = int(full_data.shape[4] / (2**depth))
+            data = full_data[:,:,x:x+width,y:y+height,z:z+d]
             data = avgpool_downscale3D(data, int(2**lod))
         
         n = OctreeNode(data.to(device), lod, depth, index)
@@ -1451,8 +1451,8 @@ def zfp_decompress_nodelist(filename : str, device : str):
             depth, index)
             width = int(full_data.shape[2] / (2**depth))
             height = int(full_data.shape[3] / (2**depth))
-            depth = int(full_data.shape[4] / (2**depth))
-            data = full_data[:,:,x:x+width,y:y+height,z:z+depth]
+            d = int(full_data.shape[4] / (2**depth))
+            data = full_data[:,:,x:x+width,y:y+height,z:z+d]
             data = avgpool_downscale3D(data, int(2**lod))
         
         n = OctreeNode(data.to(device), lod, depth, index)
@@ -1511,8 +1511,8 @@ def fpzip_decompress_nodelist(filename : str, device : str):
             depth, index)
             width = int(full_data.shape[2] / (2**depth))
             height = int(full_data.shape[3] / (2**depth))
-            depth = int(full_data.shape[4] / (2**depth))
-            data = full_data[:,:,x:x+width,y:y+height,z:z+depth]
+            d = int(full_data.shape[4] / (2**depth))
+            data = full_data[:,:,x:x+width,y:y+height,z:z+d]
             data = avgpool_downscale3D(data, int(2**lod))
         
         n = OctreeNode(data.to(device), lod, depth, index)
