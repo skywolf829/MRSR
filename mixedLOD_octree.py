@@ -496,19 +496,28 @@ class UpscalingMethod(nn.Module):
         self.distributed = distributed
         self.devices = []
         if(self.method == "model"):            
-            with torch.no_grad():
-                options = load_options("SavedModels/"+model_name)
-                torch_models, discs = load_models(options, "cpu")
-                for i in range(len(torch_models)):
-                    torch_models[i] = torch_models[i].to(device)
-                    del(discs[0])
-                    #self.models.append(torch_models[i])
-                    
-                    print("Tracing model " + str(i) + " with input size " + str(torch_models[i].get_input_shape()))
-                    self.models.append(torch.jit.trace(torch_models[i], 
-                    torch.zeros(torch_models[0].get_input_shape()).to(device)))
-                    
-            torch.cuda.empty_cache()
+            self.load_models(model_name, device, distributed)
+
+    def change_method(self, method : str, model_name : Optional[str] = None, 
+    device : Optional[str] = None, distributed : Optional[bool] = False):
+        self.method = method
+        if(method == "model" and len(self.models) == 0):
+            self.load_models(model_name, device, distributed)
+        
+    def load_models(self, model_name, device, distributed):
+        with torch.no_grad():
+            options = load_options("SavedModels/"+model_name)
+            torch_models, discs = load_models(options, "cpu")
+            for i in range(len(torch_models)):
+                torch_models[i] = torch_models[i].to(device)
+                del(discs[0])
+                #self.models.append(torch_models[i])
+                
+                print("Tracing model " + str(i) + " with input size " + str(torch_models[i].get_input_shape()))
+                self.models.append(torch.jit.trace(torch_models[i], 
+                torch.zeros(torch_models[0].get_input_shape()).to(device)))
+                
+        torch.cuda.empty_cache()
         if(distributed and torch.cuda.device_count() > 1):
             for i in range(torch.cuda.device_count()):
                 self.devices.append("cuda:"+str(i))
@@ -1605,6 +1614,9 @@ if __name__ == '__main__':
             "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
             "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_"+args['compressor']
         compress_time = 0
+
+        upscaling : UpscalingMethod = UpscalingMethod(upscaling_technique, device, 
+            model_name, distributed)
         if not load_existing:
             root_node = OctreeNode(img_gt, 0, 0, 0)
             nodes : OctreeNodeList = OctreeNodeList()
@@ -1614,8 +1626,7 @@ if __name__ == '__main__':
             ##############################################
             #nodes : OctreeNodeList = torch.load('./Output/'+img_name+'.torch')
             start_time : float = time.time()
-            upscaling : UpscalingMethod = UpscalingMethod(upscaling_technique, device, 
-            model_name, distributed)
+            
             nodes : OctreeNodeList = mixedLOD_octree_SR_compress(
                 nodes, img_gt, criterion, criterion_value,
                 upscaling, downscaling_technique,
@@ -1665,9 +1676,6 @@ if __name__ == '__main__':
 
         data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels = \
             create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
-
-        upscaling : UpscalingMethod = UpscalingMethod(upscaling_technique, device, 
-            model_name, distributed)
 
         img_upscaled = nodes_to_full_img(nodes, full_shape, 
         max_LOD, upscaling, 
@@ -1732,8 +1740,7 @@ if __name__ == '__main__':
             cmap.cpu().numpy().astype(np.uint8))
 
             point_us = "point2D" if mode == "2D" else "point3D"
-            upscaling : UpscalingMethod = UpscalingMethod('nearest', 
-            device, model_name)
+            upscaling.change_method('nearest')
             img_upscaled_point = nodes_to_full_img(nodes, full_shape, 
             max_LOD, upscaling, 
             downscaling_technique, device, data_levels, 
