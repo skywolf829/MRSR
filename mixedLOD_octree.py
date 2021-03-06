@@ -1367,7 +1367,7 @@ def sz_decompress_nodelist(filename : str, device : str):
             data = avgpool_downscale2D(data, int(2**lod))
 
         elif(len(full_shape) == 5):
-            x, y, z = get_location2D(full_data.shape[2], full_data.shape[3], full_data.shape[4], 
+            x, y, z = get_location3D(full_data.shape[2], full_data.shape[3], full_data.shape[4], 
             depth, index)
             width = int(full_data.shape[2] / (2**depth))
             height = int(full_data.shape[3] / (2**depth))
@@ -1429,7 +1429,7 @@ def zfp_decompress_nodelist(filename : str, device : str):
             data = avgpool_downscale2D(data, int(2**lod))
 
         elif(len(full_shape) == 5):
-            x, y, z = get_location2D(full_data.shape[2], full_data.shape[3], full_data.shape[4], 
+            x, y, z = get_location3D(full_data.shape[2], full_data.shape[3], full_data.shape[4], 
             depth, index)
             width = int(full_data.shape[2] / (2**depth))
             height = int(full_data.shape[3] / (2**depth))
@@ -1489,7 +1489,7 @@ def fpzip_decompress_nodelist(filename : str, device : str):
             data = avgpool_downscale2D(data, int(2**lod))
 
         elif(len(full_shape) == 5):
-            x, y, z = get_location2D(full_data.shape[2], full_data.shape[3], full_data.shape[4], 
+            x, y, z = get_location3D(full_data.shape[2], full_data.shape[3], full_data.shape[4], 
             depth, index)
             width = int(full_data.shape[2] / (2**depth))
             height = int(full_data.shape[3] / (2**depth))
