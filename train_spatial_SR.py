@@ -33,6 +33,11 @@ if __name__ == '__main__':
     parser.add_argument('--kernel_size',default=None, type=int,help='Conv kernel size')
     parser.add_argument('--stride',default=None, type=int,help='Conv stride length')
     
+    
+    parser.add_argument('--x_resolution',default=None, type=int,help='x')    
+    parser.add_argument('--y_resolution',default=None, type=int,help='y')
+    parser.add_argument('--z_resolution',default=None, type=int,help='z')
+    
     parser.add_argument('--train_distributed',type=str2bool,default=None, help='Use distributed training')
     parser.add_argument('--device',type=str,default=None, help='Device to use')
     parser.add_argument('--gpus_per_node',default=None, type=int,help='Whether or not to save discriminators')
