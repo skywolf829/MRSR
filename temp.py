@@ -12,23 +12,32 @@ import h5py
 FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 
 
-mag_field_folder = os.path.join(FlowSTSR_folder_path, "InputData", "iso1024_magfield")
-new_mag_folder = os.path.join(FlowSTSR_folder_path, "InputData", "iso_mag")
-mixing_folder = os.path.join(FlowSTSR_folder_path, "InputData", "mixing_p")
-new_mixing_folder = os.path.join(FlowSTSR_folder_path, "InputData", "mix_p")
+VF_folder = os.path.join(FlowSTSR_folder_path, "InputData", "iso1024_VF")
+new_VF_folder = os.path.join(FlowSTSR_folder_path, "InputData", "isoVF3D")
+#mixing_folder = os.path.join(FlowSTSR_folder_path, "InputData", "mixing_p")
+#new_mixing_folder = os.path.join(FlowSTSR_folder_path, "InputData", "mix_p")
 
-for filename in os.listdir(mag_field_folder):
-     file_loc = os.path.join(mag_field_folder, filename)
+for filename in os.listdir(VF_folder):
+     file_loc = os.path.join(VF_folder, filename)
      f = h5py.File(file_loc, 'r+')
-     d = np.expand_dims(f.get('data'), axis=0).astype(np.float32)
+     d = np.array(f.get('data'))
      f.close()
 
-     file_loc = os.path.join(new_mag_folder, filename)
-     f = h5py.File(file_loc, 'w')
-     f.create_dataset("data", data=d)
-     f.close()
-
-
+     octant_no = 0
+     for x in range(0, d.shape[1], int(d.shape[1]/8)):
+          x_end = int(d.shape[1]/8)
+          for y in range(0, d.shape[2], int(d.shape[2]/8)):
+               y_end = int(d.shape[2]/8)
+               for z in range(0, d.shape[3], int(d.shape[3]/8)):
+                    z_end = int(d.shape[3]/8)
+                    print("Saving octant " + str(octant_no))
+                    f_h5 = h5py.File(os.path.join(new_VF_folder, "vf_ts"+filename+\
+                         "_octant"+str(octant_no)+'.h5'), 'w')
+                    f_h5.create_dataset("data", data=\
+                         d[:,x:x_end, y:y_end, z:z_end])
+                    f_h5.close()
+                    octant_no += 1
+'''
 for filename in os.listdir(mixing_folder):
      file_loc = os.path.join(mixing_folder, filename)
      f = h5py.File(file_loc, 'r+')
@@ -39,7 +48,7 @@ for filename in os.listdir(mixing_folder):
      f = h5py.File(file_loc, 'w')
      f.create_dataset("data", data=d)
      f.close()
-
+'''
 
 
 
