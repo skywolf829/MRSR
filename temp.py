@@ -25,11 +25,11 @@ for filename in os.listdir(VF_folder):
 
      octant_no = 0
      for x in range(0, d.shape[1], int(d.shape[1]/8)):
-          x_end = int(d.shape[1]/8)
+          x_end = x+int(d.shape[1]/8)
           for y in range(0, d.shape[2], int(d.shape[2]/8)):
-               y_end = int(d.shape[2]/8)
+               y_end = y+int(d.shape[2]/8)
                for z in range(0, d.shape[3], int(d.shape[3]/8)):
-                    z_end = int(d.shape[3]/8)
+                    z_end = z+int(d.shape[3]/8)
                     print("Saving octant " + str(octant_no))
                     f_h5 = h5py.File(os.path.join(new_VF_folder, "vf_ts"+filename+\
                          "_octant"+str(octant_no)+'.h5'), 'w')
