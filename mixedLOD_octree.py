@@ -1196,25 +1196,25 @@ folder : str, name : str, metric : str, value : float):
     if(not os.path.exists(temp_folder_path)):
         os.makedirs(temp_folder_path)
     
-
-    d = full_im.cpu().numpy()[0,0]
-    d_loc = os.path.join(temp_folder_path,"nn_data.dat")
-    ndims = len(d.shape)
-    print(d.shape)
-    d.tofile(d_loc)
-    command = "sz -z -f -i " + d_loc + " -" + str(ndims) + " " + \
-        str(d.shape[0]) + " " + str(d.shape[1])
-    if(ndims == 3):
-        command = command + " " + str(d.shape[2])
-    if(metric == "psnr"):
-        command = command + " -M PSNR -S " + str(value)
-    elif(metric == "mre"):
-        command = command + " -M REL -R " + str(value)
-    elif(metric == "pw_mre"):
-        command = command + " -M PW_REL -P " + str(value)
-    print(command)
-    os.system(command)
-    os.system("rm " + d_loc)
+    for i in range(full_im.shape[1]):
+        d = full_im.cpu().numpy()[0,i]
+        d_loc = os.path.join(temp_folder_path,"nn_data_"+str(i)+".dat")
+        ndims = len(d.shape)
+        print(d.shape)
+        d.tofile(d_loc)
+        command = "sz -z -f -i " + d_loc + " -" + str(ndims) + " " + \
+            str(d.shape[0]) + " " + str(d.shape[1])
+        if(ndims == 3):
+            command = command + " " + str(d.shape[2])
+        if(metric == "psnr"):
+            command = command + " -M PSNR -S " + str(value)
+        elif(metric == "mre"):
+            command = command + " -M REL -R " + str(value)
+        elif(metric == "pw_mre"):
+            command = command + " -M PW_REL -P " + str(value)
+        print(command)
+        os.system(command)
+        os.system("rm " + d_loc)
     
     
     metadata : List[int] = []
@@ -1366,18 +1366,25 @@ def sz_decompress_nodelist(filename : str, device : str):
         full_shape.append(metadata[i])
         
     metadata = metadata[metadata[1]+2:]
-    command = "sz -x -f -s " + os.path.join(temp_folder, "nn_data.dat.sz") + " -" + \
-        str(len(full_shape[2:])) + " " + str(full_shape[2]) + " " + str(full_shape[3])
-
-    if(len(full_shape) == 5):
-        command = command + " " + str(full_shape[4])
-    print(command)
-    os.system(command)
-
-    full_data = np.fromfile(os.path.join(temp_folder, "nn_data.dat.sz.out"), dtype=np.float32)
-    full_data = np.reshape(full_data, full_shape[2:])
     
-    full_data = torch.Tensor(full_data).unsqueeze(0).unsqueeze(0)
+    data_channels = []
+    for i in range(full_shape[1]):
+        command = "sz -x -f -s " + os.path.join(temp_folder, "nn_data_"+str(i)+".dat.sz") + " -" + \
+            str(len(full_shape[2:])) + " " + str(full_shape[2]) + " " + str(full_shape[3])
+
+        if(len(full_shape) == 5):
+            command = command + " " + str(full_shape[4])
+        print(command)
+        os.system(command)
+
+        full_data = np.fromfile(os.path.join(temp_folder, "nn_data_"+str(i)+".dat.sz.out"), 
+        dtype=np.float32)
+        full_data = np.reshape(full_data, full_shape[2:])
+        
+        full_data = torch.Tensor(full_data)
+        data_channels.append(full_data)
+
+    full_data = torch.stack(data_channels).unsqueeze(0)
     nearest_upscale = UpscalingMethod("nearest", device)
 
     full_data = nearest_upscale(full_data, int(2**min_LOD))
