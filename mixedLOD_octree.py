@@ -986,6 +986,65 @@ def mixedLOD_octree_SR_compress(
     #print("Nodes traversed: " + str(nodes_checked))
     return nodes            
 
+def nondynamic_SR_compress(
+    nodes : OctreeNodeList, GT_image : torch.Tensor, 
+    criterion: str, criterion_value : float,
+    upscale : UpscalingMethod, downscaling_technique: str,
+    min_chunk_size : int, max_LOD : int, 
+    device : str, mode : str
+    ) -> OctreeNodeList:
+    node_indices_to_check = [ 0 ]
+    nodes_checked = 0
+    full_shape = nodes[0].data.shape
+    max_diff = GT_image.max() - GT_image.min()
+    allowed_error = torch.Tensor([criterion_value]).to(device)
+
+    data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels = \
+        create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
+    
+    while(len(node_indices_to_check) > 0): 
+        #print(nodes_checked)
+        nodes_checked += 1
+        i = node_indices_to_check.pop(0)
+        n = nodes[i]
+
+        # Check if we can downsample this node
+        remove_node_from_data_caches(n, full_shape, data_levels, mask_levels, mode)
+        n.LOD = n.LOD + 1
+        original_data = n.data.clone()
+        downsampled_data = downscale(downscaling_technique,n.data,2)
+        n.data = downsampled_data
+        add_node_to_data_caches(n, full_shape, data_levels, mask_levels, mode)
+        
+
+        new_img = nodes_to_full_img(nodes, full_shape, max_LOD, 
+        upscale, downscaling_technique,
+        device, data_levels, mask_levels, data_downscaled_levels, 
+        mask_downscaled_levels, mode)
+        torch.cuda.synchronize()
+        #print("Upscaling time : " + str(time.time() - t))
+        
+        # If criterion not met, reset data and stride, and see
+        # if the node is large enough to split into subnodes
+        # Otherwise, we keep the downsample, and add the node back as a 
+        # leaf node
+
+        met = criterion_met(criterion, allowed_error, GT_image, new_img, max_diff)
+
+        if(not met):
+            #print("If statement : " + str(time.time() - t))
+            t = time.time()
+            remove_node_from_data_caches(n, full_shape, data_levels, mask_levels, mode)
+            n.data = original_data
+            n.LOD = n.LOD - 1  
+        else:
+            if(n.LOD < max_LOD and 
+                n.min_width()*(2**n.LOD) > min_chunk_size and
+                n.min_width() > 1):
+                node_indices_to_check.append(i)
+    #print("Nodes traversed: " + str(nodes_checked))
+    return nodes            
+
 def compress_nodelist(nodes: OctreeNodeList, full_size : List[int], 
 min_chunk_size: int, device : str, mode : str) -> OctreeNodeList:
 
@@ -1206,12 +1265,15 @@ folder : str, name : str, metric : str, value : float):
             str(d.shape[0]) + " " + str(d.shape[1])
         if(ndims == 3):
             command = command + " " + str(d.shape[2])
-        if(metric == "psnr"):
-            command = command + " -M PSNR -S " + str(value)
-        elif(metric == "mre"):
-            command = command + " -M REL -R " + str(value)
-        elif(metric == "pw_mre"):
-            command = command + " -M PW_REL -P " + str(value)
+        if(min_LOD == 0):
+            if(metric == "psnr"):
+                command = command + " -M PSNR -S " + str(value)
+            elif(metric == "mre"):
+                command = command + " -M REL -R " + str(value)
+            elif(metric == "pw_mre"):
+                command = command + " -M PW_REL -P " + str(value)
+        else:
+            command = command + " -M PW_REL -P 0.0001"
         print(command)
         os.system(command)
         os.system("rm " + d_loc)
@@ -1565,6 +1627,7 @@ if __name__ == '__main__':
     parser.add_argument('--use_compressor',default="true",type=str2bool)
     parser.add_argument('--compressor',default="zfp",type=str)
     parser.add_argument('--data_type',default="h5",type=str)
+    parser.add_argument('--dynamic_downscaling',default="true",type=str2bool)
 
     args = vars(parser.parse_args())
     if(not args['use_compressor']):
@@ -1617,9 +1680,14 @@ if __name__ == '__main__':
     m = args['start_metric']
     while(m < args['end_metric']):
         criterion_value = m
-        save_name = img_name+"_"+upscaling_technique+ \
-            "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-            "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_"+args['compressor']
+        if(args['dynamic_downscaling']):
+            save_name = img_name+"_"+upscaling_technique+ \
+                "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
+                "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_"+args['compressor']
+        else:
+            save_name = img_name+"_"+upscaling_technique+ \
+                "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
+                "maxlod"+str(max_LOD)+"_"+args['compressor']+"_nondynamic"
         compress_time = 0
 
         upscaling : UpscalingMethod = UpscalingMethod(upscaling_technique, device, 
@@ -1634,26 +1702,35 @@ if __name__ == '__main__':
             #nodes : OctreeNodeList = torch.load('./Output/'+img_name+'.torch')
             start_time : float = time.time()
             
-            nodes : OctreeNodeList = mixedLOD_octree_SR_compress(
-                nodes, img_gt, criterion, criterion_value,
-                upscaling, downscaling_technique,
-                min_chunk, max_LOD, device, mode)
-            end_time : float = time.time()
-            compress_time = end_time - start_time
-            #print("Compression took %s seconds" % (str(end_time - start_time)))
-            
-            num_nodes : int = len(nodes)
-            nodes = compress_nodelist(nodes, full_shape, min_chunk, device, mode)
-            concat_num_nodes : int = len(nodes)
+            if(args['dynamic_downscaling']):
+                nodes : OctreeNodeList = mixedLOD_octree_SR_compress(
+                    nodes, img_gt, criterion, criterion_value,
+                    upscaling, downscaling_technique,
+                    min_chunk, max_LOD, device, mode)
+                end_time : float = time.time()
+                compress_time = end_time - start_time
+                #print("Compression took %s seconds" % (str(end_time - start_time)))
+                
+                num_nodes : int = len(nodes)
+                nodes = compress_nodelist(nodes, full_shape, min_chunk, device, mode)
+                concat_num_nodes : int = len(nodes)
 
-            print("Concatenating blocks turned %s blocks into %s" % (str(num_nodes), str(concat_num_nodes)))
-            
+                print("Concatenating blocks turned %s blocks into %s" % (str(num_nodes), str(concat_num_nodes)))
+            else:
+                nodes : OctreeNodeList = nondynamic_SR_compress(
+                    nodes, img_gt, criterion, criterion_value,
+                    upscaling, downscaling_technique,
+                    min_chunk, max_LOD, device, mode)
+                end_time : float = time.time()
+                compress_time = end_time - start_time            
+                num_nodes : int = len(nodes)
+
             if(args['use_compressor']):
                 if(args['compressor'] == "sz"):
                     sz_compress_nodelist(nodes, full_shape, max_LOD,
                         downscaling_technique, device, mode,
                         save_folder, save_name,
-                        'pw_mre', 0.001)
+                        criterion, m)
                 elif(args['compressor'] == "zfp"):
                     zfp_compress_nodelist(nodes, full_shape, max_LOD,
                         downscaling_technique, device, mode,
