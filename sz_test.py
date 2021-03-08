@@ -123,6 +123,18 @@ def ssim3D(img1, img2, window_size = 11, size_average = True):
     
     return _ssim_3D(img1, img2, window, window_size, channel, size_average)
 
+def to_img(input : torch.Tensor, mode : str):
+    if(mode == "2D"):
+        img = input[0].permute(1, 2, 0).cpu().numpy()
+        img -= img.min()
+        img *= (255/(img.max()+1e-6))
+        img = img.astype(np.uint8)
+    elif(mode == "3D"):
+        img = input[0,:,:,:,int(input.shape[4]/2)].permute(1, 2, 0).cpu().numpy()
+        img -= img.min()
+        img *= (255/(img.max()+1e-6))
+        img = img.astype(np.uint8)
+    return img
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
@@ -212,15 +224,9 @@ if __name__ == '__main__':
                 
         if(args['dims'] == 2):
             rec_ssim = ssim(torch.Tensor(dc).unsqueeze(0), torch.Tensor(d).unsqueeze(0))
-            im = dc - dc.min()
-            im *= (255/dc.max())
-            im = im.astype(np.uint8)
         elif(args['dims'] == 3):      
             rec_ssim = ssim3D(torch.Tensor(dc).unsqueeze(0), torch.Tensor(d).unsqueeze(0))
-            im = dc - dc.min()
-            im *= (255/dc.max())
-            im = im.astype(np.uint8)[:,:,int(im.shape[2]/2)]
-        
+        im = to_img(torch.Tensor(dc), "2D" if args['dims'] == 2 else "3D")
         imageio.imwrite(os.path.join(save_folder, "sz_"+args['file']+"_"+str(value)+".png"), im)
 
         
