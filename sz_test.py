@@ -226,7 +226,7 @@ if __name__ == '__main__':
             rec_ssim = ssim(torch.Tensor(dc).unsqueeze(0), torch.Tensor(d).unsqueeze(0))
         elif(args['dims'] == 3):      
             rec_ssim = ssim3D(torch.Tensor(dc).unsqueeze(0), torch.Tensor(d).unsqueeze(0))
-        im = to_img(torch.Tensor(dc), "2D" if args['dims'] == 2 else "3D")
+        im = to_img(torch.Tensor(dc).unsqueeze(0), "2D" if args['dims'] == 2 else "3D")
         imageio.imwrite(os.path.join(save_folder, "sz_"+args['file']+"_"+str(value)+".png"), im)
 
         
