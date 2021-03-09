@@ -142,7 +142,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
 
     parser.add_argument('--file',default="4010.h5",type=str,help='File to test compression on')
-    parser.add_argument('--folder',default="quadtree_images",type=str,help='File to test compression on')
+    parser.add_argument('--folder',default="octree_files",type=str,help='File to test compression on')
     parser.add_argument('--dims',default=2,type=int,help='# dimensions')
     parser.add_argument('--channels',default=1,type=int,help='# channels')
     parser.add_argument('--nx',default=1024,type=int,help='# x dimension')
