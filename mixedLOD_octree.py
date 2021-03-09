@@ -1609,6 +1609,7 @@ if __name__ == '__main__':
     parser.add_argument('--ny',default=1024,type=int,help='# y dimension')
     parser.add_argument('--nz',default=1024,type=int,help='# z dimension')
     parser.add_argument('--output_folder',default="mag2D_4010",type=str,help='Where to save results')
+    parser.add_argument('--save_name',default="Temp",type=str,help='Name for trial in results.pkl')
     parser.add_argument('--start_metric',default=10,type=float,help='PSNR to start tests at')
     parser.add_argument('--end_metric',default=100,type=float,help='PSNR to end tests at')
     parser.add_argument('--metric_skip',default=10,type=float,help='PSNR increment by')
@@ -1625,9 +1626,12 @@ if __name__ == '__main__':
     parser.add_argument('--debug',default="false",type=str2bool)
     parser.add_argument('--distributed',default="false",type=str2bool)
     parser.add_argument('--use_compressor',default="true",type=str2bool)
+
     parser.add_argument('--compressor',default="zfp",type=str)
     parser.add_argument('--data_type',default="h5",type=str)
+
     parser.add_argument('--dynamic_downscaling',default="true",type=str2bool)
+    parser.add_argument('--interpolation_heuristic',default="false",type=str2bool)
 
     args = vars(parser.parse_args())
     if(not args['use_compressor']):
@@ -1682,14 +1686,7 @@ if __name__ == '__main__':
             model_name, distributed)
     while(m < args['end_metric']):
         criterion_value = m
-        if(args['dynamic_downscaling']):
-            save_name = img_name+"_"+upscaling_technique+ \
-                "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+"_"+args['compressor']
-        else:
-            save_name = img_name+"_"+upscaling_technique+ \
-                "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-                "maxlod"+str(max_LOD)+"_"+args['compressor']+"_nondynamic"
+        save_name = args['save_name']
         compress_time = 0
 
         upscaling.change_method(upscaling_technique)
@@ -1702,7 +1699,11 @@ if __name__ == '__main__':
             ##############################################
             #nodes : OctreeNodeList = torch.load('./Output/'+img_name+'.torch')
             start_time : float = time.time()
-            
+            if(args['interpolation_heuristic']):
+                if(args['mode'] == '2D'):
+                    upscaling.change_method("bilinear")
+                elif(args['mode'] == '3D'):
+                    upscaling.change_method("trilinear")   
             if(args['dynamic_downscaling']):
                 nodes : OctreeNodeList = mixedLOD_octree_SR_compress(
                     nodes, img_gt, criterion, criterion_value,
@@ -1759,6 +1760,7 @@ if __name__ == '__main__':
             nodes : OctreeNodeList = torch.load(os.path.join(save_folder,
                 save_name+".torch"))
 
+        upscaling.change_method(upscaling_technique)
         data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels = \
             create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
 
@@ -1840,10 +1842,8 @@ if __name__ == '__main__':
         all_data = load_obj(os.path.join(save_folder, "results.pkl"))
     else:
         all_data = {}
-    n = upscaling_technique+"_"+args['compressor']
-    if(args['dynamic_downscaling']):
-        n = n + "_mixedLODoctree"
-    all_data[n] = results
+        
+    all_data[args['save_name']] = results
     save_obj(all_data, os.path.join(save_folder, "results.pkl"))
 
         
