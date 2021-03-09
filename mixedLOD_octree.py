@@ -1839,7 +1839,9 @@ if __name__ == '__main__':
         all_data = load_obj(os.path.join(save_folder, "results.pkl"))
     else:
         all_data = {}
-
+    n = upscaling_technique+"_"+args['compressor']
+    if(args['dynamic_downscaling']):
+        n = n + "_mixedLODoctree"
     all_data[upscaling_technique+"_"+args['compressor']] = results
     save_obj(all_data, os.path.join(save_folder, "results.pkl"))
 
