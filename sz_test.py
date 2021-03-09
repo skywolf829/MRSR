@@ -243,7 +243,7 @@ if __name__ == '__main__':
     else:
         all_data = {}
 
-    all_data['sz'] = results
+    all_data['SZ'] = results
     save_obj(all_data, os.path.join(save_folder, "results.pkl"))
 
     os.remove(args['file']+'.dat')    
