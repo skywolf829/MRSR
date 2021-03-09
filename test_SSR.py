@@ -336,6 +336,8 @@ if __name__ == '__main__':
     output_folder = os.path.join(FlowSTSR_folder_path, "Output")
     if(p):
         print("Loading options and model")
+        print("full resolution: " + str(args['full_resolution']))
+        print("channels: " + str(args['channels']))
     opt = load_options(os.path.join(save_folder, args["model_name"]))
     opt['cropping_resolution'] = args['full_resolution']
     opt["device"] = args["device"]
@@ -390,7 +392,8 @@ if __name__ == '__main__':
                 if(args['mode'] == "3D"):
                     LR_data = AvgPool3D(GT_data[:,0:1,:,:,:], args['scale_factor'])
                     for i in range(1, args['channels']):
-                        LR_data = torch.cat((LR_data, AvgPool3D(GT_data[:,i:i+1,:,:,:], args['scale_factor'])), dim=1)
+                        LR_data = torch.cat((LR_data, 
+                        AvgPool3D(GT_data[:,i:i+1,:,:,:], args['scale_factor'])), dim=1)
                 elif(args['mode'] == "2D"):
                     LR_data = AvgPool2D(GT_data[:,0:1,:,:], args['scale_factor'])
                     for i in range(1, args['channels']):
@@ -436,7 +439,7 @@ if __name__ == '__main__':
             inference_this_frame = inference_end_time - inference_start_time
 
             if(p):
-                print("Finished super resolving in %0.01f seconds. Performing tests." % inference_this_frame)
+                print("Finished super resolving in %0.04f seconds. Performing tests." % inference_this_frame)
 
             LR_data = LR_data.to("cpu")
 
