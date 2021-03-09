@@ -1842,7 +1842,7 @@ if __name__ == '__main__':
     n = upscaling_technique+"_"+args['compressor']
     if(args['dynamic_downscaling']):
         n = n + "_mixedLODoctree"
-    all_data[upscaling_technique+"_"+args['compressor']] = results
+    all_data[n] = results
     save_obj(all_data, os.path.join(save_folder, "results.pkl"))
 
         
