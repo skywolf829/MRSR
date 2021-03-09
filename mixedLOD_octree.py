@@ -1686,7 +1686,7 @@ if __name__ == '__main__':
             model_name, distributed)
     while(m < args['end_metric']):
         criterion_value = m
-        save_name = args['save_name']
+        save_name = args['save_name'] + "_"+ criterion + str(m)
         compress_time = 0
 
         upscaling.change_method(upscaling_technique)
