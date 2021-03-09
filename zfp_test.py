@@ -184,8 +184,7 @@ if __name__ == '__main__':
         for i in range(args['channels']):
             d[i].tofile(args['file'] + ".dat")
             command = "zfp -f -i " + args['file'] + ".dat -z " + \
-                args['file']+".dat.zfp -o " + \
-                args['file']+".dat.zfp.out -" + str(args['dims']) + " " + \
+                args['file']+".dat.zfp -" + str(args['dims']) + " " + \
                 str(args['nx']) + " " + str(args['ny'])
             if(args['dims'] == 3):
                 command = command + " " + str(args['nz'])
