@@ -1678,6 +1678,8 @@ if __name__ == '__main__':
     full_shape : List[int] = list(img_gt.shape)
     print(full_shape)
     m = args['start_metric']
+    upscaling : UpscalingMethod = UpscalingMethod(upscaling_technique, device, 
+            model_name, distributed)
     while(m < args['end_metric']):
         criterion_value = m
         if(args['dynamic_downscaling']):
@@ -1690,8 +1692,7 @@ if __name__ == '__main__':
                 "maxlod"+str(max_LOD)+"_"+args['compressor']+"_nondynamic"
         compress_time = 0
 
-        upscaling : UpscalingMethod = UpscalingMethod(upscaling_technique, device, 
-            model_name, distributed)
+        upscaling.change_method(upscaling_technique)
         if not load_existing:
             root_node = OctreeNode(img_gt, 0, 0, 0)
             nodes : OctreeNodeList = OctreeNodeList()
