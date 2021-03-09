@@ -1644,9 +1644,9 @@ if __name__ == '__main__':
     debug : bool = args['debug']
     distributed : bool = args['distributed']
 
-    img_name : str = args['filename'].split(".")[0]
-    img_ext : str = args['filename'].split(".")[1]
-    img_type : str = args['filename'].split(".")[1]
+    img_name : str = args['file'].split(".")[0]
+    img_ext : str = args['file'].split(".")[1]
+    img_type : str = args['file'].split(".")[1]
 
     FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
     input_folder = os.path.join(FlowSTSR_folder_path, "TestingData", args['folder'])
