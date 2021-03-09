@@ -1698,12 +1698,12 @@ if __name__ == '__main__':
             #nodelist_to_h5(nodes, './Output/'+img_name+'.h5')
             ##############################################
             #nodes : OctreeNodeList = torch.load('./Output/'+img_name+'.torch')
-            start_time : float = time.time()
             if(args['interpolation_heuristic']):
                 if(args['mode'] == '2D'):
                     upscaling.change_method("bilinear")
                 elif(args['mode'] == '3D'):
                     upscaling.change_method("trilinear")   
+            start_time : float = time.time()
             if(args['dynamic_downscaling']):
                 nodes : OctreeNodeList = mixedLOD_octree_SR_compress(
                     nodes, img_gt, criterion, criterion_value,
