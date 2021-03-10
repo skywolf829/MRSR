@@ -1670,6 +1670,8 @@ if __name__ == '__main__':
     results['rec_psnr'] = []
     results['rec_ssim'] = []
     results['rec_mre'] = []
+    results['rec_mre'] = []
+    results['rec_pwmre'] = []
     results['rec_innner_mre'] = []
     results['rec_innner_pwmre'] = []
     

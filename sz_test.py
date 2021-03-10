@@ -230,16 +230,16 @@ if __name__ == '__main__':
                 
         if(args['dims'] == 2):
             rec_ssim = ssim(torch.Tensor(dc).unsqueeze(0), torch.Tensor(d).unsqueeze(0))
-            inner_mre = relative_error(dc[:,:,20:dc.shape[2]-20,20:dc.shape[3]-20], 
-            d[:,:,20:d.shape[2]-20,20:d.shape[3]-20])
-            inner_pwmre = pw_relative_error(dc[:,:,20:dc.shape[2]-20,20:dc.shape[3]-20], 
-            d[:,:,20:d.shape[2]-20,20:d.shape[3]-20])
+            inner_mre = relative_error(dc[:,20:dc.shape[1]-20,20:dc.shape[2]-20], 
+            d[:,20:d.shape[1]-20,20:d.shape[2]-20])
+            inner_pwmre = pw_relative_error(dc[:,20:dc.shape[1]-20,20:dc.shape[2]-20], 
+            d[:,20:d.shape[1]-20,20:d.shape[2]-20])
         elif(args['dims'] == 3):      
             rec_ssim = ssim3D(torch.Tensor(dc).unsqueeze(0), torch.Tensor(d).unsqueeze(0))
-            inner_mre = relative_error(dc[:,:,20:dc.shape[2]-20,20:dc.shape[3]-20,20:dc.shape[4]-20], 
-            d[:,:,20:d.shape[2]-20,20:d.shape[3]-20,20:d.shape[4]-20])
-            inner_pwmre = pw_relative_error(dc[:,:,20:dc.shape[2]-20,20:dc.shape[3]-20,20:dc.shape[4]-20], 
-            d[:,:,20:d.shape[2]-20,20:d.shape[3]-20,20:d.shape[4]-20])
+            inner_mre = relative_error(dc[:,20:dc.shape[1]-20,20:dc.shape[2]-20,20:dc.shape[3]-20], 
+            d[:,20:d.shape[1]-20,20:d.shape[2]-20,20:d.shape[3]-20])
+            inner_pwmre = pw_relative_error(dc[:,20:dc.shape[1]-20,20:dc.shape[2]-20,20:dc.shape[3]-20], 
+            d[:,20:d.shape[1]-20,20:d.shape[2]-20,20:d.shape[3]-20])
         im = to_img(torch.Tensor(dc).unsqueeze(0), "2D" if args['dims'] == 2 else "3D")
         imageio.imwrite(os.path.join(save_folder, "sz_"+args['file']+"_"+str(value)+".png"), im)
 
