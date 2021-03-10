@@ -652,13 +652,14 @@ downscaling_technique : str, device : str, mode : str) -> Tuple[torch.Tensor, to
         full_img = torch.zeros([full_shape[0], 3, full_shape[2], full_shape[3], full_shape[4]]).to(device)
     # palette here: https://www.pinterest.com/pin/432978951683169251/?d=t&mt=login
     # morandi colors
+    # https://colorbrewer2.org/#type=sequential&scheme=YlOrRd&n=6
     cmap : List[torch.Tensor] = [
-        torch.tensor([[211, 197, 178]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[175, 137, 107]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[137, 108, 96]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[156, 94, 39]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[107, 48, 50]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[74, 46, 46]], dtype=nodes[0].data.dtype, device=device)
+        torch.tensor([[255,255,178]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[254,217,118]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[254,178,76]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[253,141,60]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[240,59,32]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[189,0,38]], dtype=nodes[0].data.dtype, device=device)
     ]
     for i in range(len(cmap)):
         cmap[i] = cmap[i].unsqueeze(2).unsqueeze(3)
