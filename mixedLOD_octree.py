@@ -658,8 +658,9 @@ downscaling_technique : str, device : str, mode : str) -> Tuple[torch.Tensor, to
         torch.tensor([[254,217,118]], dtype=nodes[0].data.dtype, device=device),
         torch.tensor([[254,178,76]], dtype=nodes[0].data.dtype, device=device),
         torch.tensor([[253,141,60]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[240,59,32]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[189,0,38]], dtype=nodes[0].data.dtype, device=device)
+        torch.tensor([[252,78,42]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[227,26,28]], dtype=nodes[0].data.dtype, device=device),        
+        torch.tensor([[177,0,38]], dtype=nodes[0].data.dtype, device=device)
     ]
     for i in range(len(cmap)):
         cmap[i] = cmap[i].unsqueeze(2).unsqueeze(3)
