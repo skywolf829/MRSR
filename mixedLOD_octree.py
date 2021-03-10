@@ -650,15 +650,15 @@ downscaling_technique : str, device : str, mode : str) -> Tuple[torch.Tensor, to
     full_img = torch.zeros([full_shape[0], 3, full_shape[2], full_shape[3]]).to(device)
     if(mode == "3D"):
         full_img = torch.zeros([full_shape[0], 3, full_shape[2], full_shape[3], full_shape[4]]).to(device)
+    # palette here: https://www.pinterest.com/pin/432978951683169251/?d=t&mt=login
+    # morandi colors
     cmap : List[torch.Tensor] = [
-        torch.tensor([[255, 255, 255]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[247, 251, 162]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[244, 189, 55]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[233, 112, 37]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[178, 52, 85]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[115, 30, 107]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[37, 15, 77]], dtype=nodes[0].data.dtype, device=device),
-        torch.tensor([[0, 0, 0]], dtype=nodes[0].data.dtype, device=device)
+        torch.tensor([[211, 197, 178]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[175, 137, 107]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[137, 108, 96]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[156, 94, 39]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[107, 48, 50]], dtype=nodes[0].data.dtype, device=device),
+        torch.tensor([[74, 46, 46]], dtype=nodes[0].data.dtype, device=device)
     ]
     for i in range(len(cmap)):
         cmap[i] = cmap[i].unsqueeze(2).unsqueeze(3)
