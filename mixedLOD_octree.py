@@ -245,7 +245,7 @@ def relative_error(x, GT, max_diff : Optional[torch.Tensor] = None) -> torch.Ten
 
 @torch.jit.script
 def pw_relative_error(x, GT) -> torch.Tensor:
-    val = torch.abs(GT-x) / GT
+    val = torch.abs(torch.abs(GT-x) / GT)
     return val.max()
 
 @torch.jit.script
@@ -1670,7 +1670,8 @@ if __name__ == '__main__':
     results['rec_psnr'] = []
     results['rec_ssim'] = []
     results['rec_mre'] = []
-    results['rec_pwmre'] = []
+    results['rec_innner_mre'] = []
+    results['rec_innner_pwmre'] = []
     
     if(args['data_type'] == "image"):
         img_gt : torch.Tensor = torch.from_numpy(imageio.imread(
@@ -1790,8 +1791,24 @@ if __name__ == '__main__':
         final_pwmre: float = pw_relative_error(img_upscaled, img_gt).item()
         if(len(img_upscaled.shape) == 4):
             final_ssim : float = ssim(img_upscaled, img_gt).item()
+            final_inner_mre : float = relative_error(
+                img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20], 
+                img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20]).item()
+            final_inner_pwmre: float = pw_relative_error(
+                img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20], 
+                img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20]).item()
         elif(len(img_upscaled.shape) == 5):
             final_ssim : float = ssim3D(img_upscaled, img_gt).item()
+            final_inner_mre : float = relative_error(
+                img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20,
+                    20:img_upscaled.shape[4]-20], 
+                img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20,
+                    img_gt.shape[4]-20]).item()
+            final_inner_pwmre: float = pw_relative_error(
+                img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20,
+                    20:img_upscaled.shape[4]-20], 
+                img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20,
+                    img_gt.shape[4]-20]).item()
 
         print("Final stats:")
         print("Target - " + criterion + " " + str(criterion_value))
@@ -1807,6 +1824,8 @@ if __name__ == '__main__':
         results['rec_ssim'].append(final_ssim)
         results['rec_mre'].append(final_mre)
         results['rec_pwmre'].append(final_pwmre)
+        results['rec_innner_mre'].append(final_inner_mre)
+        results['rec_innner_pwmre'].append(final_inner_pwmre)
 
         if(args['debug']):           
 
