@@ -1670,7 +1670,7 @@ if __name__ == '__main__':
     results['rec_psnr'] = []
     results['rec_ssim'] = []
     results['rec_mre'] = []
-    results['rec_mpwre'] = []
+    results['rec_pwmre'] = []
     
     if(args['data_type'] == "image"):
         img_gt : torch.Tensor = torch.from_numpy(imageio.imread(
