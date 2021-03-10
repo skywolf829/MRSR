@@ -1670,10 +1670,9 @@ if __name__ == '__main__':
     results['rec_psnr'] = []
     results['rec_ssim'] = []
     results['rec_mre'] = []
-    results['rec_mre'] = []
     results['rec_pwmre'] = []
-    results['rec_innner_mre'] = []
-    results['rec_innner_pwmre'] = []
+    results['rec_inner_mre'] = []
+    results['rec_inner_pwmre'] = []
     
     if(args['data_type'] == "image"):
         img_gt : torch.Tensor = torch.from_numpy(imageio.imread(
@@ -1826,8 +1825,8 @@ if __name__ == '__main__':
         results['rec_ssim'].append(final_ssim)
         results['rec_mre'].append(final_mre)
         results['rec_pwmre'].append(final_pwmre)
-        results['rec_innner_mre'].append(final_inner_mre)
-        results['rec_innner_pwmre'].append(final_inner_pwmre)
+        results['rec_inner_mre'].append(final_inner_mre)
+        results['rec_inner_pwmre'].append(final_inner_pwmre)
 
         if(args['debug']):           
 

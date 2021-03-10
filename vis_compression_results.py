@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import argparse
 from test_SSR import load_obj
 import os
+import copy
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
@@ -23,12 +24,27 @@ if __name__ == '__main__':
 
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
-    print(results)
+    #print(results)
     results.pop('sz', None)
+
+    for m in results.keys():
+        ks = list(results[m].keys())
+        for k in ks:
+            if("innner" in k):
+                print(m)
+                k_orig = k.split("innner")[0] + "inner" + k.split("innner")[1]
+                results[m][k_orig] = copy.deepcopy(results[m][k])
+                results[m].pop(k,None)
     # results go compression_method -> metric -> list
 
+    for m in results.keys():
+        print(m)
+        for k in results[m].keys():
+            print("    " + k)
+
     compression_method_names = list(results.keys())
-    metrics = ['file_size', 'compression_time', 'num_nodes', 'rec_psnr']
+    metrics = ['file_size', 'compression_time', 'num_nodes', 'rec_psnr',
+    'rec_mre', 'rec_pwmre', 'rec_inner_mre', 'rec_inner_pwmre']
     full_file_size = 4096
 
 
@@ -45,8 +61,9 @@ if __name__ == '__main__':
             if('rec_psnr' in results[method].keys() and \
                 metric in results[method].keys() and len(results[method][metric]) > 0 \
                     and method != "zfp"):
-                x = np.array(results[method]['rec_psnr'][:])
-                y = results[method][metric][:]
+                ordering = np.argsort(np.array(results[method]['rec_psnr'][:]))
+                x = np.array(results[method]['rec_psnr'])[ordering]
+                y = np.array(results[method][metric])[ordering]
                 if "NN_SZ" == method:
                     plt.plot(x, y, label=method, drawstyle='steps')
                 else:
@@ -65,8 +82,9 @@ if __name__ == '__main__':
             if('psnrs' in results[method].keys() and \
                 metric in results[method].keys() and len(results[method][metric]) > 0 \
                     and method != "zfp"):
-                x = np.array(results[method]['psnrs'][:])
-                y = results[method][metric][:]
+                ordering = np.argsort(np.array(results[method]['psnrs'][:]))
+                x = np.array(results[method]['psnrs'])[ordering]
+                y = np.array(results[method][metric])[ordering]
                 if "NN_SZ" == method:
                     plt.plot(x, y, label=method, drawstyle='steps')
                 else:
@@ -84,8 +102,9 @@ if __name__ == '__main__':
         for method in compression_method_names:
             if('rec_ssim' in results[method].keys() and \
                 metric in results[method].keys() and len(results[method][metric]) > 0):
-                x = np.array(results[method]['rec_ssim'][:])
-                y = results[method][metric][:]
+                ordering = np.argsort(np.array(results[method]['rec_ssim'][:]))
+                x = np.array(results[method]['rec_ssim'])[ordering]
+                y = np.array(results[method][metric])[ordering]
                 if "NN_SZ" == method:
                     plt.plot(x, y, label=method, drawstyle='steps')
                 else:
@@ -95,4 +114,84 @@ if __name__ == '__main__':
         plt.ylabel(metric)
         plt.title(args['output_file_name'] + " ssim vs - " + metric)
         plt.savefig(os.path.join(save_folder, metric+"_ssim.png"))
+        plt.clf()
+
+    for metric in metrics:
+        fig = plt.figure()
+        vals = []
+        for method in compression_method_names:
+            if('rec_mre' in results[method].keys() and \
+                metric in results[method].keys() and len(results[method][metric]) > 0):
+                ordering = np.argsort(np.array(results[method]['rec_mre'][:]))
+                x = np.array(results[method]['rec_mre'])[ordering]
+                y = np.array(results[method][metric])[ordering]
+                if "NN_SZ" == method:
+                    plt.plot(x, y, label=method, drawstyle='steps')
+                else:
+                    plt.plot(x, y, label=method)
+        plt.legend()
+        plt.xlabel("(De)compressed maximum relative error (global)")
+        plt.ylabel(metric)
+        plt.title(args['output_file_name'] + " MRE vs - " + metric)
+        plt.savefig(os.path.join(save_folder, metric+"_mre.png"))
+        plt.clf()
+
+    for metric in metrics:
+        fig = plt.figure()
+        vals = []
+        for method in compression_method_names:
+            if('rec_inner_mre' in results[method].keys() and \
+                metric in results[method].keys() and len(results[method][metric]) > 0):
+                ordering = np.argsort(np.array(results[method]['rec_inner_mre'][:]))
+                x = np.array(results[method]['rec_inner_mre'])[ordering]
+                y = np.array(results[method][metric])[ordering]
+                if "NN_SZ" == method:
+                    plt.plot(x, y, label=method, drawstyle='steps')
+                else:
+                    plt.plot(x, y, label=method)
+        plt.legend()
+        plt.xlabel("(De)compressed inner maximum relative error (global)")
+        plt.ylabel(metric)
+        plt.title(args['output_file_name'] + " inner MRE vs - " + metric)
+        plt.savefig(os.path.join(save_folder, metric+"_innermre.png"))
+        plt.clf()
+
+    for metric in metrics:
+        fig = plt.figure()
+        vals = []
+        for method in compression_method_names:
+            if('rec_pwmre' in results[method].keys() and \
+                metric in results[method].keys() and len(results[method][metric]) > 0):
+                ordering = np.argsort(np.array(results[method]['rec_pwmre'][:]))
+                x = np.array(results[method]['rec_pwmre'])[ordering]
+                y = np.array(results[method][metric])[ordering]
+                if "NN_SZ" == method:
+                    plt.plot(x, y, label=method, drawstyle='steps')
+                else:
+                    plt.plot(x, y, label=method)
+        plt.legend()
+        plt.xlabel("(De)compressed pointwise maximum relative error (local)")
+        plt.ylabel(metric)
+        plt.title(args['output_file_name'] + " PWMRE vs - " + metric)
+        plt.savefig(os.path.join(save_folder, metric+"_pwmre.png"))
+        plt.clf()
+
+    for metric in metrics:
+        fig = plt.figure()
+        vals = []
+        for method in compression_method_names:
+            if('rec_innner_pwmre' in results[method].keys() and \
+                metric in results[method].keys() and len(results[method][metric]) > 0):
+                ordering = np.argsort(np.array(results[method]['rec_innner_pwmre'][:]))
+                x = np.array(results[method]['rec_innner_pwmre'])[ordering]
+                y = np.array(results[method][metric])[ordering]
+                if "NN_SZ" == method:
+                    plt.plot(x, y, label=method, drawstyle='steps')
+                else:
+                    plt.plot(x, y, label=method)
+        plt.legend()
+        plt.xlabel("(De)compressed inner pointwise maximum relative error (global)")
+        plt.ylabel(metric)
+        plt.title(args['output_file_name'] + " inner PWMRE vs - " + metric)
+        plt.savefig(os.path.join(save_folder, metric+"_innerpwmre.png"))
         plt.clf()
