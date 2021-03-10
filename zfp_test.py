@@ -34,9 +34,8 @@ def relative_error(x, GT, max_diff = None):
     return val
 
 def pw_relative_error(x, GT):
-    val = np.abs(GT-x) / GT
+    val = np.abs(np.abs(GT-x) / GT)
     return val.max()
-
 
 def gaussian(window_size : int, sigma : float) -> torch.Tensor:
     gauss : torch.Tensor = torch.Tensor([exp(-(x - window_size//2)**2/float(2*sigma**2)) for x \
@@ -175,6 +174,8 @@ if __name__ == '__main__':
     results['compression_time'] = []
     results['rec_mre'] = []
     results['rec_pwmre'] = []
+    results['rec_inner_mre'] = []
+    results['rec_inner_pwmre'] = []
     f = h5py.File(os.path.join(input_folder, args['file']), "r")
     d = np.array(f['data'])
     f.close()
@@ -227,8 +228,16 @@ if __name__ == '__main__':
                 
         if(args['dims'] == 2):
             rec_ssim = ssim(torch.Tensor(dc).unsqueeze(0), torch.Tensor(d).unsqueeze(0))
+            inner_mre = relative_error(dc[:,:,20:dc.shape[2]-20,20:dc.shape[3]-20], 
+            d[:,:,20:d.shape[2]-20,20:d.shape[3]-20])
+            inner_pwmre = pw_relative_error(dc[:,:,20:dc.shape[2]-20,20:dc.shape[3]-20], 
+            d[:,:,20:d.shape[2]-20,20:d.shape[3]-20])
         elif(args['dims'] == 3):      
             rec_ssim = ssim3D(torch.Tensor(dc).unsqueeze(0), torch.Tensor(d).unsqueeze(0))
+            inner_mre = relative_error(dc[:,:,20:dc.shape[2]-20,20:dc.shape[3]-20,20:dc.shape[4]-20], 
+            d[:,:,20:d.shape[2]-20,20:d.shape[3]-20,20:d.shape[4]-20])
+            inner_pwmre = pw_relative_error(dc[:,:,20:dc.shape[2]-20,20:dc.shape[3]-20,20:dc.shape[4]-20], 
+            d[:,:,20:d.shape[2]-20,20:d.shape[3]-20,20:d.shape[4]-20])
         im = to_img(torch.Tensor(dc).unsqueeze(0), "2D" if args['dims'] == 2 else "3D")
         imageio.imwrite(os.path.join(save_folder, "zfp_"+args['file']+"_"+str(value)+".png"), im)
 
@@ -241,6 +250,8 @@ if __name__ == '__main__':
         results['rec_ssim'].append(rec_ssim)
         results['rec_mre'].append(final_mre)
         results['rec_pwmre'].append(final_pwmre)
+        results['rec_inner_mre'].append(inner_mre)
+        results['rec_inner_pwmre'].append(inner_pwmre)
         value += args['bpv_skip']
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
