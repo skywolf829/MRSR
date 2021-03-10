@@ -174,7 +174,7 @@ if __name__ == '__main__':
     results['psnrs'] = []
     results['compression_time'] = []
     results['rec_mre'] = []
-    results['rec_mpwre'] = []
+    results['rec_pwmre'] = []
     f = h5py.File(os.path.join(input_folder, args['file']), "r")
     d = np.array(f['data'])
     f.close()
