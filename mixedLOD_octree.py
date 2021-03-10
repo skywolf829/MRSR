@@ -260,11 +260,11 @@ def mse_criterion(GT_image, img, max_mse : torch.Tensor) -> torch.Tensor:
 @torch.jit.script
 def maximum_relative_error(GT_image, img, max_e : torch.Tensor, 
 max_diff : Optional[torch.Tensor] = None) -> torch.Tensor:
-    return  relative_error(img, GT_image, max_diff) < max_e
+    return relative_error(img, GT_image, max_diff) < max_e
 
 @torch.jit.script
 def maximum_pw_relative_error(GT_image, img, max_e : torch.Tensor) -> torch.Tensor:
-    return  relative_error(img, GT_image) < max_e
+    return pw_relative_error(img, GT_image) < max_e
 
 @torch.jit.script
 def bilinear_upscale(img : torch.Tensor, scale_factor : int) -> torch.Tensor:
@@ -1669,6 +1669,8 @@ if __name__ == '__main__':
     results['num_nodes'] = []
     results['rec_psnr'] = []
     results['rec_ssim'] = []
+    results['rec_mre'] = []
+    results['rec_mpwre'] = []
     
     if(args['data_type'] == "image"):
         img_gt : torch.Tensor = torch.from_numpy(imageio.imread(
@@ -1785,6 +1787,7 @@ if __name__ == '__main__':
         final_psnr : float = PSNR(img_upscaled, img_gt).item()
         final_mse : float = MSE(img_upscaled, img_gt).item()
         final_mre : float = relative_error(img_upscaled, img_gt).item()
+        final_pwmre: float = pw_relative_error(img_upscaled, img_gt).item()
         if(len(img_upscaled.shape) == 4):
             final_ssim : float = ssim(img_upscaled, img_gt).item()
         elif(len(img_upscaled.shape) == 5):
@@ -1792,8 +1795,8 @@ if __name__ == '__main__':
 
         print("Final stats:")
         print("Target - " + criterion + " " + str(criterion_value))
-        print("PSNR: %0.02f, SSIM: %0.02f, MSE: %0.02f, MRE: %0.04f" % \
-            (final_psnr, final_ssim, final_mse, final_mre))
+        print("PSNR: %0.02f, SSIM: %0.02f, MSE: %0.02f, MRE: %0.04f, PWMRE: %0.04f" % \
+            (final_psnr, final_ssim, final_mse, final_mre, final_pwmre))
         print("Pre-compressed data size: %f kb" % nodes.total_size())
         print("Saved file size: %f kb" % f_size_kb)
         results['psnrs'].append(criterion_value)
@@ -1802,6 +1805,8 @@ if __name__ == '__main__':
         results['num_nodes'].append(len(nodes))
         results['rec_psnr'].append(final_psnr)
         results['rec_ssim'].append(final_ssim)
+        results['rec_mre'].append(final_mre)
+        results['rec_pwmre'].append(final_pwmre)
 
         if(args['debug']):           
 

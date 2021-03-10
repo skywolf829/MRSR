@@ -173,6 +173,8 @@ if __name__ == '__main__':
     results['rec_ssim'] = []
     results['psnrs'] = []
     results['compression_time'] = []
+    results['rec_mre'] = []
+    results['rec_mpwre'] = []
     f = h5py.File(os.path.join(input_folder, args['file']), "r")
     d = np.array(f['data'])
     f.close()
@@ -219,6 +221,8 @@ if __name__ == '__main__':
         dc = np.stack(data_channels)
 
         rec_psnr = PSNR(dc, d)
+        final_mre : float = relative_error(dc, d).item()
+        final_pwmre: float = pw_relative_error(dc, d).item()
         #rec_ssim = ssim(d, dc)
                 
         if(args['dims'] == 2):
@@ -235,6 +239,8 @@ if __name__ == '__main__':
         results['compression_time'].append(compression_time)
         results['rec_psnr'].append(rec_psnr)
         results['rec_ssim'].append(rec_ssim)
+        results['rec_mre'].append(final_mre)
+        results['rec_pwmre'].append(final_pwmre)
         value += args['bpv_skip']
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
