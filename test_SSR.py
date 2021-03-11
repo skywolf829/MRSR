@@ -563,6 +563,9 @@ if __name__ == '__main__':
                 "x_imgs")
             if not os.path.exists(img_folder):
                 os.makedirs(img_folder)
+            print(dataset.item_names)
+            print("Saving " + dataset.item_names[i]+\
+                "_"+args['save_name']+".png")
             LR_img_name = os.path.join(img_folder, dataset.item_names[i]+\
                 "_"+args['save_name']+".png")
             GT_img_name = os.path.join(img_folder, dataset.item_names[i]+\
