@@ -449,6 +449,7 @@ if __name__ == '__main__':
         "inference_time": [],
         "mse": [],
         "psnr": [],
+        "ssim": [],
         "mre": [],
         "inner_mre": [],
         "img_psnr": [],
