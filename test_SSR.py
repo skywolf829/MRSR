@@ -17,6 +17,7 @@ import imageio
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 import copy
+from math import exp
 from typing import Dict, List, Tuple, Optional
 
 class img_dataset(torch.utils.data.Dataset):
