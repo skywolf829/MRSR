@@ -44,8 +44,8 @@ cd /lus/theta-fs0/projects/DL4VIS/FlowSTSR
 
 ###############################################
 
-python3 test_SSR.py --output_file_name iso3D_2x --full_resolution 1024 --channels 1 --save_name model --scale_factor 2 --testing_method model --model_name SSR_iso_mag --print True --device cuda:0 --parallel True --data_folder iso1024mag --mode 3D 
 python3 test_SSR.py --output_file_name iso3D_2x --full_resolution 1024 --channels 1 --save_name trilinear --scale_factor 2 --testing_method trilinear --print True --device cuda:0 --data_folder iso1024mag --mode 3D 
+python3 test_SSR.py --output_file_name iso3D_2x --full_resolution 1024 --channels 1 --save_name model --scale_factor 2 --testing_method model --model_name SSR_iso_mag --print True --device cuda:0 --parallel True --data_folder iso1024mag --mode 3D --test_on_gpu false
 
 #################################################
 
