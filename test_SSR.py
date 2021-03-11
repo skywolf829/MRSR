@@ -403,6 +403,7 @@ if __name__ == '__main__':
     parser.add_argument('--parallel',default="False",type=str2bool,help='Perform SR in parallel')
     parser.add_argument('--print',default="True",type=str2bool,help='Print output during testing')
     parser.add_argument('--debug',default="False",type=str2bool,help='Use fake data during testing instead of loading')
+    parser.add_argument('--test_on_gpu',default="True",type=str2bool,help='Metrics calculated on GPU?')
 
     parser.add_argument('--test_mse',default="True",type=str2bool,help='Enables tests for mse')
     parser.add_argument('--test_psnr',default="True",type=str2bool,help='Enables tests for mse')
@@ -496,7 +497,9 @@ if __name__ == '__main__':
                 elif(args['mode'] == "2D"):
                     LR_data = GT_data[:,:,::args['scale_factor'], ::args['scale_factor']].clone()
 
-            GT_data = GT_data.to("cpu")
+
+            if(not args['test_on_gpu']):
+                GT_data = GT_data.to("cpu")
             torch.cuda.empty_cache()
             if(p):
                 print("Finished downscaling to " + str(LR_data.shape) + ". Performing super resolution")
@@ -533,8 +536,8 @@ if __name__ == '__main__':
             if(p):
                 print("Finished super resolving in %0.04f seconds. Final shape: %s. Performing tests." % \
                     (inference_this_frame, str(LR_data.shape)))
-
-            LR_data = LR_data.to("cpu")
+            if(not args['test_on_gpu']):
+                LR_data = LR_data.to("cpu")
 
             mse_this_frame = None
             psnr_this_frame = None
@@ -546,17 +549,17 @@ if __name__ == '__main__':
             d['inference_time'].append(inference_this_frame)
 
             if(args['mode'] == '3D'):
-                LR_img_this_frame = LR_data[0,:,int(LR_data.shape[2]/2),:,:].clone()
-                GT_img_this_frame = GT_data[0,:,int(GT_data.shape[2]/2),:,:].clone()
+                LR_img_this_frame = LR_data[0,:,int(LR_data.shape[2]/2),:,:].clone().cpu()
+                GT_img_this_frame = GT_data[0,:,int(GT_data.shape[2]/2),:,:].clone().cpu()
             elif(args['mode'] == '2D'):
-                LR_img_this_frame = LR_data[0,:,:,:].clone()
-                GT_img_this_frame = GT_data[0,:,:,:].clone()
+                LR_img_this_frame = LR_data[0,:,:,:].clone().cpu()
+                GT_img_this_frame = GT_data[0,:,:,:].clone().cpu()
 
-            LR_img_this_frame -= GT_data.min()
-            GT_img_this_frame -= GT_data.min()
+            LR_img_this_frame -= GT_data.min().cpu()
+            GT_img_this_frame -= GT_data.min().cpu()
 
-            LR_img_this_frame *= (255/(GT_data.max()-GT_data.min()))
-            GT_img_this_frame *= (255/(GT_data.max()-GT_data.min()))
+            LR_img_this_frame *= (255/(GT_data.max().cpu()-GT_data.min().cpu()))
+            GT_img_this_frame *= (255/(GT_data.max().cpu()-GT_data.min().cpu()))
 
             LR_img_this_frame = LR_img_this_frame.permute(1, 2, 0).detach().cpu().numpy().astype(np.uint8)
             GT_img_this_frame = GT_img_this_frame.permute(1, 2, 0).detach().cpu().numpy().astype(np.uint8)
@@ -575,19 +578,19 @@ if __name__ == '__main__':
             
 
             if(args['test_mse']):
-                mse_item = mse_func(GT_data, LR_data, "cpu")
+                mse_item = mse_func(GT_data, LR_data, args['device'] if args['test_on_gpu'] else "cpu").item()
                 if(p):
                     print("MSE: " + str(mse_item))
                 d['mse'].append(mse_item)
 
             if(args['test_psnr']):
-                psnr_item = psnr_func(GT_data, LR_data, "cpu")
+                psnr_item = psnr_func(GT_data, LR_data, args['device'] if args['test_on_gpu'] else "cpu").item()
                 if(p):
                     print("PSNR: " + str(psnr_item))
                 d['psnr'].append(psnr_item)
 
             if(args['test_mre']):
-                mre_item = mre_func(GT_data, LR_data, "cpu")
+                mre_item = mre_func(GT_data, LR_data, args['device'] if args['test_on_gpu'] else "cpu").item()
                 if(p):
                     print("MRE: " + str(mre_item))
                 d['mre'].append(mre_item)
@@ -598,7 +601,7 @@ if __name__ == '__main__':
                         GT_data[:,:,6:GT_data.shape[2]-6,
                                 6:GT_data.shape[3]-6], 
                                 LR_data[:,:,6:LR_data.shape[2]-6,
-                                6:LR_data.shape[3]-6], "cpu")
+                                6:LR_data.shape[3]-6], args['device'] if args['test_on_gpu'] else "cpu").item()
                 elif(args['mode'] == '3D'):
                     mre_item = mre_func(
                         GT_data[:,:,6:GT_data.shape[2]-6,
@@ -606,7 +609,7 @@ if __name__ == '__main__':
                                 6:GT_data.shape[4]-6], 
                                 LR_data[:,:,6:LR_data.shape[2]-6,
                                 6:LR_data.shape[3]-6,
-                                6:LR_data.shape[4]-6], "cpu")
+                                6:LR_data.shape[4]-6], args['device'] if args['test_on_gpu'] else "cpu").item()
                 if(p):
                     print("Inner MRE: " + str(mre_item))
                 d['inner_mre'].append(mre_item)
