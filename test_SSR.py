@@ -529,7 +529,8 @@ if __name__ == '__main__':
             inference_this_frame = inference_end_time - inference_start_time
 
             if(p):
-                print("Finished super resolving in %0.04f seconds. Performing tests." % inference_this_frame)
+                print("Finished super resolving in %0.04f seconds. Final shape: %s. Performing tests." % \
+                    (inference_this_frame, str(LR_data.shape)))
 
             LR_data = LR_data.to("cpu")
 
