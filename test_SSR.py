@@ -159,14 +159,14 @@ def _ssim_3D(img1, img2, window, window_size, channel, size_average = True):
 
     mu1_mu2 = mu1*mu2
 
-    sigma1_sq = F.conv3d(img1*img1, window, padding = window_size//2, groups = channel) - mu1_sq
-    sigma2_sq = F.conv3d(img2*img2, window, padding = window_size//2, groups = channel) - mu2_sq
-    sigma12 = F.conv3d(img1*img2, window, padding = window_size//2, groups = channel) - mu1_mu2
+    sigma1_sq = F.conv3d(img1*img1, window, padding = window_size//2, groups = channel).cpu() - mu1_sq.cpu()
+    sigma2_sq = F.conv3d(img2*img2, window, padding = window_size//2, groups = channel).cpu() - mu2_sq.cpu()
+    sigma12 = F.conv3d(img1*img2, window, padding = window_size//2, groups = channel).cpu() - mu1_mu2.cpu()
 
     C1 = 0.01**2
     C2 = 0.03**2
 
-    ssim_map = ((2*mu1_mu2 + C1)*(2*sigma12 + C2))/((mu1_sq + mu2_sq + C1)*(sigma1_sq + sigma2_sq + C2))
+    ssim_map = ((2*mu1_mu2.cpu() + C1)*(2*sigma12 + C2))/((mu1_sq.cpu() + mu2_sq.cpu() + C1)*(sigma1_sq + sigma2_sq + C2))
 
     if size_average:
         return ssim_map.mean()
