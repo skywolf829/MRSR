@@ -480,12 +480,12 @@ if __name__ == '__main__':
             if(opt['downsample_mode'] == "average_pooling"):
                 chans = []
                 if(args['mode'] == "3D"):
-                    for i in range(args['channels']):
-                        LR_data = AvgPool3D(GT_data[:,i:i+1,:,:,:], args['scale_factor'])
+                    for j in range(args['channels']):
+                        LR_data = AvgPool3D(GT_data[:,j:j+1,:,:,:], args['scale_factor'])
                         chans.append(LR_data)
                 elif(args['mode'] == "2D"):
-                    for i in range(args['channels']):
-                        LR_data = AvgPool2D(GT_data[:,i:i+1,:,:], args['scale_factor'])
+                    for j in range(args['channels']):
+                        LR_data = AvgPool2D(GT_data[:,j:j+1,:,:], args['scale_factor'])
                         chans.append(LR_data)
                 LR_data = torch.cat(chans, dim=1)
             elif(opt['downsample_mode'] == "subsampling"):
