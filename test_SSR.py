@@ -38,7 +38,7 @@ def load_obj(location):
 def mse_func(GT, x, device):
     GT = GT.to(device)
     x = x.to(device)
-    return ((GT-x)**2).mean().item()
+    return ((GT-x)**2).mean()
 
 def psnr_func(GT, x, device):
     GT = GT.to(device)
@@ -50,18 +50,18 @@ def mre_func(GT, x, device):
     GT = GT.to(device)
     x = x.to(device)
     data_range = GT.max() - GT.min()
-    return (torch.abs(GT-x).max() / data_range).item()
+    return (torch.abs(GT-x).max() / data_range)
 
 def mag_func(GT, x, device):
     GT = GT.to(device)
     x = x.to(device)
-    return torch.abs(torch.norm(GT, dim=1) - torch.norm(x, dim=1)).mean().item()
+    return torch.abs(torch.norm(GT, dim=1) - torch.norm(x, dim=1)).mean()
 
 def angle_func(GT, x, device):
     GT = GT.to(device)
     x = x.to(device)
     cs = torch.nn.CosineSimilarity(dim=1).to(device)
-    return (torch.abs(cs(GT,x) - 1) / 2).mean().item()
+    return (torch.abs(cs(GT,x) - 1) / 2).mean()
 
 def streamline_func(GT, x, device):
     GT = GT.to(device)
