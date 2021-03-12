@@ -26,6 +26,10 @@ if __name__ == '__main__':
         os.makedirs(save_folder)
     #print(results)
     results.pop('sz', None)
+    results.pop("NN_SZ", None)
+    results.pop("NN_bilinearheuristic_mixedLOD_octree_SZ")
+    results["Super resolution + SZ"] = copy.deepcopy(results["NN_mixedLODoctree_SZ"])
+    results.pop("NN_mixedLODoctree_SZ")
 
     for m in results.keys():
         ks = list(results[m].keys())
@@ -48,6 +52,7 @@ if __name__ == '__main__':
     full_file_size = 4096
 
 
+
     for metric in metrics:
         fig = plt.figure()
         vals = []
@@ -59,8 +64,7 @@ if __name__ == '__main__':
                 results[method]['compression_ratio'] = compression_ratios
         for method in compression_method_names:
             if('rec_psnr' in results[method].keys() and \
-                metric in results[method].keys() and len(results[method][metric]) > 0 \
-                    and method != "zfp"):
+                metric in results[method].keys() and len(results[method][metric]) > 0):
                 ordering = np.argsort(np.array(results[method]['rec_psnr'][:]))
                 x = np.array(results[method]['rec_psnr'])[ordering]
                 y = np.array(results[method][metric])[ordering]

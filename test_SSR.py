@@ -404,6 +404,7 @@ if __name__ == '__main__':
     parser.add_argument('--print',default="True",type=str2bool,help='Print output during testing')
     parser.add_argument('--debug',default="False",type=str2bool,help='Use fake data during testing instead of loading')
     parser.add_argument('--test_on_gpu',default="True",type=str2bool,help='Metrics calculated on GPU?')
+    parser.add_argument('--fix_dim_order',default="False",type=str2bool,help='True if channels are last')
 
     parser.add_argument('--test_mse',default="True",type=str2bool,help='Enables tests for mse')
     parser.add_argument('--test_psnr',default="True",type=str2bool,help='Enables tests for mse')
@@ -475,6 +476,8 @@ if __name__ == '__main__':
                     GT_data = torch.randn([1, args['channels'], args['full_resolution'], args['full_resolution']]).to(args['device'])
             else:
                 GT_data = dataset[i].to(args['device'])
+            if(args['fix_dim_order']):
+                GT_data = GT_data.permute(0, 4, 1, 2, 3)
             end_load_time = time.time()
             GT_data.requires_grad_(False)
             if(p):
