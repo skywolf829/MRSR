@@ -70,7 +70,7 @@ def streamline_func(GT, x, device):
     for i in range(100):
         vals.append(streamline_loss3D(GT, x,
         100, 100, 100, 
-        1, 5, device, True).item())
+        1, 5, device, False).item())
     vals = np.array(vals)
     return vals.mean(), vals.std()
 
