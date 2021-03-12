@@ -409,6 +409,7 @@ if __name__ == '__main__':
     parser.add_argument('--test_psnr',default="True",type=str2bool,help='Enables tests for mse')
     parser.add_argument('--test_mre',default="True",type=str2bool,help='Enables tests for maximum relative error')
     parser.add_argument('--test_ssim',default="True",type=str2bool,help='Enables tests for maximum relative error')
+    parser.add_argument('--test_streamline',default="False",type=str2bool,help='Enables streamline error tests')
 
     parser.add_argument('--test_img_psnr',default="False",type=str2bool,help='Enables tests for image PSNR score')
     parser.add_argument('--test_img_ssim',default="False",type=str2bool,help='Enables tests for image SSIM score')
@@ -452,6 +453,8 @@ if __name__ == '__main__':
         "psnr": [],
         "ssim": [],
         "mre": [],
+        "streamline_error_mean": [],
+        "streamline_error_std": [],
         "inner_mre": [],
         "img_psnr": [],
         "img_ssim": [],
@@ -619,6 +622,10 @@ if __name__ == '__main__':
                 elif(args['mode'] == '3D'):
                     ssim_item = ssim3D(GT_data, LR_data).item()
                 d['ssim'].append(ssim_item)
+            if(args['test_streamline']):
+                streamline_avg, streamline_std = streamline_func(GT_data, LR_data, args['device'])
+                d["streamline_error_mean"].append(streamline_avg)
+                d["streamline_error_std"].append(streamline_std)
             '''
             if(args['test_img_psnr']):
                 psnr_item = img_psnr_func(GT_data, LR_data, "cpu")
