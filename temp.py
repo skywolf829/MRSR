@@ -20,21 +20,17 @@ def to_netcdf(vf, name):
           rootgrp.createDimension("u")
           rootgrp.createDimension("v")
           rootgrp.createDimension("channels", vf.shape[0])
-          us = rootgrp.createVariable("u", np.float32, ("u","v"))
-          vs = rootgrp.createVariable("v", np.float32, ("u","v"))
-          us[:] = vf[0]
-          vs[:] = vf[1]
+          for i in range(vf.shape[0]):
+               dim_i = rootgrp.createVariable("dim"+str(i), np.float32, ("u","v"))
+               dim_i[:] = vf[i]
      if(len(vf.shape) == 4):
           rootgrp.createDimension("u")
           rootgrp.createDimension("v")
           rootgrp.createDimension("w")
           rootgrp.createDimension("channels", vf.shape[0])     
-          us = rootgrp.createVariable("u", np.float32, ("u","v","w"))
-          vs = rootgrp.createVariable("v", np.float32, ("u","v","w"))
-          ws = rootgrp.createVariable("w", np.float32, ("u","v","w"))
-          us[:] = vf[0]
-          vs[:] = vf[1]
-          ws[:] = vf[2]
+          for i in range(vf.shape[0]):
+               dim_i = rootgrp.createVariable("dim"+str(i), np.float32, ("u","v", "w"))
+               dim_i[:] = vf[i]
 
 files_to_convert = [
      "isomag2D_compressiontest",
