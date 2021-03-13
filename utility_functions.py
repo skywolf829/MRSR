@@ -152,7 +152,7 @@ def to_img(input : torch.Tensor, mode : str, colormap = True):
         img *= (1/img.max()+1e-6)
         if(colormap and img.shape[0] == 1):
             img = cm.coolwarm(img[0].cpu().numpy())
-            img = np.transpose(img, (2, 0, 1))
+            #img = np.transpose(img, (2, 0, 1))
         else:
             img *= 255
             img = img.permute(1, 2, 0).cpu().numpy().astype(np.uint8)
@@ -162,7 +162,7 @@ def to_img(input : torch.Tensor, mode : str, colormap = True):
         img *= (1/img.max()+1e-6)
         if(colormap and img.shape[0] == 1):
             img = cm.coolwarm(img[0].cpu().numpy())
-            img = np.transpose(img, (2, 0, 1))
+            #img = np.transpose(img, (2, 0, 1))
         else:
             img *= 255
             img = img.permute(1, 2, 0).cpu().numpy().astype(np.uint8)
