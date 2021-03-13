@@ -961,7 +961,7 @@ min_chunk_size: int, device : str, mode : str) -> OctreeNodeList:
     for i in range(3, len(full_size)):
         min_width = min(min_width, full_size[i])
 
-    current_depth : nodes[0].depth
+    current_depth = nodes[0].depth
 
     # dict[depth -> LOD -> group parent index -> list]
     groups : Dict[int, Dict[int, Dict[int, Dict[int, OctreeNode]]]] = {}
