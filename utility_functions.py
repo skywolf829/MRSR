@@ -147,23 +147,25 @@ def ssim3D(img1, img2, window_size = 11, size_average = True):
 
 def to_img(input : torch.Tensor, mode : str, colormap = True):
     if(mode == "2D"):
-        img = input[0].permute(1, 2, 0).cpu().numpy()
+        img = input[0]
         img -= img.min()
         img *= (1/img.max()+1e-6)
-        if(colormap):
-            img = cm.coolwarm(img)
+        if(colormap and img.shape[0] == 1):
+            img = cm.coolwarm(img[0].cpu().numpy())
+            img = np.transpose(img, (2, 0, 1))
         else:
             img *= 255
-            img = img.astype(np.uint8)
+            img = img.permute(1, 2, 0).cpu().numpy().astype(np.uint8)
     elif(mode == "3D"):
-        img = input[0,:,:,:,int(input.shape[4]/2)].permute(1, 2, 0).cpu().numpy()
+        img = input[0,:,:,:,int(input.shape[4]/2)]
         img -= img.min()        
         img *= (1/img.max()+1e-6)
-        if(colormap):
-            img = cm.coolwarm(img)
+        if(colormap and img.shape[0] == 1):
+            img = cm.coolwarm(img[0].cpu().numpy())
+            img = np.transpose(img, (2, 0, 1))
         else:
             img *= 255
-            img = img.astype(np.uint8)
+            img = img.permute(1, 2, 0).cpu().numpy().astype(np.uint8)
     return img
 
 def bilinear_interpolate(im, x, y):
