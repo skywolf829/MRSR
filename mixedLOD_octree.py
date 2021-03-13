@@ -18,14 +18,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 import copy
-
-def save_obj(obj,location):
-    with open(location, 'wb') as f:
-        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
-
-def load_obj(location):
-    with open(location, 'rb') as f:
-        return pickle.load(f)
+from utility_functions import save_obj, load_obj, ssim, ssim3D, to_img
 
 @torch.jit.script
 class OctreeNode:
@@ -132,92 +125,6 @@ class OctreeNodeList:
         for i in range(len(self.node_list)):
             nbytes += self.node_list[i].size()
         return nbytes 
-
-def gaussian(window_size : int, sigma : float) -> torch.Tensor:
-    gauss : torch.Tensor = torch.Tensor([exp(-(x - window_size//2)**2/float(2*sigma**2)) for x \
-        in range(window_size)])
-    return gauss/gauss.sum()
-
-def create_window(window_size : torch.Tensor, channel : int) -> torch.Tensor:
-    _1D_window : torch.Tensor = gaussian(window_size, 1.5).unsqueeze(1)
-    _2D_window : torch.Tensor = _1D_window.mm(_1D_window.t()).float().unsqueeze(0).unsqueeze(0)
-    window : torch.Tensor = torch.Tensor(_2D_window.expand(channel, 1, window_size, window_size).contiguous())
-    return window
-
-def create_window_3D(window_size, channel):
-    _1D_window = gaussian(window_size, 1.5).unsqueeze(1)
-    _2D_window = _1D_window.mm(_1D_window.t())
-    _3D_window = _1D_window.mm(_2D_window.reshape(1, -1)).reshape(window_size, window_size, window_size).float().unsqueeze(0).unsqueeze(0)
-    window = Variable(_3D_window.expand(channel, 1, window_size, window_size, window_size).contiguous())
-    return window
-
-def _ssim(img1 : torch.Tensor, img2 : torch.Tensor, window : torch.Tensor, 
-window_size : torch.Tensor, channel : int, size_average : Optional[bool] = True):
-    mu1 : torch.Tensor = F.conv2d(img1, window, padding = window_size//2, groups = channel)
-    mu2 : torch.Tensor = F.conv2d(img2, window, padding = window_size//2, groups = channel)
-
-    mu1_sq : torch.Tensor = mu1.pow(2)
-    mu2_sq : torch.Tensor = mu2.pow(2)
-    mu1_mu2 : torch.Tensor = mu1*mu2
-
-    sigma1_sq : torch.Tensor = F.conv2d(img1*img1, window, padding = window_size//2, groups = channel) - mu1_sq
-    sigma2_sq : torch.Tensor = F.conv2d(img2*img2, window, padding = window_size//2, groups = channel) - mu2_sq
-    sigma12 : torch.Tensor = F.conv2d(img1*img2, window, padding = window_size//2, groups = channel) - mu1_mu2
-
-    C1 : float = 0.01**2
-    C2 : float= 0.03**2
-
-    ssim_map : torch.Tensor = ((2*mu1_mu2 + C1)*(2*sigma12 + C2))/((mu1_sq + mu2_sq + C1)*(sigma1_sq + sigma2_sq + C2))
-
-    ans : torch.Tensor = torch.Tensor([0])
-    if size_average:
-        ans = ssim_map.mean()
-    else:
-        ans = ssim_map.mean(1).mean(1).mean(1)
-    return ans
-
-def _ssim_3D(img1, img2, window, window_size, channel, size_average = True):
-    mu1 = F.conv3d(img1, window, padding = window_size//2, groups = channel)
-    mu2 = F.conv3d(img2, window, padding = window_size//2, groups = channel)
-
-    mu1_sq = mu1.pow(2)
-    mu2_sq = mu2.pow(2)
-
-    mu1_mu2 = mu1*mu2
-
-    sigma1_sq = F.conv3d(img1*img1, window, padding = window_size//2, groups = channel) - mu1_sq
-    sigma2_sq = F.conv3d(img2*img2, window, padding = window_size//2, groups = channel) - mu2_sq
-    sigma12 = F.conv3d(img1*img2, window, padding = window_size//2, groups = channel) - mu1_mu2
-
-    C1 = 0.01**2
-    C2 = 0.03**2
-
-    ssim_map = ((2*mu1_mu2 + C1)*(2*sigma12 + C2))/((mu1_sq + mu2_sq + C1)*(sigma1_sq + sigma2_sq + C2))
-
-    if size_average:
-        return ssim_map.mean()
-    else:
-        return ssim_map.mean(1).mean(1).mean(1)
-
-def ssim(img1, img2, window_size = 11, size_average = True):
-    (_, channel, _, _) = img1.size()
-    window = create_window(window_size, channel)
-    
-    if img1.is_cuda:
-        window = window.cuda(img1.get_device())
-    window = window.type_as(img1)
-    
-    return _ssim(img1, img2, window, window_size, channel, size_average)
-
-def ssim3D(img1, img2, window_size = 11, size_average = True):
-    (_, channel, _, _, _) = img1.size()
-    window = create_window_3D(window_size, channel)
-    
-    if img1.is_cuda:
-        window = window.cuda(img1.get_device())
-    window = window.type_as(img1)
-    
-    return _ssim_3D(img1, img2, window, window_size, channel, size_average)
 
 def ssim_criterion(GT_image, img, min_ssim=0.6) -> float:
     if(len(GT_image.shape) == 4):
@@ -1197,19 +1104,6 @@ min_chunk_size: int, device : str, mode : str) -> OctreeNodeList:
                         
         current_depth -= 1
     return nodes
-
-def to_img(input : torch.Tensor, mode : str):
-    if(mode == "2D"):
-        img = input[0].permute(1, 2, 0).cpu().numpy()
-        img -= img.min()
-        img *= (255/(img.max()+1e-6))
-        img = img.astype(np.uint8)
-    elif(mode == "3D"):
-        img = input[0,:,:,:,int(input.shape[4]/2)].permute(1, 2, 0).cpu().numpy()
-        img -= img.min()
-        img *= (255/(img.max()+1e-6))
-        img = img.astype(np.uint8)
-    return img
 
 def nodelist_to_h5(nodes : OctreeNodeList, name : str):
     f = h5py.File(name, "w")

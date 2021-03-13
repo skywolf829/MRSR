@@ -8,7 +8,7 @@ import copy
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
     
-    parser.add_argument('--save_folder',default="mag2D_compression",
+    parser.add_argument('--save_folder',default="mag2D_compression_pwmre",
     type=str,help='Folder to save images to')
     parser.add_argument('--output_file_name',default="results.pkl",
     type=str,help='filename to visualize in output folder')    
@@ -25,6 +25,7 @@ if __name__ == '__main__':
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
     #print(results)
+    '''
     results.pop('sz', None)
     results.pop("NN_SZ", None)
     results.pop("NN_bilinearheuristic_mixedLOD_octree_SZ")
@@ -40,7 +41,7 @@ if __name__ == '__main__':
                 results[m][k_orig] = copy.deepcopy(results[m][k])
                 results[m].pop(k,None)
     # results go compression_method -> metric -> list
-
+    '''
     for m in results.keys():
         print(m)
         for k in results[m].keys():
