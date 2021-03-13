@@ -8,10 +8,50 @@ import matplotlib.pyplot as plt
 from utility_functions import AvgPool2D
 import os
 import h5py
+from netCDF4 import Dataset
 
 FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 
 
+def to_netcdf(vf, name):
+     rootgrp = Dataset(name+".nc", "w", format="NETCDF4")
+
+     if(len(vf.shape) == 3):
+          rootgrp.createDimension("u")
+          rootgrp.createDimension("v")
+          rootgrp.createDimension("channels", vf.shape[0])
+          us = rootgrp.createVariable("u", np.float32, ("u","v","w"))
+          vs = rootgrp.createVariable("v", np.float32, ("u","v","w"))
+          us[:] = vf[0].cpu().numpy()
+          vs[:] = vf[1].cpu().numpy()
+     if(len(vf.shape) == 4):
+          rootgrp.createDimension("u")
+          rootgrp.createDimension("v")
+          rootgrp.createDimension("w")
+          rootgrp.createDimension("channels", vf.shape[0])     
+          us = rootgrp.createVariable("u", np.float32, ("u","v","w"))
+          vs = rootgrp.createVariable("v", np.float32, ("u","v","w"))
+          ws = rootgrp.createVariable("w", np.float32, ("u","v","w"))
+          us[:] = vf[0].cpu().numpy()
+          vs[:] = vf[1].cpu().numpy()
+          ws[:] = vf[2].cpu().numpy()
+
+files_to_convert = [
+     "isomag2D_compressiontest",
+     "isomag3D_compressiontest",
+     "mixing3D_compressiontest",
+     "iso3DVF_compressiontest"
+]
+file_loc_base = os.path.join(FlowSTSR_folder_path, "TestingData", "octree_files")
+for name in files_to_convert:
+     print("Loading " + name)
+     f = h5py.File(os.path.join(file_loc_base, name+".h5"), 'r')
+     d = np.array(f['data'])
+     to_netcdf(d, name)
+     print("Finished " + name)
+
+
+'''
 VF_folder = os.path.join(FlowSTSR_folder_path, "TestingData", "iso1024")
 new_VF_folder = os.path.join(FlowSTSR_folder_path, "TestingData", "iso3DVF")
 #mixing_folder = os.path.join(FlowSTSR_folder_path, "InputData", "mixing_p")
@@ -38,6 +78,7 @@ for filename in os.listdir(VF_folder):
                     f_h5.create_dataset("data", data=a)
                     f_h5.close()
                     octant_no += 1
+'''
 '''
 for filename in os.listdir(mixing_folder):
      file_loc = os.path.join(mixing_folder, filename)
