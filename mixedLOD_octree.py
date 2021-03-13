@@ -1578,6 +1578,8 @@ if __name__ == '__main__':
         f = h5py.File(os.path.join(input_folder, args['file']), "r")
         img_gt : torch.Tensor = torch.from_numpy(np.array(f['data'])).unsqueeze(0).to(device)
         f.close()
+    imageio.imwrite(os.path.join(save_folder, "GT.png"), 
+        to_img(img_gt, mode))
 
     full_shape : List[int] = list(img_gt.shape)
     print(full_shape)
