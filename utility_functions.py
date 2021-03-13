@@ -147,7 +147,7 @@ def ssim3D(img1, img2, window_size = 11, size_average = True):
 
 def to_img(input : torch.Tensor, mode : str, colormap = True):
     if(mode == "2D"):
-        img = input[0]
+        img = input[0].clone()
         img -= img.min()
         img *= (1/img.max()+1e-6)
         if(colormap and img.shape[0] == 1):
@@ -158,7 +158,7 @@ def to_img(input : torch.Tensor, mode : str, colormap = True):
             img *= 255
             img = img.permute(1, 2, 0).cpu().numpy().astype(np.uint8)
     elif(mode == "3D"):
-        img = input[0,:,:,:,int(input.shape[4]/2)]
+        img = input[0,:,:,:,int(input.shape[4]/2)].clone()
         img -= img.min()        
         img *= (1/img.max()+1e-6)
         if(colormap and img.shape[0] == 1):
