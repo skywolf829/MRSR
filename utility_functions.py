@@ -166,6 +166,7 @@ def to_img(input : torch.Tensor, mode : str, colormap = True):
         else:
             img *= 255
             img = img.permute(1, 2, 0).cpu().numpy().astype(np.uint8)
+    print(img.shape)
     return img
 
 def bilinear_interpolate(im, x, y):
