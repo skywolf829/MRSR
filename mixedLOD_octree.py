@@ -961,7 +961,7 @@ min_chunk_size: int, device : str, mode : str) -> OctreeNodeList:
     for i in range(3, len(full_size)):
         min_width = min(min_width, full_size[i])
 
-    current_depth : int = int(torch.log2(torch.tensor(min_width/min_chunk_size)))
+    current_depth : nodes[0].depth
 
     # dict[depth -> LOD -> group parent index -> list]
     groups : Dict[int, Dict[int, Dict[int, Dict[int, OctreeNode]]]] = {}
@@ -972,7 +972,7 @@ min_chunk_size: int, device : str, mode : str) -> OctreeNodeList:
         l : int = nodes[i].LOD
         group_parent_index : int = int(nodes[i].index / magic_num)
         n_index : int = nodes[i].index % magic_num
-
+        current_depth = max(current_depth, d)
         if(d not in groups.keys()):
             groups[d] = {}
         if(l not in groups[d].keys()):
@@ -1012,13 +1012,14 @@ min_chunk_size: int, device : str, mode : str) -> OctreeNodeList:
                                 group[3].data
                             
                             new_node = OctreeNode(new_data, group[0].LOD, 
-                            group[0].depth-1, int(group[0].index / 4))
+                            group[0].depth-1, parent)
                             nodes.append(new_node)
                             nodes.remove(group[0])
                             nodes.remove(group[1])
                             nodes.remove(group[2])
                             nodes.remove(group[3])
                             d = current_depth-1
+                            l = lod
                             if(d not in groups.keys()):
                                 groups[d] = {}
                             if(lod not in groups[d].keys()):
@@ -1094,6 +1095,7 @@ min_chunk_size: int, device : str, mode : str) -> OctreeNodeList:
                             nodes.remove(group[6])
                             nodes.remove(group[7])
                             d = current_depth-1
+                            l = lod
                             if(d not in groups.keys()):
                                 groups[d] = {}
                             if(lod not in groups[d].keys()):
