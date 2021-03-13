@@ -20,8 +20,8 @@ def to_netcdf(vf, name):
           rootgrp.createDimension("u")
           rootgrp.createDimension("v")
           rootgrp.createDimension("channels", vf.shape[0])
-          us = rootgrp.createVariable("u", np.float32, ("u","v","w"))
-          vs = rootgrp.createVariable("v", np.float32, ("u","v","w"))
+          us = rootgrp.createVariable("u", np.float32, ("u","v"))
+          vs = rootgrp.createVariable("v", np.float32, ("u","v"))
           us[:] = vf[0].cpu().numpy()
           vs[:] = vf[1].cpu().numpy()
      if(len(vf.shape) == 4):
