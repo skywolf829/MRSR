@@ -19,6 +19,7 @@ import threading
 import copy
 from math import exp
 from typing import Dict, List, Tuple, Optional
+from utility_functions import ssim, ssim3D, save_obj, load_obj
 
 class img_dataset(torch.utils.data.Dataset):
     def __init__(self, data):
@@ -27,13 +28,6 @@ class img_dataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         return self.data[index]
 
-def save_obj(obj,location):
-    with open(location, 'wb') as f:
-        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
-
-def load_obj(location):
-    with open(location, 'rb') as f:
-        return pickle.load(f)
 
 def mse_func(GT, x, device):
     GT = GT.to(device)
@@ -105,106 +99,6 @@ def img_psnr_func(GT, x, device):
     x = x.to(device)
     m = ((GT-x)**2).mean()
     return (20.0*log(255.0)-10.0*log(m)).item()
-
-
-def gaussian(window_size : int, sigma : float) -> torch.Tensor:
-    gauss : torch.Tensor = torch.Tensor([exp(-(x - window_size//2)**2/float(2*sigma**2)) for x \
-        in range(window_size)])
-    return gauss/gauss.sum()
-
-def create_window(window_size : torch.Tensor, channel : int) -> torch.Tensor:
-    _1D_window : torch.Tensor = gaussian(window_size, 1.5).unsqueeze(1)
-    _2D_window : torch.Tensor = _1D_window.mm(_1D_window.t()).float().unsqueeze(0).unsqueeze(0)
-    window : torch.Tensor = torch.Tensor(_2D_window.expand(channel, 1, window_size, window_size).contiguous())
-    return window
-
-def create_window_3D(window_size, channel):
-    _1D_window = gaussian(window_size, 1.5).unsqueeze(1)
-    _2D_window = _1D_window.mm(_1D_window.t())
-    _3D_window = _1D_window.mm(_2D_window.reshape(1, -1)).reshape(window_size, window_size, window_size).float().unsqueeze(0).unsqueeze(0)
-    window = torch.Tensor(_3D_window.expand(channel, 1, window_size, window_size, window_size).contiguous())
-    return window
-
-def _ssim(img1 : torch.Tensor, img2 : torch.Tensor, window : torch.Tensor, 
-window_size : torch.Tensor, channel : int, size_average : Optional[bool] = True):
-    mu1 : torch.Tensor = F.conv2d(img1, window, padding = window_size//2, groups = channel)
-    mu2 : torch.Tensor = F.conv2d(img2, window, padding = window_size//2, groups = channel)
-
-    mu1_sq : torch.Tensor = mu1.pow(2)
-    mu2_sq : torch.Tensor = mu2.pow(2)
-    mu1_mu2 : torch.Tensor = mu1*mu2
-
-    sigma1_sq : torch.Tensor = F.conv2d(img1*img1, window, padding = window_size//2, groups = channel) - mu1_sq
-    sigma2_sq : torch.Tensor = F.conv2d(img2*img2, window, padding = window_size//2, groups = channel) - mu2_sq
-    sigma12 : torch.Tensor = F.conv2d(img1*img2, window, padding = window_size//2, groups = channel) - mu1_mu2
-
-    C1 : float = 0.01**2
-    C2 : float= 0.03**2
-
-    ssim_map : torch.Tensor = ((2*mu1_mu2 + C1)*(2*sigma12 + C2))/((mu1_sq + mu2_sq + C1)*(sigma1_sq + sigma2_sq + C2))
-
-    ans : torch.Tensor = torch.Tensor([0])
-    if size_average:
-        ans = ssim_map.mean()
-    else:
-        ans = ssim_map.mean(1).mean(1).mean(1)
-    return ans
-
-def _ssim_3D(img1, img2, window, window_size, channel, size_average = True):
-    mu1 = F.conv3d(img1, window, padding = window_size//2, groups = channel)
-    mu2 = F.conv3d(img2, window, padding = window_size//2, groups = channel)
-
-    mu1_sq = mu1.pow(2)
-    mu2_sq = mu2.pow(2)
-
-    mu1_mu2 = mu1*mu2
-
-    sigma1_sq = F.conv3d(img1*img1, window, padding = window_size//2, groups = channel).cpu() - mu1_sq.cpu()
-    sigma2_sq = F.conv3d(img2*img2, window, padding = window_size//2, groups = channel).cpu() - mu2_sq.cpu()
-    sigma12 = F.conv3d(img1*img2, window, padding = window_size//2, groups = channel).cpu() - mu1_mu2.cpu()
-
-    C1 = 0.01**2
-    C2 = 0.03**2
-
-    ssim_map = ((2*mu1_mu2.cpu() + C1)*(2*sigma12 + C2))/((mu1_sq.cpu() + mu2_sq.cpu() + C1)*(sigma1_sq + sigma2_sq + C2))
-
-    if size_average:
-        return ssim_map.mean()
-    else:
-        return ssim_map.mean(1).mean(1).mean(1)
-
-def ssim(img1, img2, window_size = 11, size_average = True):
-    (_, channel, _, _) = img1.size()
-    window = create_window(window_size, channel)
-    
-    if img1.is_cuda:
-        window = window.cuda(img1.get_device())
-    window = window.type_as(img1)
-    
-    return _ssim(img1, img2, window, window_size, channel, size_average)
-
-def ssim3D(img1, img2, window_size = 11, size_average = True):
-    (_, channel, _, _, _) = img1.size()
-    window = create_window_3D(window_size, channel)
-    
-    if img1.is_cuda:
-        window = window.cuda(img1.get_device())
-    window = window.type_as(img1)
-    
-    return _ssim_3D(img1, img2, window, window_size, channel, size_average)
-
-'''
-def img_ssim_func(GT, x, device):
-    return ssim(x, GT, data_range=1.0).item()
-
-def img_fid_func(GT, x, device):
-    GT_dl = torch.utils.data.DataLoader(img_dataset(GT))
-    x_dl = torch.utils.data.DataLoader(img_dataset(x))
-    fid_metric = FID()
-    GT_feats = fid_metric.compute_feats(GT_dl)
-    x_feats = fid_metric.compute_feats(x_dl)
-    return fid_metric(GT_feats, x_feats)
-'''
 
 def generate_by_patch(generator, input_volume, patch_size, receptive_field, device):
     with torch.no_grad():
