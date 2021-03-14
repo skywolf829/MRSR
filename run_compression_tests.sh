@@ -18,7 +18,7 @@ export PATH="$HOME/fpzip/bin:$PATH"
 
 #python3 mixedLOD_octree.py --downscaling_technique avgpool2D --upscaling_technique model --criterion psnr --start_metric 20 --end_metric 100 --metric_skip 5 --output_folder mag2D_compression --mode 2D --file 4010.h5 --dims 2 --nx 1024 --ny 1024 --use_compressor true --compressor fpzip --load_existing true --debug true
 
-python3 -u sz_test.py --metric mre --channels 1 --file isomag2D_compressiontest.h5 --start_value 0.05 --end_value 1.0 --value_skip .05 --dims 2 --nx 1024 --ny 1024 --output_folder mag2D_compression
+python3 -u sz_test.py --metric mre --channels 1 --file isomag2D_compressiontest.h5 --start_value 0.005 --end_value 0.05 --value_skip .005 --dims 2 --nx 1024 --ny 1024 --output_folder mag2D_compression
 #python3 zfp_test.py --metric psnr --channels 1 --file isomag2D_compressiontest.h5 --start_bpv 0.25 --end_bpv 4 --bpv_skip 0.25 --dims 2 --nx 1024 --ny 1024 --output_folder mag2D_compression_pwmre
 
 # 3D iso1024 mag
