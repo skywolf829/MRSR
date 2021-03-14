@@ -1686,6 +1686,8 @@ if __name__ == '__main__':
 
         f_data_size_kb = nodes.total_size()
 
+        del data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels
+
         final_psnr : float = PSNR(img_upscaled, img_gt).item()
         final_mse : float = MSE(img_upscaled, img_gt).item()
         final_mre : float = relative_error(img_upscaled, img_gt).item()
@@ -1753,6 +1755,10 @@ if __name__ == '__main__':
 
             point_us = "point2D" if mode == "2D" else "point3D"
             upscaling.change_method('nearest')
+
+            data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels = \
+            create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
+            
             img_upscaled_point = nodes_to_full_img(nodes, full_shape, 
             max_LOD, upscaling, 
             downscaling_technique, device, data_levels, 
