@@ -1,7 +1,7 @@
 #!/bin/sh
 cd /lus/theta-fs0/projects/DL4VIS/FlowSTSR
+export PATH="$HOME/sz/bin:$PATH"
 export PATH="$HOME/zfp/bin:$PATH"
-
 export PATH="$HOME/fpzip/bin:$PATH"
 
 
