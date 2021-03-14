@@ -479,18 +479,19 @@ def downscale(method: str, img: torch.Tensor, scale_factor: int) -> torch.Tensor
 def criterion_met(method: str, value: torch.Tensor, 
 a: torch.Tensor, b: torch.Tensor, max_diff : Optional[torch.Tensor] = None) -> torch.Tensor:
     passed : torch.Tensor = torch.empty([1],device=a.device)
-    if(method == "psnr"):
-        passed = psnr_criterion(a, b, value, max_diff)
-    elif(method == "mse"):
-        passed = mse_criterion(a, b, value)
-    elif(method == "mre"):
-        passed = maximum_relative_error(a, b, value, max_diff)
-    elif(method == "pw_mre"):
-        passed = maximum_pw_relative_error(a, b, value)
-    elif(method == "ssim"):
-        passed = ssim_criterion(a, b, value)
-    else:
-        print("No support for criterion: " + str(method))
+    with torch.no_grad():
+        if(method == "psnr"):
+            passed = psnr_criterion(a, b, value, max_diff)
+        elif(method == "mse"):
+            passed = mse_criterion(a, b, value)
+        elif(method == "mre"):
+            passed = maximum_relative_error(a, b, value, max_diff)
+        elif(method == "pw_mre"):
+            passed = maximum_pw_relative_error(a, b, value)
+        elif(method == "ssim"):
+            passed = ssim_criterion(a, b, value)
+        else:
+            print("No support for criterion: " + str(method))
     return passed
 
 @torch.jit.script
