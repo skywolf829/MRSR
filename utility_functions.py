@@ -718,18 +718,6 @@ def feature_distance(img1, img2, device):
     
     return np.mean((img1_feature_vector - img2_feature_vector) ** 2)
 
-def MSE(x, y):
-    _mse = np.mean((x - y) ** 2)
-    return _mse
-
-def PSNR(GT,fake,max_val=255): 
-    sqrtmse = ((GT - fake) ** 2).mean() ** 0.5
-    return 20 * log10(max_val / sqrtmse)
-
-def SSIM(GT,fake,multichannel=True):
-    s = compare_ssim(GT, fake, multichannel=multichannel)
-    return s
-
 def RGB2NP(img_array):
     im = img_array.astype(np.float32)
     im *= (2/255)
