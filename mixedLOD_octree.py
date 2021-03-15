@@ -431,49 +431,50 @@ class UpscalingMethod(nn.Module):
 
     def forward(self, in_frame : torch.Tensor, scale_factor : float,
     lod : Optional[int] = None) -> torch.Tensor:
-        up = torch.empty([1],device=in_frame.device)
-        if(self.method == "bilinear"):
-            up = bilinear_upscale(in_frame, scale_factor)
-        elif(self.method == "bicubic"):
-            up = bicubic_upscale(in_frame, scale_factor)
-        elif(self.method == "point2D"):
-            up = point_upscale2D(in_frame, scale_factor)
-        elif(self.method == "point3D"):
-            up = point_upscale3D(in_frame, scale_factor)
-        elif(self.method == "nearest"):
-            up = nearest_neighbor_upscale(in_frame, scale_factor)
-        elif(self.method == "trilinear"):
-            up = trilinear_upscale(in_frame, scale_factor)
-        elif(self.method == "model"):
-            up = in_frame
-            while(scale_factor > 1):
-                with torch.no_grad():
+        with torch.no_grad():
+            up = torch.empty([1],device=in_frame.device)
+            if(self.method == "bilinear"):
+                up = bilinear_upscale(in_frame, scale_factor)
+            elif(self.method == "bicubic"):
+                up = bicubic_upscale(in_frame, scale_factor)
+            elif(self.method == "point2D"):
+                up = point_upscale2D(in_frame, scale_factor)
+            elif(self.method == "point3D"):
+                up = point_upscale3D(in_frame, scale_factor)
+            elif(self.method == "nearest"):
+                up = nearest_neighbor_upscale(in_frame, scale_factor)
+            elif(self.method == "trilinear"):
+                up = trilinear_upscale(in_frame, scale_factor)
+            elif(self.method == "model"):
+                up = in_frame
+                while(scale_factor > 1):
                     if not self.distributed:
                         up = self.models[len(self.models)-lod](up)
                     else:
                         up = generate_by_patch_parallel(self.models[len(self.models)-lod], 
                             up, 140, 10, self.devices)
-                scale_factor = int(scale_factor / 2)
-                lod -= 1
-        else:
-            print("No support for upscaling method: " + str(self.method))
+                    scale_factor = int(scale_factor / 2)
+                    lod -= 1
+            else:
+                print("No support for upscaling method: " + str(self.method))
         return up
 
 @torch.jit.script
 def downscale(method: str, img: torch.Tensor, scale_factor: int) -> torch.Tensor:
-    down = torch.zeros([1])
-    if(method == "bilinear"):
-        down = bilinear_downscale(img, scale_factor)
-    elif(method == "subsample2D"):
-        down = subsample_downscale2D(img, scale_factor)
-    elif(method == "subsample3D"):
-        down = subsample_downscale3D(img, scale_factor)
-    elif(method == "avgpool2D"):
-        down = avgpool_downscale2D(img, scale_factor)
-    elif(method == "avgpool3D"):
-        down = avgpool_downscale3D(img, scale_factor)
-    else:
-        print("No support for downscaling method: " + str(method))
+    with torch.no_grad():
+        down = torch.zeros([1])        
+        if(method == "bilinear"):
+            down = bilinear_downscale(img, scale_factor)
+        elif(method == "subsample2D"):
+            down = subsample_downscale2D(img, scale_factor)
+        elif(method == "subsample3D"):
+            down = subsample_downscale3D(img, scale_factor)
+        elif(method == "avgpool2D"):
+            down = avgpool_downscale2D(img, scale_factor)
+        elif(method == "avgpool3D"):
+            down = avgpool_downscale3D(img, scale_factor)
+        else:
+            print("No support for downscaling method: " + str(method))
     return down
 
 def criterion_met(method: str, value: torch.Tensor, 
@@ -755,7 +756,7 @@ List[torch.Tensor], List[torch.Tensor]]:
         curr_shape = [full_shape[0], full_shape[1], full_shape[2], full_shape[3], full_shape[4]]
     while(curr_LOD <= max_LOD):
         full_img = torch.zeros(curr_shape).to(device)
-        mask = torch.zeros(curr_shape).to(device)
+        mask = torch.zeros(curr_shape, dtype=torch.bool).to(device)
         data_levels.append(full_img.clone())
         data_downscaled_levels.append(full_img.clone())
         mask_levels.append(mask.clone())
