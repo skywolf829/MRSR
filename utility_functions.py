@@ -132,7 +132,7 @@ def _ssim_3D(img1, img2, window, window_size, channel, size_average = True):
     mu1_mu2 += C1
 
     sigma12 *= 2
-    sigma12 *= C2
+    sigma12 += C2
 
     mu1_mu2 *= sigma12
 

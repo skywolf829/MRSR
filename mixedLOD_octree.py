@@ -755,7 +755,7 @@ List[torch.Tensor], List[torch.Tensor]]:
     if(mode == "3D"):
         curr_shape = [full_shape[0], full_shape[1], full_shape[2], full_shape[3], full_shape[4]]
     while(curr_LOD <= max_LOD):
-        full_img = torch.zeros(curr_shape).to(device)
+        full_img = torch.zeros(curr_shape, dtype=torch.float32).to(device)
         mask = torch.zeros(curr_shape, dtype=torch.bool).to(device)
         data_levels.append(full_img.clone())
         data_downscaled_levels.append(full_img.clone())
@@ -1690,13 +1690,6 @@ if __name__ == '__main__':
                 save_name+".torch")) / 1024
 
         f_data_size_kb = nodes.total_size()
-
-        while(len(data_levels) > 0):
-            del data_levels[0]
-            del mask_levels[0]
-            del data_downscaled_levels[0]
-            del mask_downscaled_levels[0]
-        del data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels
         
         torch.cuda.empty_cache()
         with torch.no_grad():
