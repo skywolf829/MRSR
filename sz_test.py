@@ -50,14 +50,14 @@ if __name__ == '__main__':
     f = h5py.File(os.path.join(input_folder, args['file']), "r")
     d = np.array(f['data'])
     f.close()
-    d.tofile(args['file'] + ".dat")
+    for i in range(args['channels']):
+        d[i].tofile(args['file'] + ".dat")
+
     value = args['start_value']
     while(value < args['end_value']):
         data_channels = []
         f_size_kb = 0
-        for i in range(args['channels']):
-            d[i].tofile(args['file'] + ".dat")
-
+        for i in range(args['channels']):            
             command = "sz -z -f -i " + args['file'] + ".dat -" + str(args['dims']) + " " + \
                 str(args['nx']) + " " + str(args['ny'])
             if(args['dims'] == 3):
