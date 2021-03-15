@@ -1697,12 +1697,14 @@ if __name__ == '__main__':
             del data_downscaled_levels[0]
             del mask_downscaled_levels[0]
         del data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels
-
+        
+        torch.cuda.empty_cache()
         with torch.no_grad():
             final_psnr : float = PSNR(img_upscaled, img_gt).item()
             final_mse : float = MSE(img_upscaled, img_gt).item()
             final_mre : float = relative_error(img_upscaled, img_gt).item()
             final_pwmre: float = pw_relative_error(img_upscaled, img_gt).item()
+            torch.cuda.empty_cache()
             if(len(img_upscaled.shape) == 4):
                 final_ssim : float = ssim(img_upscaled, img_gt).item()
                 final_inner_mre : float = relative_error(
