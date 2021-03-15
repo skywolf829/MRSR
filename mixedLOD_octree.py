@@ -549,7 +549,7 @@ def nodes_to_full_img(nodes: OctreeNodeList, full_shape: List[int],
         torch.cuda.synchronize()
         curr_LOD -= 1
 
-        full_img *=  (1-mask_downscaled_levels[curr_LOD])
+        full_img *=  (~mask_downscaled_levels[curr_LOD])
         full_img += data_downscaled_levels[curr_LOD]*mask_downscaled_levels[curr_LOD]
     return full_img
 
