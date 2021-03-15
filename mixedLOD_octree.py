@@ -1533,6 +1533,8 @@ if __name__ == '__main__':
     parser.add_argument('--dynamic_downscaling',default="true",type=str2bool)
     parser.add_argument('--interpolation_heuristic',default="false",type=str2bool)
 
+    torch.set_grad_enabled(False)
+
     args = vars(parser.parse_args())
     if(not args['use_compressor']):
         args['compressor'] = "none"
