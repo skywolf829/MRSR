@@ -1751,7 +1751,7 @@ if __name__ == '__main__':
             rootgrp.createDimension("w")
             rootgrp.createDimension("channels", img_upscaled.shape[0])
             dim_0 = rootgrp.createVariable("pressure", np.float32, ("u","v","w"))
-            dim_0[:] = img_upscaled[0]
+            dim_0[:] = img_upscaled[0].cpu().numpy()
 
         if(args['debug']):           
 
