@@ -1526,6 +1526,7 @@ if __name__ == '__main__':
     parser.add_argument('--debug',default="false",type=str2bool)
     parser.add_argument('--distributed',default="false",type=str2bool)
     parser.add_argument('--use_compressor',default="true",type=str2bool)
+    parser.add_argument('--save_netcdf',default="false",type=str2bool)
 
     parser.add_argument('--compressor',default="zfp",type=str)
     parser.add_argument('--data_type',default="h5",type=str)
@@ -1739,6 +1740,16 @@ if __name__ == '__main__':
         results['rec_pwmre'].append(final_pwmre)
         results['rec_inner_mre'].append(final_inner_mre)
         results['rec_inner_pwmre'].append(final_inner_pwmre)
+        
+        if(args['save_netcdf']):
+            from netCDF4 import Dataset
+            rootgrp = Dataset(save_name+".nc", "w", format="NETCDF4")
+            rootgrp.createDimension("u")
+            rootgrp.createDimension("v")
+            rootgrp.createDimension("w")
+            rootgrp.createDimension("channels", img_upscaled.shape[0])
+            dim_0 = rootgrp.createVariable("pressure", np.float32, ("u","v","w"))
+            dim_0[:] = img_upscaled[0]
 
         if(args['debug']):           
 
