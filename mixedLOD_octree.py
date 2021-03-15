@@ -1725,7 +1725,7 @@ if __name__ == '__main__':
                         20:img_upscaled.shape[4]-20], 
                     img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20,
                         img_gt.shape[4]-20]).item()
-
+        print(img_upscaled.shape)
         print("Final stats:")
         print("Target - " + criterion + " " + str(criterion_value))
         print("PSNR: %0.02f, SSIM: %0.02f, MSE: %0.02f, MRE: %0.04f, PWMRE: %0.04f" % \
@@ -1749,9 +1749,9 @@ if __name__ == '__main__':
             rootgrp.createDimension("u")
             rootgrp.createDimension("v")
             rootgrp.createDimension("w")
-            rootgrp.createDimension("channels", img_upscaled.shape[0])
+            rootgrp.createDimension("channels", img_upscaled.shape[1])
             dim_0 = rootgrp.createVariable("pressure", np.float32, ("u","v","w"))
-            dim_0[:] = img_upscaled[0].cpu().numpy()
+            dim_0[:] = img_upscaled[0,0].cpu().numpy()
 
         if(args['debug']):           
 

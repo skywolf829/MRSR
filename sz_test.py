@@ -23,6 +23,7 @@ if __name__ == '__main__':
     parser.add_argument('--end_value',default=100,type=float,help='PSNR to end tests at')
     parser.add_argument('--value_skip',default=10,type=float,help='PSNR increment by')
     parser.add_argument('--metric',default='psnr',type=str)
+    parser.add_argument('--save_netcdf',default="false",type=str2bool)
     
 
     args = vars(parser.parse_args())
@@ -117,6 +118,16 @@ if __name__ == '__main__':
 
         print("Target: " +args['metric'] + " " + str(value))
         print("PSNR: " + str(rec_psnr) + " SSIM: " + str(rec_ssim))
+
+        if(args['save_netcdf']):
+            from netCDF4 import Dataset
+            rootgrp = Dataset("sz_"+args['file']+".nc", "w", format="NETCDF4")
+            rootgrp.createDimension("u")
+            rootgrp.createDimension("v")
+            rootgrp.createDimension("w")
+            rootgrp.createDimension("channels", dc.shape[0])
+            dim_0 = rootgrp.createVariable("pressure", np.float32, ("u","v","w"))
+            dim_0[:] = dc[0]
 
         results['psnrs'].append(value)
         results['file_size'].append(f_size_kb)
