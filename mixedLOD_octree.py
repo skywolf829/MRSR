@@ -1714,7 +1714,7 @@ if __name__ == '__main__':
                     img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20], 
                     img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20]).item()
             elif(len(img_upscaled.shape) == 5):
-                final_ssim : float = ssim3D(img_upscaled.to("cuda:1"), img_gt.to("cuda:1")).item()
+                final_ssim : float = ssim3D(img_upscaled.detach().to("cuda:2"), img_gt.detach().to("cuda:2")).item()
                 final_inner_mre : float = relative_error(
                     img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20,
                         20:img_upscaled.shape[4]-20], 
