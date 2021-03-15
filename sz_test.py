@@ -115,7 +115,8 @@ if __name__ == '__main__':
         im = to_img(torch.Tensor(dc).unsqueeze(0), "2D" if args['dims'] == 2 else "3D")
         imageio.imwrite(os.path.join(save_folder, "sz_"+args['file']+"_"+str(value)+".png"), im)
 
-        
+        print("Target: " +args['metric'] + " " + str(value))
+        print("PSNR: " + str(rec_psnr) + " SSIM: " + str(rec_ssim))
 
         results['psnrs'].append(value)
         results['file_size'].append(f_size_kb)
