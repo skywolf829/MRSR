@@ -103,17 +103,17 @@ window_size : torch.Tensor, channel : int, size_average : Optional[bool] = True)
     return ans
 
 def _ssim_3D(img1, img2, window, window_size, channel, size_average = True):
-    mu1 = F.conv3d(img1, window, padding = window_size//2, groups = channel)
-    mu2 = F.conv3d(img2, window, padding = window_size//2, groups = channel)
+    mu1 = F.conv3d(img1, window, padding = window_size//2, groups = channel).to("cuda:2")
+    mu2 = F.conv3d(img2, window, padding = window_size//2, groups = channel).to("cuda:2")
 
-    mu1_sq = mu1.pow(2)
-    mu2_sq = mu2.pow(2)
+    mu1_sq = mu1.pow(2).to("cuda:2")
+    mu2_sq = mu2.pow(2).to("cuda:2")
 
     mu1_mu2 = mu1*mu2
 
-    sigma1_sq = F.conv3d(img1*img1, window, padding = window_size//2, groups = channel) - mu1_sq
-    sigma2_sq = F.conv3d(img2*img2, window, padding = window_size//2, groups = channel) - mu2_sq
-    sigma12 = F.conv3d(img1*img2, window, padding = window_size//2, groups = channel) - mu1_mu2
+    sigma1_sq = F.conv3d(img1*img1, window, padding = window_size//2, groups = channel).to("cuda:2") - mu1_sq
+    sigma2_sq = F.conv3d(img2*img2, window, padding = window_size//2, groups = channel).to("cuda:2") - mu2_sq
+    sigma12 = F.conv3d(img1*img2, window, padding = window_size//2, groups = channel).to("cuda:2") - mu1_mu2
 
     C1 = 0.01**2
     C2 = 0.03**2
