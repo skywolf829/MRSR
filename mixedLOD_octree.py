@@ -1695,30 +1695,31 @@ if __name__ == '__main__':
             del mask_downscaled_levels[0]
         del data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels
 
-        final_psnr : float = PSNR(img_upscaled, img_gt).item()
-        final_mse : float = MSE(img_upscaled, img_gt).item()
-        final_mre : float = relative_error(img_upscaled, img_gt).item()
-        final_pwmre: float = pw_relative_error(img_upscaled, img_gt).item()
-        if(len(img_upscaled.shape) == 4):
-            final_ssim : float = ssim(img_upscaled, img_gt).item()
-            final_inner_mre : float = relative_error(
-                img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20], 
-                img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20]).item()
-            final_inner_pwmre: float = pw_relative_error(
-                img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20], 
-                img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20]).item()
-        elif(len(img_upscaled.shape) == 5):
-            final_ssim : float = ssim3D(img_upscaled, img_gt).item()
-            final_inner_mre : float = relative_error(
-                img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20,
-                    20:img_upscaled.shape[4]-20], 
-                img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20,
-                    img_gt.shape[4]-20]).item()
-            final_inner_pwmre: float = pw_relative_error(
-                img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20,
-                    20:img_upscaled.shape[4]-20], 
-                img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20,
-                    img_gt.shape[4]-20]).item()
+        with torch.no_grad():
+            final_psnr : float = PSNR(img_upscaled, img_gt).item()
+            final_mse : float = MSE(img_upscaled, img_gt).item()
+            final_mre : float = relative_error(img_upscaled, img_gt).item()
+            final_pwmre: float = pw_relative_error(img_upscaled, img_gt).item()
+            if(len(img_upscaled.shape) == 4):
+                final_ssim : float = ssim(img_upscaled, img_gt).item()
+                final_inner_mre : float = relative_error(
+                    img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20], 
+                    img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20]).item()
+                final_inner_pwmre: float = pw_relative_error(
+                    img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20], 
+                    img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20]).item()
+            elif(len(img_upscaled.shape) == 5):
+                final_ssim : float = ssim3D(img_upscaled, img_gt).item()
+                final_inner_mre : float = relative_error(
+                    img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20,
+                        20:img_upscaled.shape[4]-20], 
+                    img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20,
+                        img_gt.shape[4]-20]).item()
+                final_inner_pwmre: float = pw_relative_error(
+                    img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20,
+                        20:img_upscaled.shape[4]-20], 
+                    img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20,
+                        img_gt.shape[4]-20]).item()
 
         print("Final stats:")
         print("Target - " + criterion + " " + str(criterion_value))
