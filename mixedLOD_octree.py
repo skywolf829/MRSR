@@ -1714,7 +1714,7 @@ if __name__ == '__main__':
                     img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20], 
                     img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20]).item()
             elif(len(img_upscaled.shape) == 5):
-                final_ssim : float = ssim3D(img_upscaled, img_gt).item()
+                final_ssim : float = ssim3D(img_upscaled.to("cuda:1"), img_gt.to("cuda:1")).item()
                 final_inner_mre : float = relative_error(
                     img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20,
                         20:img_upscaled.shape[4]-20], 
@@ -1728,7 +1728,7 @@ if __name__ == '__main__':
         print(img_upscaled.shape)
         print("Final stats:")
         print("Target - " + criterion + " " + str(criterion_value))
-        print("PSNR: %0.02f, SSIM: %0.02f, MSE: %0.02f, MRE: %0.04f, PWMRE: %0.04f" % \
+        print("PSNR: %0.02f, SSIM: %0.04f, MSE: %0.02f, MRE: %0.04f, PWMRE: %0.04f" % \
             (final_psnr, final_ssim, final_mse, final_mre, final_pwmre))
         print("Pre-compressed data size: %f kb" % nodes.total_size())
         print("Saved file size: %f kb" % f_size_kb)
