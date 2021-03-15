@@ -1688,11 +1688,11 @@ if __name__ == '__main__':
 
         f_data_size_kb = nodes.total_size()
 
-        for j in range(len(data_levels)):
-            del data_levels[j]
-            del mask_levels[j]
-            del data_downscaled_levels[j]
-            del mask_downscaled_levels[j]
+        while(len(data_levels) > 0):
+            del data_levels[0]
+            del mask_levels[0]
+            del data_downscaled_levels[0]
+            del mask_downscaled_levels[0]
         del data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels
 
         final_psnr : float = PSNR(img_upscaled, img_gt).item()
