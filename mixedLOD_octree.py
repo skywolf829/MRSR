@@ -1313,6 +1313,162 @@ folder : str, name : str):
     os.system("tar -cjvf " + save_location + " -C " + folder + " Temp")
     os.system("rm -r " + temp_folder_path)
 
+def sz_compress(nodes: OctreeNodeList, full_shape, max_LOD,
+downscaling_technique, device, mode,
+folder : str, name : str, metric : str, value : float):
+    
+    
+    min_LOD = max_LOD
+    for i in range(len(nodes)):
+        min_LOD = min(nodes[i].LOD, min_LOD)
+    
+    if(mode == "2D"):
+        full_im = torch.zeros([1, full_shape[1], 
+        int(full_shape[2] / (2**min_LOD)), int(full_shape[3] / (2**min_LOD))], dtype=torch.float32)
+    elif(mode == "3D"):
+        full_im = torch.zeros([1, full_shape[1], 
+        int(full_shape[2] / (2**min_LOD)), 
+        int(full_shape[3] / (2**min_LOD)),
+        int(full_shape[4] / (2**min_LOD))], dtype=torch.float32)
+
+    for i in range(len(nodes)):
+        n = nodes[i]
+        if(mode == "2D"):
+            x, y = get_location2D(full_shape[2], full_shape[3], 
+            n.depth, n.index)
+            x = int(x / (2**min_LOD))
+            y = int(y / (2**min_LOD))
+            width = n.data.shape[2] 
+            height = n.data.shape[3]
+            full_im[:,:,x:x+width,y:y+height] = n.data
+
+        elif(mode == "3D"):
+            x, y, z = get_location3D(full_shape[2], full_shape[3], full_shape[4],
+            n.depth, n.index)
+            x = int(x / (2**min_LOD))
+            y = int(y / (2**min_LOD))
+            z = int(z / (2**min_LOD))
+            width = n.data.shape[2] 
+            height = n.data.shape[3]
+            d = n.data.shape[4]
+            full_im[:,:,x:x+width,y:y+height,z:z+d] = n.data
+            
+    temp_folder_path = os.path.join(folder, "Temp")
+    save_location = os.path.join(folder, name +".tar.gz")
+    if(not os.path.exists(temp_folder_path)):
+        os.makedirs(temp_folder_path)
+    
+    for i in range(full_im.shape[1]):
+        d = full_im.cpu().numpy()[0,i]
+        d_loc = os.path.join(temp_folder_path,"nn_data_"+str(i)+".dat")
+        ndims = len(d.shape)
+        print(d.shape)
+        d.tofile(d_loc)
+        command = "sz -z -f -i " + d_loc + " -" + str(ndims) + " " + \
+            str(d.shape[0]) + " " + str(d.shape[1])
+        if(ndims == 3):
+            command = command + " " + str(d.shape[2])
+        if(min_LOD == 0):
+            if(metric == "psnr"):
+                command = command + " -M PSNR -S " + str(value)
+            elif(metric == "mre"):
+                command = command + " -M REL -R " + str(value)
+            elif(metric == "pw_mre"):
+                command = command + " -M PW_REL -P " + str(value)
+        else:
+            command = command + " -M PW_REL -P 0.001"
+        print(command)
+        os.system(command)
+        os.system("rm " + d_loc)
+    
+    del full_im
+
+    metadata : List[int] = []
+    metadata.append(min_LOD)
+    metadata.append(len(full_shape))
+    metadata.append(full_shape[0])
+    metadata.append(full_shape[1])
+    for i in range(2,len(full_shape)):
+        metadata.append(int(full_shape[i]/(2**min_LOD)))
+    for i in range(len(nodes)):
+        metadata.append(nodes[i].depth)
+        metadata.append(nodes[i].index)
+        metadata.append(nodes[i].LOD)
+
+    metadata = np.array(metadata, dtype=int)
+    metadata.tofile(os.path.join(temp_folder_path, "metadata"))
+
+    os.system("tar -cjvf " + save_location + " -C " + folder + " Temp")
+    os.system("rm -r " + temp_folder_path)
+
+def sz_decompress(filename : str, device : str):
+    print("Decompressing " + filename + " with sz method")
+    folder_path = os.path.dirname(os.path.abspath(__file__))
+    temp_folder = os.path.join(folder_path, "Temp")
+    if(not os.path.exists(temp_folder)):
+        os.makedirs(temp_folder)
+    
+    nodes = OctreeNodeList()
+
+    os.system("tar -xvf " + filename)
+    metadata = np.fromfile(os.path.join(temp_folder, "metadata"), dtype=int)
+    min_LOD = metadata[0]
+    full_shape = []
+    for i in range(2, metadata[1]+2):
+        full_shape.append(metadata[i])
+        
+    metadata = metadata[metadata[1]+2:]
+    
+    data_channels = []
+    for i in range(full_shape[1]):
+        command = "sz -x -f -s " + os.path.join(temp_folder, "nn_data_"+str(i)+".dat.sz") + " -" + \
+            str(len(full_shape[2:])) + " " + str(full_shape[2]) + " " + str(full_shape[3])
+
+        if(len(full_shape) == 5):
+            command = command + " " + str(full_shape[4])
+        print(command)
+        os.system(command)
+
+        full_data = np.fromfile(os.path.join(temp_folder, "nn_data_"+str(i)+".dat.sz.out"), 
+        dtype=np.float32)
+        full_data = np.reshape(full_data, full_shape[2:])
+        
+        full_data = torch.Tensor(full_data)
+        data_channels.append(full_data)
+
+    full_data = torch.stack(data_channels).unsqueeze(0)
+    
+    for i in range(0, len(metadata), 3):
+        depth = metadata[i]
+        index = metadata[i+1]
+        lod = metadata[i+2]
+        if(len(full_shape) == 4):
+            x, y = get_location2D(full_data.shape[2], full_data.shape[3], 
+            depth, index)
+            x = int(x / (2**min_LOD))
+            y = int(y / (2**min_LOD))
+            width = int(full_data.shape[2] / (2**(depth+lod-min_LOD)))
+            height = int(full_data.shape[3] / (2**(depth+lod-min_LOD)))
+            data = full_data[:,:,x:x+width,y:y+height]
+
+        elif(len(full_shape) == 5):
+            x, y, z = get_location3D(full_data.shape[2], full_data.shape[3], full_data.shape[4], 
+            depth, index)
+            x = int(x / (2**min_LOD))
+            y = int(y / (2**min_LOD))
+            z = int(z / (2**min_LOD))
+            width = int(full_data.shape[2] / (2**(depth+lod-min_LOD)))
+            height = int(full_data.shape[3] / (2**(depth+lod-min_LOD)))
+            d = int(full_data.shape[4] / (2**(depth+lod-min_LOD)))
+            data = full_data[:,:,x:x+width,y:y+height,z:z+d]
+        
+        n = OctreeNode(data.to(device), lod, depth, index)
+        nodes.append(n)
+    del full_data
+    os.system("rm -r " + temp_folder)
+    print("Finished decompressing, " + str(len(nodes)) + " blocks recovered")
+    return nodes
+
 def sz_decompress_nodelist(filename : str, device : str):
     print("Decompressing " + filename + " with sz method")
     folder_path = os.path.dirname(os.path.abspath(__file__))
@@ -1705,31 +1861,31 @@ if __name__ == '__main__':
             
             torch.cuda.empty_cache()
             with torch.no_grad():
-                final_psnr : float = PSNR(img_upscaled, img_gt).item()
-                final_mse : float = MSE(img_upscaled, img_gt).item()
-                final_mre : float = relative_error(img_upscaled, img_gt).item()
-                final_pwmre: float = pw_relative_error(img_upscaled, img_gt).item()
+                final_psnr : float = PSNR(img_upscaled, img_gt).cpu().item()
+                final_mse : float = MSE(img_upscaled, img_gt).cpu().item()
+                final_mre : float = relative_error(img_upscaled, img_gt).cpu().item()
+                final_pwmre: float = pw_relative_error(img_upscaled, img_gt).cpu().item()
                 torch.cuda.empty_cache()
                 if(len(img_upscaled.shape) == 4):
-                    final_ssim : float = ssim(img_upscaled, img_gt).item()
+                    final_ssim : float = ssim(img_upscaled, img_gt).cpu().item()
                     final_inner_mre : float = relative_error(
                         img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20], 
-                        img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20]).item()
+                        img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20]).cpu().item()
                     final_inner_pwmre: float = pw_relative_error(
                         img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20], 
-                        img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20]).item()
+                        img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20]).cpu().item()
                 elif(len(img_upscaled.shape) == 5):
-                    final_ssim : float = ssim3D(img_upscaled.detach().to("cuda:1"), img_gt.detach().to("cuda:1")).item()
+                    final_ssim : float = ssim3D(img_upscaled.detach().to("cuda:1"), img_gt.detach().to("cuda:1")).cpu().item()
                     final_inner_mre : float = relative_error(
                         img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20,
                             20:img_upscaled.shape[4]-20], 
                         img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20,
-                            img_gt.shape[4]-20]).item()
+                            img_gt.shape[4]-20]).cpu().item()
                     final_inner_pwmre: float = pw_relative_error(
                         img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20,
                             20:img_upscaled.shape[4]-20], 
                         img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20,
-                            img_gt.shape[4]-20]).item()
+                            img_gt.shape[4]-20]).cpu().item()
             print(img_upscaled.shape)
             print("Final stats:")
             print("Target - " + criterion + " " + str(criterion_value))
