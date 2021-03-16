@@ -1745,7 +1745,7 @@ if __name__ == '__main__':
             rootgrp.createDimension("channels", img_upscaled.shape[1])
             dim_0 = rootgrp.createVariable("pressure", np.float32, ("u","v","w"))
             dim_0[:] = img_upscaled[0,0].cpu().numpy()
-
+        del img_upscaled
         if(args['debug']):           
 
             img_seams = nodes_to_full_img_seams(nodes, full_shape,
@@ -1765,7 +1765,7 @@ if __name__ == '__main__':
             img_upscaled_debug = np.transpose(img_upscaled_debug, (1, 2, 0))
             imageio.imwrite(os.path.join(save_folder, save_name+"_debug.png"), 
                     img_upscaled_debug)
-
+            del img_upscaled_debug
             imageio.imwrite(os.path.join(save_folder,"colormap.png"), 
             cmap.cpu().numpy().astype(np.uint8))
 
@@ -1783,6 +1783,7 @@ if __name__ == '__main__':
             
             imageio.imwrite(os.path.join(save_folder, save_name+"_point.png"), 
                     to_img(img_upscaled_point, mode))
+            del img_upscaled_point
         m += args['metric_skip']
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
