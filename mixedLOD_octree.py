@@ -1597,8 +1597,6 @@ if __name__ == '__main__':
     while(m < args['end_metric']):
         torch.cuda.empty_cache()
         with profiler.profile(profile_memory=True, record_shapes=True) as prof:
-
-            print(prof.key_averages().table(sort_by="self_cpu_memory_usage", row_limit=10))
             criterion_value = m
             save_name = args['save_name'] + "_"+ criterion + str(m)
             compress_time = 0
