@@ -1790,7 +1790,7 @@ if __name__ == '__main__':
                 for i in range(len(nodes)):
                     del nodes[i].data
                 del nodes
-        prof.display()
+        print(prof.display())
         m += args['metric_skip']
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
