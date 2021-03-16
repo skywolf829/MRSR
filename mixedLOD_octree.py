@@ -19,7 +19,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 import copy
 from utility_functions import save_obj, load_obj, ssim, ssim3D, to_img
-import torch.autograd.profiler as profiler
+from pytorch_memlab import LineProfiler
 
 @torch.jit.script
 class OctreeNode:
@@ -1596,7 +1596,8 @@ if __name__ == '__main__':
             model_name, distributed)
     while(m < args['end_metric']):
         torch.cuda.empty_cache()
-        with profiler.profile(profile_memory=True, record_shapes=True) as prof:
+        with LineProfiler(mixedLOD_octree_SR_compress, sz_compress_nodelist, 
+        create_caches_from_nodelist, nodes_to_full_img) as prof:
             criterion_value = m
             save_name = args['save_name'] + "_"+ criterion + str(m)
             compress_time = 0
@@ -1790,7 +1791,7 @@ if __name__ == '__main__':
                 for i in range(len(nodes)):
                     del nodes[i].data
                 del nodes
-        print(prof.key_averages().table())
+        prof.display()
         m += args['metric_skip']
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
