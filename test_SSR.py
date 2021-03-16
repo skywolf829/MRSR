@@ -427,8 +427,8 @@ if __name__ == '__main__':
                     LR_data = F.interpolate(LR_data, scale_factor=args['scale_factor'], 
                     mode="trilinear", align_corners=True)
                 elif(args['mode'] == '2D'):
-                        LR_data = F.interpolate(LR_data, scale_factor=args['scale_factor'], 
-                        mode=args['testing_method'], align_corners=True)
+                    LR_data = F.interpolate(LR_data, scale_factor=args['scale_factor'], 
+                    mode=args['testing_method'], align_corners=True)
             inference_end_time = time.time()
             
             inference_this_frame = inference_end_time - inference_start_time
