@@ -1598,7 +1598,7 @@ if __name__ == '__main__':
             model_name, distributed)
     while(m < args['end_metric']):
         torch.cuda.empty_cache()
-        with LineProfiler(mixedLOD_octree_SR_compress,nodes_to_full_img) as prof:
+        with LineProfiler(mixedLOD_octree_SR_compress,nodes_to_full_img,compress_nodelist) as prof:
             criterion_value = m
             save_name = args['save_name'] + "_"+ criterion + str(m)
             compress_time = 0
@@ -1683,7 +1683,11 @@ if __name__ == '__main__':
             downscaling_technique, device, data_levels, 
             mask_levels, data_downscaled_levels, 
             mask_downscaled_levels, mode)
-
+            while(len(data_levels)>0):
+                del data_levels[0]
+                del mask_levels[0]
+                del data_downscaled_levels[0]
+                del mask_downscaled_levels[0]
             imageio.imwrite(os.path.join(save_folder, save_name+".png"), 
                     to_img(img_upscaled, mode))
 
@@ -1785,7 +1789,11 @@ if __name__ == '__main__':
                 downscaling_technique, device, data_levels, 
                 mask_levels, data_downscaled_levels, 
                 mask_downscaled_levels, mode)
-                
+                while(len(data_levels)>0):
+                    del data_levels[0]
+                    del mask_levels[0]
+                    del data_downscaled_levels[0]
+                    del mask_downscaled_levels[0]
                 imageio.imwrite(os.path.join(save_folder, save_name+"_point.png"), 
                         to_img(img_upscaled_point, mode))
                 del img_upscaled_point
