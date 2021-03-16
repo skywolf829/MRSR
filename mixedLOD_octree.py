@@ -1596,8 +1596,7 @@ if __name__ == '__main__':
             model_name, distributed)
     while(m < args['end_metric']):
         torch.cuda.empty_cache()
-        with LineProfiler(mixedLOD_octree_SR_compress, sz_compress_nodelist, 
-        create_caches_from_nodelist, nodes_to_full_img) as prof:
+        with LineProfiler(mixedLOD_octree_SR_compress,nodes_to_full_img) as prof:
             criterion_value = m
             save_name = args['save_name'] + "_"+ criterion + str(m)
             compress_time = 0
