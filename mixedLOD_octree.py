@@ -1594,6 +1594,7 @@ if __name__ == '__main__':
     upscaling : UpscalingMethod = UpscalingMethod(upscaling_technique, device, 
             model_name, distributed)
     while(m < args['end_metric']):
+        torch.cuda.empty_cache()
         criterion_value = m
         save_name = args['save_name'] + "_"+ criterion + str(m)
         compress_time = 0
