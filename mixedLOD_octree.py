@@ -1530,6 +1530,7 @@ if __name__ == '__main__':
     parser.add_argument('--distributed',default="false",type=str2bool)
     parser.add_argument('--use_compressor',default="true",type=str2bool)
     parser.add_argument('--save_netcdf',default="false",type=str2bool)
+    parser.add_argument('--save_TKE',default="false",type=str2bool)
 
     parser.add_argument('--compressor',default="zfp",type=str)
     parser.add_argument('--data_type',default="h5",type=str)
@@ -1579,6 +1580,8 @@ if __name__ == '__main__':
     results['rec_pwmre'] = []
     results['rec_inner_mre'] = []
     results['rec_inner_pwmre'] = []
+    if(args['save_TKE']):
+        results['TKE_error'] = []
     
     if(args['data_type'] == "image"):
         img_gt : torch.Tensor = torch.from_numpy(imageio.imread(
@@ -1744,7 +1747,9 @@ if __name__ == '__main__':
             results['rec_pwmre'].append(final_pwmre)
             results['rec_inner_mre'].append(final_inner_mre)
             results['rec_inner_pwmre'].append(final_inner_pwmre)
-            
+            if(args['save_TKE']):
+                results['TKE_error'].append(0.5*(img_gt.mean().item()-img_upscaled.mean().item()))
+
             if(args['save_netcdf']):
                 from netCDF4 import Dataset
                 rootgrp = Dataset(save_name+".nc", "w", format="NETCDF4")

@@ -24,6 +24,7 @@ if __name__ == '__main__':
     parser.add_argument('--value_skip',default=10,type=float,help='PSNR increment by')
     parser.add_argument('--metric',default='psnr',type=str)
     parser.add_argument('--save_netcdf',default="false",type=str2bool)
+    parser.add_argument('--save_TKE',default="false",type=str2bool)
     
 
     args = vars(parser.parse_args())
@@ -48,6 +49,8 @@ if __name__ == '__main__':
     results['rec_pwmre'] = []
     results['rec_inner_mre'] = []
     results['rec_inner_pwmre'] = []
+    if(args['save_TKE']):
+        results['TKE_error'] = []
     f = h5py.File(os.path.join(input_folder, args['file']), "r")
     d = np.array(f['data'])
     f.close()
@@ -138,6 +141,8 @@ if __name__ == '__main__':
         results['rec_pwmre'].append(final_pwmre)
         results['rec_inner_mre'].append(inner_mre)
         results['rec_inner_pwmre'].append(inner_pwmre)
+        if(args['save_TKE']):
+            results['TKE_error'].append(0.5*(d.mean()-dc.mean()))
         value += args['value_skip']
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
