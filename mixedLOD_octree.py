@@ -19,6 +19,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 import copy
 from utility_functions import save_obj, load_obj, ssim, ssim3D, to_img
+import torch.autograd.profiler as profiler
 
 @torch.jit.script
 class OctreeNode:
@@ -1595,199 +1596,203 @@ if __name__ == '__main__':
             model_name, distributed)
     while(m < args['end_metric']):
         torch.cuda.empty_cache()
-        criterion_value = m
-        save_name = args['save_name'] + "_"+ criterion + str(m)
-        compress_time = 0
+        with profiler.profile(profile_memory=True, record_shapes=True) as prof:
 
-        upscaling.change_method(upscaling_technique)
-        if not load_existing:
-            root_node = OctreeNode(img_gt, 0, 0, 0)
-            nodes : OctreeNodeList = OctreeNodeList()
-            nodes.append(root_node)
-            #torch.save(nodes, './Output/'+img_name+'.torch')
-            #nodelist_to_h5(nodes, './Output/'+img_name+'.h5')
-            ##############################################
-            #nodes : OctreeNodeList = torch.load('./Output/'+img_name+'.torch')
-            if(args['interpolation_heuristic']):
-                if(args['mode'] == '2D'):
-                    upscaling.change_method("bilinear")
-                elif(args['mode'] == '3D'):
-                    upscaling.change_method("trilinear")   
-            start_time : float = time.time()
-            if(args['dynamic_downscaling']):
-                nodes : OctreeNodeList = mixedLOD_octree_SR_compress(
-                    nodes, img_gt, criterion, criterion_value,
-                    upscaling, downscaling_technique,
-                    min_chunk, max_LOD, device, mode)
-                end_time : float = time.time()
-                compress_time = end_time - start_time
-                #print("Compression took %s seconds" % (str(end_time - start_time)))
+            print(prof.key_averages().table(sort_by="self_cpu_memory_usage", row_limit=10))
+            criterion_value = m
+            save_name = args['save_name'] + "_"+ criterion + str(m)
+            compress_time = 0
+
+            upscaling.change_method(upscaling_technique)
+            if not load_existing:
+                root_node = OctreeNode(img_gt, 0, 0, 0)
+                nodes : OctreeNodeList = OctreeNodeList()
+                nodes.append(root_node)
+                #torch.save(nodes, './Output/'+img_name+'.torch')
+                #nodelist_to_h5(nodes, './Output/'+img_name+'.h5')
+                ##############################################
+                #nodes : OctreeNodeList = torch.load('./Output/'+img_name+'.torch')
+                if(args['interpolation_heuristic']):
+                    if(args['mode'] == '2D'):
+                        upscaling.change_method("bilinear")
+                    elif(args['mode'] == '3D'):
+                        upscaling.change_method("trilinear")   
+                start_time : float = time.time()
+                if(args['dynamic_downscaling']):
+                    nodes : OctreeNodeList = mixedLOD_octree_SR_compress(
+                        nodes, img_gt, criterion, criterion_value,
+                        upscaling, downscaling_technique,
+                        min_chunk, max_LOD, device, mode)
+                    end_time : float = time.time()
+                    compress_time = end_time - start_time
+                    #print("Compression took %s seconds" % (str(end_time - start_time)))
+                    
+                    num_nodes : int = len(nodes)
+                    nodes = compress_nodelist(nodes, full_shape, min_chunk, device, mode)
+                    concat_num_nodes : int = len(nodes)
+
+                    print("Concatenating blocks turned %s blocks into %s" % (str(num_nodes), str(concat_num_nodes)))
+                else:
+                    nodes : OctreeNodeList = nondynamic_SR_compress(
+                        nodes, img_gt, criterion, criterion_value,
+                        upscaling, downscaling_technique,
+                        min_chunk, max_LOD, device, mode)
+                    end_time : float = time.time()
+                    compress_time = end_time - start_time            
+                    num_nodes : int = len(nodes)
+
+                if(args['use_compressor']):
+                    if(args['compressor'] == "sz"):
+                        sz_compress_nodelist(nodes, full_shape, max_LOD,
+                            downscaling_technique, device, mode,
+                            save_folder, save_name,
+                            criterion, m)
+                    elif(args['compressor'] == "zfp"):
+                        zfp_compress_nodelist(nodes, full_shape, max_LOD,
+                            downscaling_technique, device, mode,
+                            save_folder, save_name)
+                    elif(args['compressor'] == "fpzip"):
+                        fpzip_compress_nodelist(nodes, full_shape, max_LOD,
+                            downscaling_technique, device, mode,
+                            save_folder, save_name)
+                else:
+                    torch.save(nodes, os.path.join(save_folder,
+                        save_name+".torch"))
                 
-                num_nodes : int = len(nodes)
-                nodes = compress_nodelist(nodes, full_shape, min_chunk, device, mode)
-                concat_num_nodes : int = len(nodes)
-
-                print("Concatenating blocks turned %s blocks into %s" % (str(num_nodes), str(concat_num_nodes)))
-            else:
-                nodes : OctreeNodeList = nondynamic_SR_compress(
-                    nodes, img_gt, criterion, criterion_value,
-                    upscaling, downscaling_technique,
-                    min_chunk, max_LOD, device, mode)
-                end_time : float = time.time()
-                compress_time = end_time - start_time            
-                num_nodes : int = len(nodes)
-
+                
+                #nodelist_to_h5(nodes, "./Output/"+img_name+"_"+upscaling_technique+ \
+                #    "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
+                #        "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".h5")
             if(args['use_compressor']):
-                if(args['compressor'] == "sz"):
-                    sz_compress_nodelist(nodes, full_shape, max_LOD,
-                        downscaling_technique, device, mode,
-                        save_folder, save_name,
-                        criterion, m)
-                elif(args['compressor'] == "zfp"):
-                    zfp_compress_nodelist(nodes, full_shape, max_LOD,
-                        downscaling_technique, device, mode,
-                        save_folder, save_name)
+                if(args['compressor'] == "sz"):                
+                    nodes = sz_decompress_nodelist(os.path.join(save_folder,save_name + ".tar.gz"), device)
+                elif(args['compressor'] == "zfp"):                
+                    nodes = zfp_decompress_nodelist(os.path.join(save_folder,save_name + ".tar.gz"), device)
                 elif(args['compressor'] == "fpzip"):
-                    fpzip_compress_nodelist(nodes, full_shape, max_LOD,
-                        downscaling_technique, device, mode,
-                        save_folder, save_name)
+                    nodes = fpzip_decompress_nodelist(os.path.join(save_folder,save_name + ".tar.gz"), device)
             else:
-                torch.save(nodes, os.path.join(save_folder,
+                nodes : OctreeNodeList = torch.load(os.path.join(save_folder,
                     save_name+".torch"))
-            
-            
-            #nodelist_to_h5(nodes, "./Output/"+img_name+"_"+upscaling_technique+ \
-            #    "_"+downscaling_technique+"_"+criterion+str(criterion_value)+"_" +\
-            #        "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".h5")
-        if(args['use_compressor']):
-            if(args['compressor'] == "sz"):                
-                nodes = sz_decompress_nodelist(os.path.join(save_folder,save_name + ".tar.gz"), device)
-            elif(args['compressor'] == "zfp"):                
-                nodes = zfp_decompress_nodelist(os.path.join(save_folder,save_name + ".tar.gz"), device)
-            elif(args['compressor'] == "fpzip"):
-                nodes = fpzip_decompress_nodelist(os.path.join(save_folder,save_name + ".tar.gz"), device)
-        else:
-            nodes : OctreeNodeList = torch.load(os.path.join(save_folder,
-                save_name+".torch"))
 
-        upscaling.change_method(upscaling_technique)
-        data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels = \
-            create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
-
-        img_upscaled = nodes_to_full_img(nodes, full_shape, 
-        max_LOD, upscaling, 
-        downscaling_technique, device, data_levels, 
-        mask_levels, data_downscaled_levels, 
-        mask_downscaled_levels, mode)
-
-        imageio.imwrite(os.path.join(save_folder, save_name+".png"), 
-                to_img(img_upscaled, mode))
-
-        if(args['use_compressor']):
-            f_size_kb = os.path.getsize(os.path.join(save_folder,
-            save_name+".tar.gz")) / 1024
-        else:
-            f_size_kb = os.path.getsize(os.path.join(save_folder,
-                save_name+".torch")) / 1024
-
-        f_data_size_kb = nodes.total_size()
-        
-        torch.cuda.empty_cache()
-        with torch.no_grad():
-            final_psnr : float = PSNR(img_upscaled, img_gt).item()
-            final_mse : float = MSE(img_upscaled, img_gt).item()
-            final_mre : float = relative_error(img_upscaled, img_gt).item()
-            final_pwmre: float = pw_relative_error(img_upscaled, img_gt).item()
-            torch.cuda.empty_cache()
-            if(len(img_upscaled.shape) == 4):
-                final_ssim : float = ssim(img_upscaled, img_gt).item()
-                final_inner_mre : float = relative_error(
-                    img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20], 
-                    img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20]).item()
-                final_inner_pwmre: float = pw_relative_error(
-                    img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20], 
-                    img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20]).item()
-            elif(len(img_upscaled.shape) == 5):
-                final_ssim : float = ssim3D(img_upscaled.detach().to("cuda:1"), img_gt.detach().to("cuda:1")).item()
-                final_inner_mre : float = relative_error(
-                    img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20,
-                        20:img_upscaled.shape[4]-20], 
-                    img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20,
-                        img_gt.shape[4]-20]).item()
-                final_inner_pwmre: float = pw_relative_error(
-                    img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20,
-                        20:img_upscaled.shape[4]-20], 
-                    img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20,
-                        img_gt.shape[4]-20]).item()
-        print(img_upscaled.shape)
-        print("Final stats:")
-        print("Target - " + criterion + " " + str(criterion_value))
-        print("PSNR: %0.02f, SSIM: %0.04f, MSE: %0.02f, MRE: %0.04f, PWMRE: %0.04f" % \
-            (final_psnr, final_ssim, final_mse, final_mre, final_pwmre))
-        print("Pre-compressed data size: %f kb" % nodes.total_size())
-        print("Saved file size: %f kb" % f_size_kb)
-        results['psnrs'].append(criterion_value)
-        results['file_size'].append(f_size_kb)
-        results['compression_time'].append(compress_time)
-        results['num_nodes'].append(len(nodes))
-        results['rec_psnr'].append(final_psnr)
-        results['rec_ssim'].append(final_ssim)
-        results['rec_mre'].append(final_mre)
-        results['rec_pwmre'].append(final_pwmre)
-        results['rec_inner_mre'].append(final_inner_mre)
-        results['rec_inner_pwmre'].append(final_inner_pwmre)
-        
-        if(args['save_netcdf']):
-            from netCDF4 import Dataset
-            rootgrp = Dataset(save_name+".nc", "w", format="NETCDF4")
-            rootgrp.createDimension("u")
-            rootgrp.createDimension("v")
-            rootgrp.createDimension("w")
-            rootgrp.createDimension("channels", img_upscaled.shape[1])
-            dim_0 = rootgrp.createVariable("pressure", np.float32, ("u","v","w"))
-            dim_0[:] = img_upscaled[0,0].cpu().numpy()
-        del img_upscaled
-        if(args['debug']):           
-
-            img_seams = nodes_to_full_img_seams(nodes, full_shape,
-            upscaling, device, mode)
-
-            imageio.imwrite(os.path.join(save_folder, save_name+"_seams.png"), 
-                    to_img(img_seams, mode))
-
-            img_upscaled_debug, cmap = nodes_to_full_img_debug(nodes, full_shape, 
-            max_LOD, upscaling, 
-            downscaling_technique, device, mode)
-            img_upscaled_debug = img_upscaled_debug.cpu().numpy().astype(np.uint8)
-            if(mode == "3D"):
-                img_upscaled_debug = img_upscaled_debug[:,:,:,
-                :,int(img_upscaled_debug.shape[4]/2)+1]
-            img_upscaled_debug = img_upscaled_debug[0]
-            img_upscaled_debug = np.transpose(img_upscaled_debug, (1, 2, 0))
-            imageio.imwrite(os.path.join(save_folder, save_name+"_debug.png"), 
-                    img_upscaled_debug)
-            del img_upscaled_debug
-            imageio.imwrite(os.path.join(save_folder,"colormap.png"), 
-            cmap.cpu().numpy().astype(np.uint8))
-
-            point_us = "point2D" if mode == "2D" else "point3D"
-            upscaling.change_method('nearest')
-
+            upscaling.change_method(upscaling_technique)
             data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels = \
-            create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
+                create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
 
-            img_upscaled_point = nodes_to_full_img(nodes, full_shape, 
+            img_upscaled = nodes_to_full_img(nodes, full_shape, 
             max_LOD, upscaling, 
             downscaling_technique, device, data_levels, 
             mask_levels, data_downscaled_levels, 
             mask_downscaled_levels, mode)
+
+            imageio.imwrite(os.path.join(save_folder, save_name+".png"), 
+                    to_img(img_upscaled, mode))
+
+            if(args['use_compressor']):
+                f_size_kb = os.path.getsize(os.path.join(save_folder,
+                save_name+".tar.gz")) / 1024
+            else:
+                f_size_kb = os.path.getsize(os.path.join(save_folder,
+                    save_name+".torch")) / 1024
+
+            f_data_size_kb = nodes.total_size()
             
-            imageio.imwrite(os.path.join(save_folder, save_name+"_point.png"), 
-                    to_img(img_upscaled_point, mode))
-            del img_upscaled_point
-            for i in range(len(nodes)):
-                del nodes[i].data
-            del nodes
+            torch.cuda.empty_cache()
+            with torch.no_grad():
+                final_psnr : float = PSNR(img_upscaled, img_gt).item()
+                final_mse : float = MSE(img_upscaled, img_gt).item()
+                final_mre : float = relative_error(img_upscaled, img_gt).item()
+                final_pwmre: float = pw_relative_error(img_upscaled, img_gt).item()
+                torch.cuda.empty_cache()
+                if(len(img_upscaled.shape) == 4):
+                    final_ssim : float = ssim(img_upscaled, img_gt).item()
+                    final_inner_mre : float = relative_error(
+                        img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20], 
+                        img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20]).item()
+                    final_inner_pwmre: float = pw_relative_error(
+                        img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20], 
+                        img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20]).item()
+                elif(len(img_upscaled.shape) == 5):
+                    final_ssim : float = ssim3D(img_upscaled.detach().to("cuda:1"), img_gt.detach().to("cuda:1")).item()
+                    final_inner_mre : float = relative_error(
+                        img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20,
+                            20:img_upscaled.shape[4]-20], 
+                        img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20,
+                            img_gt.shape[4]-20]).item()
+                    final_inner_pwmre: float = pw_relative_error(
+                        img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20,
+                            20:img_upscaled.shape[4]-20], 
+                        img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20,
+                            img_gt.shape[4]-20]).item()
+            print(img_upscaled.shape)
+            print("Final stats:")
+            print("Target - " + criterion + " " + str(criterion_value))
+            print("PSNR: %0.02f, SSIM: %0.04f, MSE: %0.02f, MRE: %0.04f, PWMRE: %0.04f" % \
+                (final_psnr, final_ssim, final_mse, final_mre, final_pwmre))
+            print("Pre-compressed data size: %f kb" % nodes.total_size())
+            print("Saved file size: %f kb" % f_size_kb)
+            results['psnrs'].append(criterion_value)
+            results['file_size'].append(f_size_kb)
+            results['compression_time'].append(compress_time)
+            results['num_nodes'].append(len(nodes))
+            results['rec_psnr'].append(final_psnr)
+            results['rec_ssim'].append(final_ssim)
+            results['rec_mre'].append(final_mre)
+            results['rec_pwmre'].append(final_pwmre)
+            results['rec_inner_mre'].append(final_inner_mre)
+            results['rec_inner_pwmre'].append(final_inner_pwmre)
+            
+            if(args['save_netcdf']):
+                from netCDF4 import Dataset
+                rootgrp = Dataset(save_name+".nc", "w", format="NETCDF4")
+                rootgrp.createDimension("u")
+                rootgrp.createDimension("v")
+                rootgrp.createDimension("w")
+                rootgrp.createDimension("channels", img_upscaled.shape[1])
+                dim_0 = rootgrp.createVariable("pressure", np.float32, ("u","v","w"))
+                dim_0[:] = img_upscaled[0,0].cpu().numpy()
+            del img_upscaled
+            if(args['debug']):           
+
+                img_seams = nodes_to_full_img_seams(nodes, full_shape,
+                upscaling, device, mode)
+
+                imageio.imwrite(os.path.join(save_folder, save_name+"_seams.png"), 
+                        to_img(img_seams, mode))
+
+                img_upscaled_debug, cmap = nodes_to_full_img_debug(nodes, full_shape, 
+                max_LOD, upscaling, 
+                downscaling_technique, device, mode)
+                img_upscaled_debug = img_upscaled_debug.cpu().numpy().astype(np.uint8)
+                if(mode == "3D"):
+                    img_upscaled_debug = img_upscaled_debug[:,:,:,
+                    :,int(img_upscaled_debug.shape[4]/2)+1]
+                img_upscaled_debug = img_upscaled_debug[0]
+                img_upscaled_debug = np.transpose(img_upscaled_debug, (1, 2, 0))
+                imageio.imwrite(os.path.join(save_folder, save_name+"_debug.png"), 
+                        img_upscaled_debug)
+                del img_upscaled_debug
+                imageio.imwrite(os.path.join(save_folder,"colormap.png"), 
+                cmap.cpu().numpy().astype(np.uint8))
+
+                point_us = "point2D" if mode == "2D" else "point3D"
+                upscaling.change_method('nearest')
+
+                data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels = \
+                create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
+
+                img_upscaled_point = nodes_to_full_img(nodes, full_shape, 
+                max_LOD, upscaling, 
+                downscaling_technique, device, data_levels, 
+                mask_levels, data_downscaled_levels, 
+                mask_downscaled_levels, mode)
+                
+                imageio.imwrite(os.path.join(save_folder, save_name+"_point.png"), 
+                        to_img(img_upscaled_point, mode))
+                del img_upscaled_point
+                for i in range(len(nodes)):
+                    del nodes[i].data
+                del nodes
+            print(prof.key_averages().table())
         m += args['metric_skip']
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
