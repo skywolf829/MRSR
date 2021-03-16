@@ -300,8 +300,8 @@ def generate_by_patch_parallel(generator, input_volume, patch_size, receptive_fi
     with torch.no_grad():
         final_volume = torch.zeros(
             [input_volume.shape[0], input_volume.shape[1], input_volume.shape[2]*2, 
-            input_volume.shape[3]*2, input_volume.shape[4]*2]
-            ).to(devices[0])
+            input_volume.shape[3]*2, input_volume.shape[4]*2],
+            dtype=torch.float32).to(devices[0])
         
         rf = receptive_field
 
@@ -823,12 +823,6 @@ def mixedLOD_octree_SR_compress(
 
         met = criterion_met(criterion, allowed_error, GT_image, new_img, max_diff)
 
-        #print("Criteria time : " + str(time.time() - t))
-        t = time.time()
-
-        #print("Print time : " + str(time.time() - t))
-        t = time.time()
-
         if(not met):
             #print("If statement : " + str(time.time() - t))
             t = time.time()
@@ -893,7 +887,11 @@ def mixedLOD_octree_SR_compress(
                 n.min_width() > 1):
                 node_indices_to_check.append(i)
         
-
+    while(0 < len(data_levels)):
+        del data_levels[0]
+        del mask_levels[0]
+        del data_downscaled_levels[0]
+        del mask_downscaled_levels[0]
     #print("Nodes traversed: " + str(nodes_checked))
     return nodes            
 
@@ -1178,7 +1176,8 @@ folder : str, name : str, metric : str, value : float):
         os.system(command)
         os.system("rm " + d_loc)
     
-    
+    del full_im
+
     metadata : List[int] = []
     metadata.append(min_LOD)
     metadata.append(len(full_shape))
@@ -1373,6 +1372,7 @@ def sz_decompress_nodelist(filename : str, device : str):
         
         n = OctreeNode(data.to(device), lod, depth, index)
         nodes.append(n)
+    del full_data
     os.system("rm -r " + temp_folder)
     print("Finished decompressing, " + str(len(nodes)) + " blocks recovered")
     return nodes
@@ -1784,6 +1784,9 @@ if __name__ == '__main__':
             imageio.imwrite(os.path.join(save_folder, save_name+"_point.png"), 
                     to_img(img_upscaled_point, mode))
             del img_upscaled_point
+            for i in range(len(nodes)):
+                del nodes[i].data
+            del nodes
         m += args['metric_skip']
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
