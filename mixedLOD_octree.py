@@ -756,18 +756,16 @@ List[torch.Tensor], List[torch.Tensor]]:
     if(mode == "3D"):
         curr_shape = [full_shape[0], full_shape[1], full_shape[2], full_shape[3], full_shape[4]]
     while(curr_LOD <= max_LOD):
-        full_img = torch.zeros(curr_shape, dtype=torch.float32).to(device)
-        mask = torch.zeros(curr_shape, dtype=torch.bool).to(device)
-        data_levels.append(full_img.clone())
-        data_downscaled_levels.append(full_img.clone())
-        mask_levels.append(mask.clone())
-        mask_downscaled_levels.append(mask.clone())
+        data_levels.append(torch.zeros(curr_shape, dtype=torch.float32).to(device))
+        data_downscaled_levels.append(torch.zeros(curr_shape, dtype=torch.float32).to(device))
+        mask_levels.append(torch.zeros(curr_shape, dtype=torch.bool).to(device))
+        mask_downscaled_levels.append(torch.zeros(curr_shape, dtype=torch.bool).to(device))
         curr_shape[2] = int(curr_shape[2] / 2)
         curr_shape[3] = int(curr_shape[3] / 2)  
         if(mode == "3D"):
             curr_shape[4] = int(curr_shape[4] / 2)
         curr_LOD += 1
-    
+        
     for i in range(len(nodes)):
         add_node_to_data_caches(nodes[i], full_shape,
         data_levels, mask_levels, mode)
@@ -1787,10 +1785,10 @@ if __name__ == '__main__':
                 imageio.imwrite(os.path.join(save_folder, save_name+"_point.png"), 
                         to_img(img_upscaled_point, mode))
                 del img_upscaled_point
-                for i in range(len(nodes)):
-                    del nodes[i].data
-                del nodes
-        print(prof.display())
+            for i in range(len(nodes)):
+                del nodes[i].data
+            del nodes
+        #print(prof.display())
         m += args['metric_skip']
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
