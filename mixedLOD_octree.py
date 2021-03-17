@@ -1390,7 +1390,7 @@ folder : str, name : str, metric : str, value : float):
         else:
         '''
         #command = command + " -M PW_REL -P 0.001"
-        command = command + " -M REL -R 0.01"
+        command = command + " -M REL -R 0.001"
         print(command)
         os.system(command)
         os.system("rm " + d_loc)
