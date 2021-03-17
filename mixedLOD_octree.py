@@ -128,12 +128,12 @@ class OctreeNodeList:
         return nbytes 
     
     def mean(self):
-        m = np.zeros([self.node_list[0].data.shape[1]])
+        m = torch.zeros([self.node_list[0].data.shape[1]])
         dims = [0, 2, 3]
         if(len(self.node_list[0].data.shape) == 5):
             dims.append(4)
         for i in range(len(self.node_list)):
-            m += self.node_list[i].data.mean(dims).cpu().numpy()
+            m += self.node_list[i].data.mean(dims).cpu()
         return m / len(self.node_list)
 
 def ssim_criterion(GT_image, img, min_ssim=0.6) -> float:
@@ -1340,7 +1340,7 @@ folder : str, name : str, metric : str, value : float):
         int(full_shape[3] / (2**min_LOD)),
         int(full_shape[4] / (2**min_LOD))], dtype=torch.float32)
 
-    full_im += nodes.mean()
+    full_im += nodes.mean().numpy()
 
     for i in range(len(nodes)):
         n = nodes[i]
