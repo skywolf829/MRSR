@@ -135,6 +135,16 @@ class OctreeNodeList:
         for i in range(len(self.node_list)):
             m += self.node_list[i].data.mean(dims).cpu()
         return m / len(self.node_list)
+    def max(self):
+        m = self.node_list[i].data.max().cpu().item()
+        for i in range(len(self.node_list)):
+            m = max(m, self.node_list[i].data.max().cpu().item())
+        return m
+    def min(self):
+        m = self.node_list[i].data.min().cpu().item()
+        for i in range(len(self.node_list)):
+            m = min(m, self.node_list[i].data.min().cpu().item())
+        return m
 
 def ssim_criterion(GT_image, img, min_ssim=0.6) -> float:
     if(len(GT_image.shape) == 4):
@@ -1390,7 +1400,10 @@ folder : str, name : str, metric : str, value : float):
         else:
         '''
         #command = command + " -M PW_REL -P 0.001"
-        command = command + " -M REL -R 0.0025"
+        max_diff = nodes.max() - nodes.min()
+        REL_target = (max_diff / (10**(value/10))) **0.5
+        command = command + " -M REL -R " + str(REL_target)
+        #command = command + " -M REL -R 0.0025"
         print(command)
         os.system(command)
         os.system("rm " + d_loc)
