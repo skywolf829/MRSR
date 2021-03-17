@@ -1447,8 +1447,8 @@ def sz_decompress(filename : str, device : str):
             depth, index)
             x = int(x / (2**min_LOD))
             y = int(y / (2**min_LOD))
-            width = int(full_data.shape[2] / (2**(depth+lod-min_LOD)))
-            height = int(full_data.shape[3] / (2**(depth+lod-min_LOD)))
+            width = int(full_data.shape[2] / (2**(depth+lod)))
+            height = int(full_data.shape[3] / (2**(depth+lod)))
             data = full_data[:,:,x:x+width,y:y+height]
 
         elif(len(full_shape) == 5):
