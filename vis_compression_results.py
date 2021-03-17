@@ -8,7 +8,7 @@ import copy
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
     
-    parser.add_argument('--save_folder',default="mag3D_compression",
+    parser.add_argument('--save_folder',default="mag2D_compression",
     type=str,help='Folder to save images to')
     parser.add_argument('--output_file_name',default="results.pkl",
     type=str,help='filename to visualize in output folder')    
@@ -45,15 +45,15 @@ if __name__ == '__main__':
         print(m)
         for k in results[m].keys():
             print("    " + k)
-            if(k == "rec_psnr" or k == "rec_ssim" or k == "file_size" or k == "psnrs"):
+            if(k == "rec_psnr" or k == "rec_ssim" or k == "file_size" or k == "psnrs" or k == "TKE_error"):
                 print("        " + str(results[m][k]))
 
     compression_method_names = list(results.keys())
     metrics = ['file_size', 'compression_time', 'num_nodes', 'rec_psnr',
-    'rec_mre', 'rec_pwmre', 'rec_inner_mre', 'rec_inner_pwmre']
+    'rec_mre', 'rec_pwmre', 'rec_inner_mre', 'rec_inner_pwmre', "TKE_error"]
     #full_file_size = 524209
-    #full_file_size = 4096
-    full_file_size = 4194306
+    full_file_size = 4096
+    #full_file_size = 4194306
 
     for metric in metrics:
         fig = plt.figure()
@@ -73,9 +73,9 @@ if __name__ == '__main__':
                 if "NN_SZ" == method:
                     plt.plot(x, y, label=method, drawstyle='steps')
                 elif "NN_trilinearheuristic_mixedLOD_octree_SZ" == method:
-                    plt.plot(x[2:], y[2:], label=method)
+                    plt.plot(x[:], y[:], label=method)
                 else:
-                    plt.plot(x[2:], y[2:], label=method)
+                    plt.plot(x[:], y[:], label=method)
         plt.legend()
         plt.xlabel("(De)compressed PSNR")
         plt.ylabel(metric)
@@ -83,6 +83,7 @@ if __name__ == '__main__':
         plt.savefig(os.path.join(save_folder, metric+"_recpsnr.png"))
         plt.clf()
     
+    '''
     for metric in metrics:
         fig = plt.figure()
         vals = []
@@ -103,7 +104,7 @@ if __name__ == '__main__':
         plt.title(args['output_file_name'] + " psnr vs - " + metric)
         plt.savefig(os.path.join(save_folder, metric+"_psnr.png"))
         plt.clf()
-
+    '''
     for metric in metrics:
         fig = plt.figure()
         vals = []
@@ -116,16 +117,16 @@ if __name__ == '__main__':
                 if "NN_SZ" == method:
                     plt.plot(x, y, label=method, drawstyle='steps')
                 elif "NN_trilinearheuristic_mixedLOD_octree_SZ" == method:
-                    plt.plot(x[2:], y[2:], label=method)
+                    plt.plot(x[:], y[:], label=method)
                 else:
-                    plt.plot(x[2:], y[2:], label=method)
+                    plt.plot(x[:], y[:], label=method)
         plt.legend()
         plt.xlabel("(De)compressed SSIM")
         plt.ylabel(metric)
         plt.title(args['output_file_name'] + " ssim vs - " + metric)
         plt.savefig(os.path.join(save_folder, metric+"_ssim.png"))
         plt.clf()
-
+    '''
     for metric in metrics:
         fig = plt.figure()
         vals = []
@@ -145,7 +146,7 @@ if __name__ == '__main__':
         plt.title(args['output_file_name'] + " MRE vs - " + metric)
         plt.savefig(os.path.join(save_folder, metric+"_mre.png"))
         plt.clf()
-
+    
     for metric in metrics:
         fig = plt.figure()
         vals = []
@@ -165,7 +166,7 @@ if __name__ == '__main__':
         plt.title(args['output_file_name'] + " inner MRE vs - " + metric)
         plt.savefig(os.path.join(save_folder, metric+"_innermre.png"))
         plt.clf()
-
+    
     for metric in metrics:
         fig = plt.figure()
         vals = []
@@ -185,7 +186,7 @@ if __name__ == '__main__':
         plt.title(args['output_file_name'] + " PWMRE vs - " + metric)
         plt.savefig(os.path.join(save_folder, metric+"_pwmre.png"))
         plt.clf()
-
+    
     for metric in metrics:
         fig = plt.figure()
         vals = []
@@ -205,7 +206,7 @@ if __name__ == '__main__':
         plt.title(args['output_file_name'] + " inner PWMRE vs - " + metric)
         plt.savefig(os.path.join(save_folder, metric+"_innerpwmre.png"))
         plt.clf()
-
+    '''
     if("TKE_error" in metrics):
         for metric in metrics:
             fig = plt.figure()
@@ -226,3 +227,25 @@ if __name__ == '__main__':
             plt.title(args['output_file_name'] + " TKE error vs - " + metric)
             plt.savefig(os.path.join(save_folder, metric+"_TKEerror.png"))
             plt.clf()
+    if("compression_ratio" in metrics):
+        for metric in metrics:
+            fig = plt.figure()
+            vals = []
+            print(metric)
+            for method in compression_method_names:
+                if('compression_ratio' in results[method].keys() and \
+                    metric in results[method].keys() and len(results[method][metric]) > 0):
+                    ordering = np.argsort(np.array(results[method]['compression_ratio'][:]))
+                    x = np.array(results[method]['compression_ratio'])[ordering]
+                    y = np.array(results[method][metric])[ordering]
+                    if "NN_SZ" == method:
+                        plt.plot(x, y, label=method, drawstyle='steps')
+                    else:
+                        plt.plot(x, y, label=method)
+            plt.legend()
+            plt.xlabel("Compression ratio")
+            plt.ylabel(metric)
+            plt.title(args['output_file_name'] + " Compression Ratio vs - " + metric)
+            plt.savefig(os.path.join(save_folder, metric+"_compressionratio.png"))
+            plt.clf()
+            
