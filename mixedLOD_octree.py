@@ -1436,7 +1436,7 @@ def sz_decompress(filename : str, device : str):
         full_data = torch.Tensor(full_data)
         data_channels.append(full_data)
 
-    print(full_shape)
+    #print(full_shape)
     full_data = torch.stack(data_channels).unsqueeze(0)
     for i in range(0, len(metadata), 3):
         depth = metadata[i]
@@ -1463,8 +1463,8 @@ def sz_decompress(filename : str, device : str):
             d = int(full_shape[4] / (2**(depth+lod)))
             data = full_data[:,:,x:x+width,y:y+height,z:z+d]
         
-        print("Node %i: depth %i index %i lod %i, data shape %s" % (i, depth, index, lod, str(data.shape)))
-        print(str(x) + " " + str(y))
+        #print("Node %i: depth %i index %i lod %i, data shape %s" % (i, depth, index, lod, str(data.shape)))
+        #print(str(x) + " " + str(y))
         n = OctreeNode(data.to(device), lod, depth, index)
         nodes.append(n)
     del full_data
