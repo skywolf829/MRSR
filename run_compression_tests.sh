@@ -19,7 +19,7 @@ python3 -u mixedLOD_octree.py --save_name NN_SZ_nearestneighbor --downscaling_te
 
 #python3 mixedLOD_octree.py --downscaling_technique avgpool2D --upscaling_technique model --criterion psnr --start_metric 20 --end_metric 100 --metric_skip 5 --output_folder mag2D_compression --mode 2D --file 4010.h5 --dims 2 --nx 1024 --ny 1024 --use_compressor true --compressor fpzip --load_existing true --debug true
 
-#python3 -u sz_test.py --metric mre --channels 1 --file isomag2D_compressiontest.h5 --start_value 0.005 --end_value 0.07 --value_skip .005 --dims 2 --nx 1024 --ny 1024 --save_TKE true --output_folder mag2D_compression_test
+python3 -u sz_test.py --metric mre --channels 1 --file isomag2D_compressiontest.h5 --start_value 0.005 --end_value 0.08 --value_skip .005 --dims 2 --nx 1024 --ny 1024 --save_TKE true --output_folder mag2D_compression_test
 #python3 zfp_test.py --metric psnr --channels 1 --file isomag2D_compressiontest.h5 --start_bpv 0.25 --end_bpv 4 --bpv_skip 0.25 --dims 2 --nx 1024 --ny 1024 --output_folder mag2D_compression_pwmre
 
 # 3D iso1024 mag
