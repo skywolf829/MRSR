@@ -140,7 +140,7 @@ class OctreeNodeList:
         for i in range(len(self.node_list)):
             m = max(m, self.node_list[i].data.max().cpu().item())
         return m
-        
+
     def min(self):
         m = self.node_list[0].data.min().cpu().item()
         for i in range(len(self.node_list)):
@@ -1186,6 +1186,7 @@ folder : str, name : str, metric : str, value : float):
             str(d.shape[0]) + " " + str(d.shape[1])
         if(ndims == 3):
             command = command + " " + str(d.shape[2])
+        '''
         if(min_LOD == 0):
             if(metric == "psnr"):
                 command = command + " -M PSNR -S " + str(value)
@@ -1195,6 +1196,10 @@ folder : str, name : str, metric : str, value : float):
                 command = command + " -M PW_REL -P " + str(value)
         else:
             command = command + " -M PW_REL -P 0.001"
+        '''
+        max_diff = nodes.max() - nodes.min()
+        REL_target = (max_diff / (10**(value/10))) **0.5
+        command = command + " -M REL -R " + str(REL_target)
         print(command)
         os.system(command)
         os.system("rm " + d_loc)
@@ -1486,9 +1491,9 @@ def sz_decompress(filename : str, device : str):
             x = int(x / (2**min_LOD))
             y = int(y / (2**min_LOD))
             z = int(z / (2**min_LOD))
-            width = int(full_shape[2] / (2**(depth+lod)))
-            height = int(full_shape[3] / (2**(depth+lod)))
-            d = int(full_shape[4] / (2**(depth+lod)))
+            width = int(full_shape[2] / (2**(depth+lod-min_LOD)))
+            height = int(full_shape[3] / (2**(depth+lod-min_LOD)))
+            d = int(full_shape[4] / (2**(depth+lod-min_LOD)))
             data = full_data[:,:,x:x+width,y:y+height,z:z+d]
         
         #print("Node %i: depth %i index %i lod %i, data shape %s" % (i, depth, index, lod, str(data.shape)))
@@ -1833,7 +1838,7 @@ if __name__ == '__main__':
 
             if(args['use_compressor']):
                 if(args['compressor'] == "sz"):
-                    sz_compress(nodes, full_shape, max_LOD,
+                    sz_compress_nodelist(nodes, full_shape, max_LOD,
                         downscaling_technique, device, mode,
                         save_folder, save_name,
                         criterion, m)
@@ -1855,7 +1860,7 @@ if __name__ == '__main__':
             #        "maxlod"+str(max_LOD)+"_chunk"+str(min_chunk)+".h5")
         if(args['use_compressor']):
             if(args['compressor'] == "sz"):                
-                nodes = sz_decompress(os.path.join(save_folder,save_name + ".tar.gz"), device)
+                nodes = sz_decompress_nodelist(os.path.join(save_folder,save_name + ".tar.gz"), device)
             elif(args['compressor'] == "zfp"):                
                 nodes = zfp_decompress_nodelist(os.path.join(save_folder,save_name + ".tar.gz"), device)
             elif(args['compressor'] == "fpzip"):
