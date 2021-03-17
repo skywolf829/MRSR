@@ -75,7 +75,7 @@ if __name__ == '__main__':
                 elif "NN_trilinearheuristic_mixedLOD_octree_SZ" == method:
                     plt.plot(x[2:], y[2:], label=method)
                 else:
-                    plt.plot(x, y, label=method)
+                    plt.plot(x[2:], y[2:], label=method)
         plt.legend()
         plt.xlabel("(De)compressed PSNR")
         plt.ylabel(metric)
@@ -118,7 +118,7 @@ if __name__ == '__main__':
                 elif "NN_trilinearheuristic_mixedLOD_octree_SZ" == method:
                     plt.plot(x[2:], y[2:], label=method)
                 else:
-                    plt.plot(x, y, label=method)
+                    plt.plot(x[2:], y[2:], label=method)
         plt.legend()
         plt.xlabel("(De)compressed SSIM")
         plt.ylabel(metric)
