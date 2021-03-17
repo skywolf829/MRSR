@@ -136,12 +136,13 @@ class OctreeNodeList:
             m += self.node_list[i].data.mean(dims).cpu()
         return m / len(self.node_list)
     def max(self):
-        m = self.node_list[i].data.max().cpu().item()
+        m = self.node_list[0].data.max().cpu().item()
         for i in range(len(self.node_list)):
             m = max(m, self.node_list[i].data.max().cpu().item())
         return m
+        
     def min(self):
-        m = self.node_list[i].data.min().cpu().item()
+        m = self.node_list[0].data.min().cpu().item()
         for i in range(len(self.node_list)):
             m = min(m, self.node_list[i].data.min().cpu().item())
         return m
