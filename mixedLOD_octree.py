@@ -1462,6 +1462,8 @@ def sz_decompress(filename : str, device : str):
             d = int(full_data.shape[4] / (2**(depth+lod-min_LOD)))
             data = full_data[:,:,x:x+width,y:y+height,z:z+d]
         
+        print("Node %i: depth %i index %i lod %i, data shape %s" % (i, depth, index, lod, str(data.shape)))
+        print(str(x) + " " + str(y))
         n = OctreeNode(data.to(device), lod, depth, index)
         nodes.append(n)
     del full_data
