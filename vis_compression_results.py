@@ -83,7 +83,7 @@ if __name__ == '__main__':
         plt.savefig(os.path.join(save_folder, metric+"_recpsnr.png"))
         plt.clf()
     
-    '''
+    
     for metric in metrics:
         fig = plt.figure()
         vals = []
@@ -104,7 +104,7 @@ if __name__ == '__main__':
         plt.title(args['output_file_name'] + " psnr vs - " + metric)
         plt.savefig(os.path.join(save_folder, metric+"_psnr.png"))
         plt.clf()
-    '''
+    
     for metric in metrics:
         fig = plt.figure()
         vals = []

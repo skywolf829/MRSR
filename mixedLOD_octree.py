@@ -126,6 +126,15 @@ class OctreeNodeList:
         for i in range(len(self.node_list)):
             nbytes += self.node_list[i].size()
         return nbytes 
+    
+    def mean(self):
+        m = np.zeros([self.node_list[0].data.shape[1]])
+        dims = [0, 2, 3]
+        if(len(self.node_list[0].data.shape) == 5):
+            dims.append(4)
+        for i in range(len(self.node_list)):
+            m += self.node_list[i].data.mean(dims).cpu().numpy()
+        return m / len(self.node_list)
 
 def ssim_criterion(GT_image, img, min_ssim=0.6) -> float:
     if(len(GT_image.shape) == 4):
@@ -1331,6 +1340,8 @@ folder : str, name : str, metric : str, value : float):
         int(full_shape[3] / (2**min_LOD)),
         int(full_shape[4] / (2**min_LOD))], dtype=torch.float32)
 
+    full_im += nodes.mean()
+
     for i in range(len(nodes)):
         n = nodes[i]
         if(mode == "2D"):
@@ -1368,6 +1379,7 @@ folder : str, name : str, metric : str, value : float):
             str(d.shape[0]) + " " + str(d.shape[1])
         if(ndims == 3):
             command = command + " " + str(d.shape[2])
+        '''
         if(min_LOD == 0):
             if(metric == "psnr"):
                 command = command + " -M PSNR -S " + str(value)
@@ -1376,7 +1388,9 @@ folder : str, name : str, metric : str, value : float):
             elif(metric == "pw_mre"):
                 command = command + " -M PW_REL -P " + str(value)
         else:
-            command = command + " -M PW_REL -P 0.001"
+        '''
+        #command = command + " -M PW_REL -P 0.001"
+        command = command + " -M REL -R 0.01"
         print(command)
         os.system(command)
         os.system("rm " + d_loc)
