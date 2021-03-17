@@ -1437,29 +1437,28 @@ def sz_decompress(filename : str, device : str):
         data_channels.append(full_data)
 
     full_data = torch.stack(data_channels).unsqueeze(0)
-    
     for i in range(0, len(metadata), 3):
         depth = metadata[i]
         index = metadata[i+1]
         lod = metadata[i+2]
         if(len(full_shape) == 4):
-            x, y = get_location2D(full_data.shape[2], full_data.shape[3], 
+            x, y = get_location2D(full_shape[2], full_shape[3], 
             depth, index)
             x = int(x / (2**min_LOD))
             y = int(y / (2**min_LOD))
-            width = int(full_data.shape[2] / (2**(depth+lod)))
-            height = int(full_data.shape[3] / (2**(depth+lod)))
+            width = int(full_shape[2] / (2**(depth+lod)))
+            height = int(full_shape[3] / (2**(depth+lod)))
             data = full_data[:,:,x:x+width,y:y+height]
 
         elif(len(full_shape) == 5):
-            x, y, z = get_location3D(full_data.shape[2], full_data.shape[3], full_data.shape[4], 
+            x, y, z = get_location3D(full_shape[2], full_shape[3], full_shape[4], 
             depth, index)
             x = int(x / (2**min_LOD))
             y = int(y / (2**min_LOD))
             z = int(z / (2**min_LOD))
-            width = int(full_data.shape[2] / (2**(depth+lod-min_LOD)))
-            height = int(full_data.shape[3] / (2**(depth+lod-min_LOD)))
-            d = int(full_data.shape[4] / (2**(depth+lod-min_LOD)))
+            width = int(full_shape[2] / (2**(depth+lod)))
+            height = int(full_shape[3] / (2**(depth+lod)))
+            d = int(full_shape[4] / (2**(depth+lod)))
             data = full_data[:,:,x:x+width,y:y+height,z:z+d]
         
         print("Node %i: depth %i index %i lod %i, data shape %s" % (i, depth, index, lod, str(data.shape)))
