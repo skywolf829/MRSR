@@ -25,6 +25,7 @@ if __name__ == '__main__':
     parser.add_argument('--metric',default='psnr',type=str)
     parser.add_argument('--save_netcdf',default="false",type=str2bool)
     parser.add_argument('--save_TKE',default="false",type=str2bool)
+    parser.add_argument('--device',default="cpu",type=str)
     
 
     args = vars(parser.parse_args())
@@ -105,7 +106,8 @@ if __name__ == '__main__':
         #rec_ssim = ssim(d, dc)
                 
         if(args['dims'] == 2):
-            rec_ssim = ssim(torch.Tensor(dc).unsqueeze(0), torch.Tensor(d).unsqueeze(0)).cpu().item()
+            rec_ssim = ssim(torch.Tensor(dc).unsqueeze(0).to(args['device']), 
+                torch.Tensor(d).unsqueeze(0).to(args['device'])).cpu().item()
             inner_mre = relative_error(dc[:,20:dc.shape[1]-20,20:dc.shape[2]-20], 
             d[:,20:d.shape[1]-20,20:d.shape[2]-20])
             inner_pwmre = pw_relative_error(dc[:,20:dc.shape[1]-20,20:dc.shape[2]-20], 
