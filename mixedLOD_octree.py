@@ -1436,22 +1436,24 @@ def sz_decompress(filename : str, device : str):
         full_data = torch.Tensor(full_data)
         data_channels.append(full_data)
 
+    print(full_shape)
     full_data = torch.stack(data_channels).unsqueeze(0)
     for i in range(0, len(metadata), 3):
         depth = metadata[i]
         index = metadata[i+1]
         lod = metadata[i+2]
         if(len(full_shape) == 4):
-            x, y = get_location2D(full_shape[2], full_shape[3], 
+            x, y = get_location2D(int(full_shape[2]*(2**min_LOD)), int(full_shape[3]*(2**min_LOD)), 
             depth, index)
             x = int(x / (2**min_LOD))
             y = int(y / (2**min_LOD))
-            width = int(full_shape[2] / (2**(depth+lod)))
-            height = int(full_shape[3] / (2**(depth+lod)))
+            width = int(full_shape[2] / (2**(depth+lod-min_LOD)))
+            height = int(full_shape[3] / (2**(depth+lod-min_LOD)))
             data = full_data[:,:,x:x+width,y:y+height]
 
         elif(len(full_shape) == 5):
-            x, y, z = get_location3D(full_shape[2], full_shape[3], full_shape[4], 
+            x, y, z = get_location3D(int(full_shape[2]*(2**min_LOD)), 
+            int(full_shape[3]*(2**min_LOD)), int(full_shape[4]*(2**min_LOD)), 
             depth, index)
             x = int(x / (2**min_LOD))
             y = int(y / (2**min_LOD))
