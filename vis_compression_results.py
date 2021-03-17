@@ -51,9 +51,9 @@ if __name__ == '__main__':
     compression_method_names = list(results.keys())
     metrics = ['file_size', 'compression_time', 'num_nodes', 'rec_psnr',
     'rec_mre', 'rec_pwmre', 'rec_inner_mre', 'rec_inner_pwmre']
-    full_file_size = 524209
+    #full_file_size = 524209
     #full_file_size = 4096
-
+    full_file_size = 4194306
 
     for metric in metrics:
         fig = plt.figure()
