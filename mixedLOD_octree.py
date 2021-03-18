@@ -179,7 +179,7 @@ def pw_relative_error(x, GT) -> torch.Tensor:
 @torch.jit.script
 def psnr_criterion(GT_image, img, min_PSNR : torch.Tensor,
 max_diff : Optional[torch.Tensor] = None) -> torch.Tensor:
-    return PSNR(img, GT_image, max_diff) +2.5 > min_PSNR
+    return PSNR(img, GT_image, max_diff) > min_PSNR
 
 @torch.jit.script
 def mse_criterion(GT_image, img, max_mse : torch.Tensor) -> torch.Tensor:
