@@ -1733,7 +1733,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--dynamic_downscaling',default="true",type=str2bool)
     parser.add_argument('--interpolation_heuristic',default="false",type=str2bool)
-
+    parser.add_argument('--preupscaling_PSNR', type=str2bool, default="false")
     torch.set_grad_enabled(False)
 
     args = vars(parser.parse_args())
@@ -1840,12 +1840,31 @@ if __name__ == '__main__':
                 compress_time = end_time - start_time            
                 num_nodes : int = len(nodes)
 
+            if(args['preupscaling_PSNR']):
+                upscaling.change_method(upscaling_technique)
+                data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels = \
+                    create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
+
+                img_upscaled = nodes_to_full_img(nodes, full_shape, 
+                max_LOD, upscaling, 
+                downscaling_technique, device, data_levels, 
+                mask_levels, data_downscaled_levels, 
+                mask_downscaled_levels, mode)
+                while(len(data_levels)>0):
+                    del data_levels[0]
+                    del mask_levels[0]
+                    del data_downscaled_levels[0]
+                    del mask_downscaled_levels[0]
+                p : float = PSNR(img_upscaled, img_gt).cpu().item()
+                print("Pre compression PSNR: " + str(p))
+            else:
+                p = m
             if(args['use_compressor']):
                 if(args['compressor'] == "sz"):
                     sz_compress(nodes, full_shape, max_LOD,
                         downscaling_technique, device, mode,
                         save_folder, save_name,
-                        criterion, m)
+                        criterion, p)
                 elif(args['compressor'] == "zfp"):
                     zfp_compress_nodelist(nodes, full_shape, max_LOD,
                         downscaling_technique, device, mode,
