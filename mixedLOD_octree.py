@@ -1963,7 +1963,7 @@ if __name__ == '__main__':
         results['rec_inner_mre'].append(final_inner_mre)
         results['rec_inner_pwmre'].append(final_inner_pwmre)
         if(args['save_TKE']):
-            results['TKE_error'].append(0.5*(img_gt.mean().item()-img_upscaled.mean().item()))
+            results['TKE_error'].append(0.5*((img_gt**2).mean().item()-(img_upscaled**2).mean().item()))
 
         if(args['save_netcdf']):
             from netCDF4 import Dataset

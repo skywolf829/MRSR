@@ -144,7 +144,7 @@ if __name__ == '__main__':
         results['rec_inner_mre'].append(inner_mre)
         results['rec_inner_pwmre'].append(inner_pwmre)
         if(args['save_TKE']):
-            results['TKE_error'].append(0.5*(d.mean()-dc.mean()))
+            results['TKE_error'].append(0.5*((d**2).mean()-(dc**2).mean()))
         value += args['value_skip']
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
