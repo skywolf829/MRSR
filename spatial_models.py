@@ -787,7 +787,15 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
             #print("IO time: %0.06f" % (time.time() - t_io_start))
             t_update_start = time.time()
             
-            real_hr = real_hr.to(opt["device"])           
+            real_hr = real_hr.to(opt["device"])       
+            if opt['scaling_mode'] == "channel":
+                mins = []
+                maxs = []
+                for c in range(real_hr.shape[1]):
+                    mins.append[real_hr[:,c].min()]
+                    maxs.append[real_hr[:,c].max()]
+                    real_hr[:,c] -= mins[-1]
+                    real_hr[:,c] *= (1/(maxs[-1]-mins[-1]))
             if opt['mode'] == "3D": 
                 if opt['downsample_mode'] == "nearest":
                     real_lr = real_hr[:,:,::2,::2,::2].clone()
@@ -1034,7 +1042,6 @@ class DenseBlock(nn.Module):
         c4_out = self.lrelu(self.c4(torch.cat([x, c1_out, c2_out, c3_out], 1)))
         final_out = self.final_conv(torch.cat([x, c1_out, c2_out, c3_out, c4_out], 1))
         return final_out
-
 
 class RRDB(nn.Module):
     def __init__ (self,opt):
