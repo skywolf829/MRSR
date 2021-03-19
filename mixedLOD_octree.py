@@ -1779,7 +1779,12 @@ if __name__ == '__main__':
     results['rec_inner_pwmre'] = []
     if(args['save_TKE']):
         results['TKE_error'] = []
-    
+
+    if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
+        all_data = load_obj(os.path.join(save_folder, "results.pkl"))
+    else:
+        all_data = {}
+
     if(args['data_type'] == "image"):
         img_gt : torch.Tensor = torch.from_numpy(imageio.imread(
             "TestingData/quadtree_images/"+img_name+"."+img_ext).astype(np.float32)).to(device)
@@ -1965,6 +1970,8 @@ if __name__ == '__main__':
         results['rec_inner_pwmre'].append(final_inner_pwmre)
         if(args['save_TKE']):
             results['TKE_error'].append(0.5*((img_gt**2).mean().item()-(img_upscaled**2).mean().item()))
+        all_data[args['save_name']] = results
+        save_obj(all_data, os.path.join(save_folder, "results.pkl"))
 
         if(args['save_netcdf']):
             from netCDF4 import Dataset
@@ -2024,12 +2031,12 @@ if __name__ == '__main__':
         #print(prof.display())
         m += args['metric_skip']
 
+    '''
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
         all_data = load_obj(os.path.join(save_folder, "results.pkl"))
     else:
         all_data = {}
-        
-    all_data[args['save_name']] = results
-    save_obj(all_data, os.path.join(save_folder, "results.pkl"))
+    '''
+    
 
         
