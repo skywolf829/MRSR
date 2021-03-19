@@ -52,6 +52,13 @@ if __name__ == '__main__':
     results['rec_inner_pwmre'] = []
     if(args['save_TKE']):
         results['TKE_error'] = []
+    
+    if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
+        all_data = load_obj(os.path.join(save_folder, "results.pkl"))
+        results = all_data['SZ']
+    else:
+        all_data = {}
+
     f = h5py.File(os.path.join(input_folder, args['file']), "r")
     d = np.array(f['data'])
     f.close()
@@ -145,15 +152,16 @@ if __name__ == '__main__':
         results['rec_inner_pwmre'].append(inner_pwmre)
         if(args['save_TKE']):
             results['TKE_error'].append(0.5*((d**2).mean()-(dc**2).mean()))
+        all_data['SZ'] = results
+        save_obj(all_data, os.path.join(save_folder, "results.pkl"))
         value += args['value_skip']
-
+    '''
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
         all_data = load_obj(os.path.join(save_folder, "results.pkl"))
     else:
         all_data = {}
-
-    all_data['SZ'] = results
-    save_obj(all_data, os.path.join(save_folder, "results.pkl"))
+    '''
+    
 
     os.remove(args['file']+'.dat')    
     os.remove(args['file']+'.dat.sz.out')
