@@ -792,8 +792,8 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                 mins = []
                 maxs = []
                 for c in range(real_hr.shape[1]):
-                    mins.append[real_hr[:,c].min()]
-                    maxs.append[real_hr[:,c].max()]
+                    mins.append(real_hr[:,c].min())
+                    maxs.append(real_hr[:,c].max())
                     real_hr[:,c] -= mins[-1]
                     real_hr[:,c] *= (1/(maxs[-1]-mins[-1]))
             if opt['mode'] == "3D": 
