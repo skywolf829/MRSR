@@ -19,13 +19,13 @@ export PATH="$HOME/fpzip/bin:$PATH"
 
 #python3 mixedLOD_octree.py --downscaling_technique avgpool2D --upscaling_technique model --criterion psnr --start_metric 20 --end_metric 100 --metric_skip 5 --output_folder mag2D_compression --mode 2D --file 4010.h5 --dims 2 --nx 1024 --ny 1024 --use_compressor true --compressor fpzip --load_existing true --debug true
 
-python3 -u sz_test.py --metric mre --channels 1 --file isomag2D_compressiontest.h5 --start_value 0.08 --end_value 0.2 --value_skip .01 --dims 2 --nx 1024 --ny 1024 --save_TKE true --output_folder mag2D_compression_test
+#python3 -u sz_test.py --metric mre --channels 1 --file isomag2D_compressiontest.h5 --start_value 0.08 --end_value 0.2 --value_skip .01 --dims 2 --nx 1024 --ny 1024 --save_TKE true --output_folder mag2D_compression_test
 #python3 zfp_test.py --metric psnr --channels 1 --file isomag2D_compressiontest.h5 --start_bpv 0.25 --end_bpv 4 --bpv_skip 0.25 --dims 2 --nx 1024 --ny 1024 --output_folder mag2D_compression_pwmre
 
 # 3D iso1024 mag
 #python3 mixedLOD_octree.py --downscaling_technique avgpool3D --upscaling_technique model --model_name SSR_isomag3D --criterion psnr --start_metric 20 --end_metric 100 --metric_skip 5 --output_folder mag3D_compression --mode 3D --file isomag3D_compressiontest.h5 --dims 3 --nx 128 --ny 128 --nz 128 --use_compressor true --compressor sz --load_existing false --debug true --device cuda:1 &
 #python3 -u mixedLOD_octree.py --save_name NN_trilinearheuristic_SR_octree_SZ --downscaling_technique avgpool3D --upscaling_technique model --model_name SSR_iso_mag --criterion psnr --start_metric 30 --end_metric 55 --metric_skip 0.5 --output_folder mag3D_compression --max_LOD 4 --min_chunk 32 --mode 3D --file isomag3D_compressiontest.h5 --dims 3 --nx 1024 --ny 1024 --nz 1024 --save_TKE true --use_compressor true --distributed true --compressor sz --load_existing false --debug false --device cuda:0 --interpolation_heuristic true 
-#python3 -u sz_test.py --metric mre --channels 1 --file isomag3D_compressiontest.h5 --start_value 0.005 --end_value 0.4 --value_skip 0.05 --dims 3 --nx 1024 --ny 1024 --nz 1024 --output_folder mag3D_compression --save_TKE true
+python3 -u sz_test.py --metric mre --channels 1 --file isomag3D_compressiontest.h5 --start_value 0.005 --end_value 0.6 --value_skip 0.05 --dims 3 --nx 1024 --ny 1024 --nz 1024 --output_folder mag3D_compression --save_TKE true
 
 # 3D mixing dataset
 #python3 -u mixedLOD_octree.py --save_name NN_trilinearheuristic_SR_octree_SZ --downscaling_technique avgpool3D --upscaling_technique model --model_name SSR_mixing_p --criterion psnr --start_metric 30 --end_metric 55 --metric_skip 0.5 --output_folder mixing3D_compression --max_LOD 5 --min_chunk 16 --mode 3D --file mixing3D_compressiontest.h5 --dims 3 --nx 512 --ny 512 --nz 512 --use_compressor true --distributed true --compressor sz --load_existing false --save_netcdf false --debug true --device cuda:0 --interpolation_heuristic true 
