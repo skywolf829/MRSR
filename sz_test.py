@@ -55,7 +55,11 @@ if __name__ == '__main__':
     
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
         all_data = load_obj(os.path.join(save_folder, "results.pkl"))
-        results = all_data['SZ']
+        if("SZ" in all_data.keys()):
+            results = all_data['SZ']
+        else:
+            all_data['SZ'] = {}
+            results = all_data['SZ']
     else:
         all_data = {}
 
