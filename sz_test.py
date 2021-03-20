@@ -58,10 +58,10 @@ if __name__ == '__main__':
         if("SZ" in all_data.keys()):
             results = all_data['SZ']
         else:
-            all_data['SZ'] = {}
-            results = all_data['SZ']
+            all_data['SZ'] = results
     else:
         all_data = {}
+        all_data['SZ'] = results
 
     f = h5py.File(os.path.join(input_folder, args['file']), "r")
     d = np.array(f['data'])
