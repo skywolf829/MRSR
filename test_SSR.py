@@ -401,7 +401,14 @@ if __name__ == '__main__':
                 elif(args['mode'] == "2D"):
                     LR_data = GT_data[:,:,::args['scale_factor'], ::args['scale_factor']].clone()
 
-
+            if opt['scaling_mode'] == "channel":
+                mins = []
+                maxs = []
+                for c in range(GT_data.shape[1]):
+                    mins.append(GT_data[:,c].min())
+                    maxs.append(GT_data[:,c].max())
+                    LR_data[:,c] -= mins[-1]
+                    LR_data[:,c] *= (1/(maxs[-1]-mins[-1]))
             if(not args['test_on_gpu']):
                 GT_data = GT_data.to("cpu")
             torch.cuda.empty_cache()
@@ -436,7 +443,10 @@ if __name__ == '__main__':
             inference_end_time = time.time()
             
             inference_this_frame = inference_end_time - inference_start_time
-
+            if opt['scaling_mode'] == "channel":
+                for c in range(GT_data.shape[1]):
+                    LR_data[:,c] *= (maxs[-1]-mins[-1])
+                    LR_data[:,c] += mins[-1]
             if(p):
                 print("Finished super resolving in %0.04f seconds. Final shape: %s. Performing tests." % \
                     (inference_this_frame, str(LR_data.shape)))
