@@ -401,7 +401,7 @@ if __name__ == '__main__':
                 elif(args['mode'] == "2D"):
                     LR_data = GT_data[:,:,::args['scale_factor'], ::args['scale_factor']].clone()
 
-            if opt['scaling_mode'] == "channel":
+            if opt['scaling_mode'] == "channel" and args['testing_method'] == "model":
                 mins = []
                 maxs = []
                 for c in range(GT_data.shape[1]):
@@ -443,7 +443,7 @@ if __name__ == '__main__':
             inference_end_time = time.time()
             
             inference_this_frame = inference_end_time - inference_start_time
-            if opt['scaling_mode'] == "channel":
+            if opt['scaling_mode'] == "channel" and args['testing_method'] == "model":
                 for c in range(GT_data.shape[1]):
                     LR_data[:,c] *= (maxs[-1]-mins[-1])
                     LR_data[:,c] += mins[-1]
