@@ -445,8 +445,8 @@ if __name__ == '__main__':
             inference_this_frame = inference_end_time - inference_start_time
             if opt['scaling_mode'] == "channel" and args['testing_method'] == "model":
                 for c in range(GT_data.shape[1]):
-                    LR_data[:,c] *= (maxs[-1]-mins[-1])
-                    LR_data[:,c] += mins[-1]
+                    LR_data[:,c] *= (maxs[c]-mins[c])
+                    LR_data[:,c] += mins[c]
             if(p):
                 print("Finished super resolving in %0.04f seconds. Final shape: %s. Performing tests." % \
                     (inference_this_frame, str(LR_data.shape)))
