@@ -142,7 +142,7 @@ if __name__ == '__main__':
             rootgrp.createDimension("v")
             rootgrp.createDimension("w")
             rootgrp.createDimension("channels", dc.shape[0])
-            dim_0 = rootgrp.createVariable("pressure", np.float32, ("u","v","w"))
+            dim_0 = rootgrp.createVariable("velocity magnitude", np.float32, ("u","v","w"))
             dim_0[:] = dc[0]
 
         results['psnrs'].append(value)

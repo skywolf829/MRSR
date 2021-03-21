@@ -1981,7 +1981,7 @@ if __name__ == '__main__':
             rootgrp.createDimension("v")
             rootgrp.createDimension("w")
             rootgrp.createDimension("channels", img_upscaled.shape[1])
-            dim_0 = rootgrp.createVariable("pressure", np.float32, ("u","v","w"))
+            dim_0 = rootgrp.createVariable("velocity magnitude", np.float32, ("u","v","w"))
             dim_0[:] = img_upscaled[0,0].cpu().numpy()
         del img_upscaled
         if(args['debug']):           
