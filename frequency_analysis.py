@@ -72,8 +72,8 @@ for i in range(0, n_bins):
     sphere = get_sphere(full_size, radius, shell_size, device)
     
     xs.append(radius)
-    sphere *= GT_fft.real
-    GT_freqs.append(torch.abs(sphere).mean().cpu().numpy())
+
+    GT_freqs.append(torch.abs((sphere*GT_fft).real).mean().cpu().numpy())
 del GT_fft
 
 NN = torch.tensor(np.array(Dataset(os.path.join(input_folder, args['NN']), 'r', 
@@ -86,8 +86,8 @@ for i in range(0, n_bins):
     print("Bin " + str(i))
     radius = i*((full_size[0]/2) / n_bins)
     sphere = get_sphere(full_size, radius, shell_size, device)
-    sphere *= NN_fft.real
-    NN_freqs.append(torch.abs(sphere).mean().cpu().numpy())
+
+    NN_freqs.append(torch.abs((sphere*NN_fft).real).mean().cpu().numpy())
 del NN_fft
 
 
@@ -101,8 +101,8 @@ for i in range(0, n_bins):
     print("Bin " + str(i))
     radius = i*((full_size[0]/2) / n_bins)
     sphere = get_sphere(full_size, radius, shell_size, device)
-    sphere *= SZ_fft.real
-    SZ_freqs.append(torch.abs(sphere).mean().cpu().numpy())
+
+    SZ_freqs.append(torch.abs((sphere*SZ_fft).real).mean().cpu().numpy())
 del SZ_fft
 
 fig = plt.figure()
