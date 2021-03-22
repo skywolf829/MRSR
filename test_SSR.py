@@ -498,7 +498,12 @@ if __name__ == '__main__':
                 d['mse'].append(mse_item)
 
             if(args['test_psnr']):
-                psnr_item = psnr_func(GT_data, LR_data, args['device'] if args['test_on_gpu'] else "cpu").item()
+                psnr_item = psnr_func(
+                    GT_data[:,:,6:GT_data.shape[2]-6,
+                    6:GT_data.shape[3]-6,6:GT_data.shape[4]-6], 
+                    LR_data[:,:,6:LR_data.shape[2]-6,
+                    6:LR_data.shape[3]-6,6:LR_data.shape[4]-6], 
+                    args['device'] if args['test_on_gpu'] else "cpu").item()
                 if(p):
                     print("PSNR: " + str(psnr_item))
                 d['psnr'].append(psnr_item)
@@ -541,13 +546,17 @@ if __name__ == '__main__':
                         
             if(args['test_aad']):
                 cs = torch.nn.CosineSimilarity(dim=1).to(args['device'])
-                angles = (torch.abs(cs(LR_data, 
-                    GT_data) - 1) / 2).mean().item()
+                angles = (torch.abs(cs(LR_data[:,:,6:LR_data.shape[2]-6,
+                    6:LR_data.shape[3]-6,6:LR_data.shape[4]-6], 
+                    GT_data[:,:,6:GT_data.shape[2]-6,
+                    6:GT_data.shape[3]-6,6:GT_data.shape[4]-6]) - 1) / 2).mean().item()
                 d['aad'].append(angles)
 
             if(args['test_amd']):
-                mags = torch.abs(torch.norm(LR_data, dim=1) \
-                    - torch.norm(GT_data, dim=1)).mean().item()
+                mags = torch.abs(torch.norm(LR_data[:,:,6:LR_data.shape[2]-6,
+                    6:LR_data.shape[3]-6,6:LR_data.shape[4]-6], dim=1) \
+                    - torch.norm(GT_data[:,:,6:GT_data.shape[2]-6,
+                    6:GT_data.shape[3]-6,6:GT_data.shape[4]-6], dim=1)).mean().item()
                 d['amd'].append(mags)
 
             '''

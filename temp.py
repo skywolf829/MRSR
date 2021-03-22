@@ -12,7 +12,28 @@ from netCDF4 import Dataset
 
 FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 
+files_to_convert = [
+     "isomag3D_compressiontest"
+]
 
+file_loc_base = os.path.join(FlowSTSR_folder_path, "TestingData", "octree_files")
+f = h5py.File(os.path.join(file_loc_base, files_to_convert[0]+".h5"), 'r')
+d = np.array(f['data'])
+d[0].tofile("512cubed.dat")
+'''
+rootgrp = Dataset(files_to_convert[0]+".nc", "w", format="NETCDF4")
+rootgrp.createDimension("u")
+rootgrp.createDimension("v")
+rootgrp.createDimension("w")
+rootgrp.createDimension("channels", d.shape[0])
+dim_0 = rootgrp.createVariable("velocity magnitude", np.float32, ("u","v","w"))
+dim_0[:] = d[0]
+#dim_1 = rootgrp.createVariable("v", np.float32, ("u","v", "w"))
+#dim_1[:] = d[1]
+#dim_2 = rootgrp.createVariable("w", np.float32, ("u","v", "w"))
+#dim_2[:] = d[2]
+'''
+'''
 def to_netcdf(vf, name):
      rootgrp = Dataset(name+".nc", "w", format="NETCDF4")
 
@@ -45,7 +66,7 @@ for name in files_to_convert:
      d = np.array(f['data'])
      to_netcdf(d, name)
      print("Finished " + name)
-
+'''
 
 '''
 VF_folder = os.path.join(FlowSTSR_folder_path, "TestingData", "iso1024")
