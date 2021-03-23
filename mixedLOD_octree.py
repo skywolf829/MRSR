@@ -1412,7 +1412,7 @@ folder : str, name : str, metric : str, value : float):
         #command = command + " -M PW_REL -P 0.001"
         max_diff = nodes.max() - nodes.min()
         REL_target = (max_diff / (10**(value/10))) **0.5
-        REL_target *= 10
+        #REL_target *= 10
         #command = command + " -M REL -R " + str(REL_target)
         #command = command + " -M REL -R 0.0025"
         command = command + " -M PW_REL -P " + str(REL_target)
