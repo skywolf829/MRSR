@@ -34,7 +34,7 @@ from math import exp
 
 def save_obj(obj,location):
     with open(location, 'wb') as f:
-        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(obj, f, pickle.DEFAULT_PROTOCOL)
 
 def load_obj(location):
     with open(location, 'rb') as f:
