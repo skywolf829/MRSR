@@ -1152,6 +1152,7 @@ def h5_to_nodelist(name: str, device : str):
         )
     return nodes
 
+'''
 def sz_compress_nodelist(nodes: OctreeNodeList, full_shape, max_LOD,
 downscaling_technique, device, mode,
 folder : str, name : str, metric : str, value : float):
@@ -1186,7 +1187,7 @@ folder : str, name : str, metric : str, value : float):
             str(d.shape[0]) + " " + str(d.shape[1])
         if(ndims == 3):
             command = command + " " + str(d.shape[2])
-        '''
+        
         if(min_LOD == 0):
             if(metric == "psnr"):
                 command = command + " -M PSNR -S " + str(value)
@@ -1196,7 +1197,7 @@ folder : str, name : str, metric : str, value : float):
                 command = command + " -M PW_REL -P " + str(value)
         else:
             command = command + " -M PW_REL -P 0.001"
-        '''
+        
         #command = command + " -M PW_REL -P 0.001"
         max_diff = nodes.max() - nodes.min()
         REL_target = (max_diff / (10**(value/10))) **0.5
@@ -1226,7 +1227,7 @@ folder : str, name : str, metric : str, value : float):
 
     os.system("tar -cjvf " + save_location + " -C " + folder + " Temp")
     os.system("rm -r " + temp_folder_path)
-
+'''
 def zfp_compress_nodelist(nodes: OctreeNodeList, full_shape, max_LOD,
 downscaling_technique, device, mode,
 folder : str, name : str):
@@ -1412,7 +1413,7 @@ folder : str, name : str, metric : str, value : float):
         #command = command + " -M PW_REL -P 0.001"
         max_diff = nodes.max() - nodes.min()
         REL_target = (max_diff / (10**(value/10))) **0.5
-        #REL_target *= 10
+        REL_target *= 10
         #command = command + " -M REL -R " + str(REL_target)
         #command = command + " -M REL -R 0.0025"
         command = command + " -M PW_REL -P " + str(REL_target)
