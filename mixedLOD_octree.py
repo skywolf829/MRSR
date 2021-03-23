@@ -1783,9 +1783,13 @@ if __name__ == '__main__':
 
     if(os.path.exists(os.path.join(save_folder, "results.pkl"))):
         all_data = load_obj(os.path.join(save_folder, "results.pkl"))
-        results = all_data[args['save_name']]
+        if(args['save_name'] in all_data.keys()):
+            results = all_data[args['save_name']]
+        else:
+            all_data[args['save_name']] = results
     else:
         all_data = {}
+        all_data[args['save_name']] = results
 
     if(args['data_type'] == "image"):
         img_gt : torch.Tensor = torch.from_numpy(imageio.imread(
