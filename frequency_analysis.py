@@ -17,9 +17,9 @@ input_folder = os.path.join(FlowSTSR_folder_path, "TestingData")
 parser = argparse.ArgumentParser(description='Test fourier space results')
 
 parser.add_argument('--datafolder',default="")
-parser.add_argument('--GT',default="mixing3D_compressiontest.nc")
-parser.add_argument('--NN',default="mixing3D_compressiontest_NN.nc")
-parser.add_argument('--SZ',default="mixing3D_compressiontest_SZ.nc")
+parser.add_argument('--GT',default="mag3D_compressiontest.nc")
+parser.add_argument('--NN',default="mag3D_compressiontest_NN.nc")
+parser.add_argument('--SZ',default="mag3D_compressiontest_SZ.nc")
 parser.add_argument('--device',default="cuda:0")
 
 args = vars(parser.parse_args())
