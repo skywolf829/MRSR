@@ -17,10 +17,10 @@ input_folder = os.path.join(FlowSTSR_folder_path, "TestingData")
 parser = argparse.ArgumentParser(description='Test fourier space results')
 
 parser.add_argument('--datafolder',default="")
-parser.add_argument('--GT',default="isomag3D_compressiontest.nc")
-parser.add_argument('--NN',default="isomag3D_compressiontest_NN.nc")
-parser.add_argument('--SZ',default="isomag3D_compressiontest_SZ.nc")
-parser.add_argument('--device',default="cpu")
+parser.add_argument('--GT',default="mixing3D_compressiontest.nc")
+parser.add_argument('--NN',default="mixing3D_compressiontest_NN.nc")
+parser.add_argument('--SZ',default="mixing3D_compressiontest_SZ.nc")
+parser.add_argument('--device',default="cuda:0")
 
 args = vars(parser.parse_args())
 
@@ -77,7 +77,7 @@ for i in range(0, n_bins):
 del GT_fft
 
 NN = torch.tensor(np.array(Dataset(os.path.join(input_folder, args['NN']), 'r', 
-format="NETCDF4")['pressure']), device=device)
+format="NETCDF4")['velocity magnitude']), device=device)
 NN_fft = fft.fftn(NN, dim=(-3, -2, -1))
 del NN
 NN_fft = torch.roll(NN_fft, shifts=(NN_fft.shape[0]//2, NN_fft.shape[1]//2, NN_fft.shape[2]//2), dims=(-3, -2, -1))
@@ -92,7 +92,7 @@ del NN_fft
 
 
 SZ = torch.tensor(np.array(Dataset(os.path.join(input_folder, args['SZ']), 'r', 
-format="NETCDF4")['pressure']), device=device)
+format="NETCDF4")['velocity magnitude']), device=device)
 SZ_fft = fft.fftn(SZ, dim=(-3, -2, -1))
 del SZ
 SZ_fft = torch.roll(SZ_fft, shifts=(SZ_fft.shape[0]//2, SZ_fft.shape[1]//2, SZ_fft.shape[2]//2), dims=(-3, -2, -1))
@@ -115,4 +115,13 @@ plt.title("Radially Averaged Power Spectrum Density")
 plt.ylabel("Power")
 plt.xlabel("Wavenumber")
 plt.legend()
-plt.show()
+print("xs")
+print(xs)
+print("GT_freqs, NN_freqs, and SZ_freqs")
+print(GT_freqs)
+print()
+print(NN_freqs)
+print()
+print(SZ_freqs)
+#plt.show()
+plt.savefig("powerspectra.png")
