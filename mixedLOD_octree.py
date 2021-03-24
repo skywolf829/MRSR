@@ -1985,9 +1985,13 @@ if __name__ == '__main__':
             rootgrp = Dataset(save_name+".nc", "w", format="NETCDF4")
             rootgrp.createDimension("u")
             rootgrp.createDimension("v")
-            rootgrp.createDimension("w")
+            if(mode == "3D"):
+                rootgrp.createDimension("w")
             rootgrp.createDimension("channels", img_upscaled.shape[1])
-            dim_0 = rootgrp.createVariable("velocity magnitude", np.float32, ("u","v","w"))
+            if(mode == "3D"):
+                dim_0 = rootgrp.createVariable("velocity magnitude", np.float32, ("u","v","w"))
+            elif(mode == "2D"):
+                dim_0 = rootgrp.createVariable("velocity magnitude", np.float32, ("u","v"))
             dim_0[:] = img_upscaled[0,0].cpu().numpy()
         del img_upscaled
         if(args['debug']):           

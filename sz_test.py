@@ -140,9 +140,13 @@ if __name__ == '__main__':
             rootgrp = Dataset("sz_"+args['file']+".nc", "w", format="NETCDF4")
             rootgrp.createDimension("u")
             rootgrp.createDimension("v")
-            rootgrp.createDimension("w")
+            if(args['dims'] == 3):
+                rootgrp.createDimension("w")
             rootgrp.createDimension("channels", dc.shape[0])
-            dim_0 = rootgrp.createVariable("velocity magnitude", np.float32, ("u","v","w"))
+            if(args['dims'] == 3):
+                dim_0 = rootgrp.createVariable("velocity magnitude", np.float32, ("u","v","w"))
+            elif(args['dims'] == 2):
+                dim_0 = rootgrp.createVariable("velocity magnitude", np.float32, ("u","v"))
             dim_0[:] = dc[0]
 
         results['psnrs'].append(value)
