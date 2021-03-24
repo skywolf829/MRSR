@@ -61,7 +61,7 @@ GT_fft = fft.fftn(GT, dim=(-3, -2, -1))
 del GT
 GT_fft = torch.roll(GT_fft, shifts=(GT_fft.shape[0]//2, GT_fft.shape[1]//2, GT_fft.shape[2]//2), dims=(-3, -2, -1))
 
-n_bins = 256
+n_bins = int(GT_fft.shape[0] / 2)
 shell_size = 3
 full_size = list(GT_fft.shape)
 GT_fft = GT_fft.to("cuda:0")
@@ -74,36 +74,37 @@ for i in range(0, n_bins):
     xs.append(radius)
 
     GT_freqs.append(torch.abs((sphere*GT_fft).real).mean().cpu().numpy())
-del GT_fft
+del GT_fft, sphere
 
+device = "cuda:1"
 NN = torch.tensor(np.array(Dataset(os.path.join(input_folder, args['NN']), 'r', 
 format="NETCDF4")['velocity magnitude']), device=device)
 NN_fft = fft.fftn(NN, dim=(-3, -2, -1))
 del NN
 NN_fft = torch.roll(NN_fft, shifts=(NN_fft.shape[0]//2, NN_fft.shape[1]//2, NN_fft.shape[2]//2), dims=(-3, -2, -1))
-NN_fft = NN_fft.to("cuda:0")
+NN_fft = NN_fft.to(device)
 for i in range(0, n_bins):
     print("Bin " + str(i))
     radius = i*((full_size[0]/2) / n_bins)
     sphere = get_sphere(full_size, radius, shell_size, device)
 
     NN_freqs.append(torch.abs((sphere*NN_fft).real).mean().cpu().numpy())
-del NN_fft
+del NN_fft, sphere
 
-
+device = "cuda:2"
 SZ = torch.tensor(np.array(Dataset(os.path.join(input_folder, args['SZ']), 'r', 
 format="NETCDF4")['velocity magnitude']), device=device)
 SZ_fft = fft.fftn(SZ, dim=(-3, -2, -1))
 del SZ
 SZ_fft = torch.roll(SZ_fft, shifts=(SZ_fft.shape[0]//2, SZ_fft.shape[1]//2, SZ_fft.shape[2]//2), dims=(-3, -2, -1))
-SZ_fft = SZ_fft.to("cuda:0")
+SZ_fft = SZ_fft.to(device)
 for i in range(0, n_bins):
     print("Bin " + str(i))
     radius = i*((full_size[0]/2) / n_bins)
     sphere = get_sphere(full_size, radius, shell_size, device)
 
     SZ_freqs.append(torch.abs((sphere*SZ_fft).real).mean().cpu().numpy())
-del SZ_fft
+del SZ_fft, sphere
 
 fig = plt.figure()
 
