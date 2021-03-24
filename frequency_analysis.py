@@ -73,7 +73,7 @@ for i in range(0, n_bins):
     
     xs.append(radius)
 
-    GT_freqs.append(torch.abs((sphere*GT_fft).real).mean().cpu().numpy()[0])
+    GT_freqs.append(torch.abs((sphere*GT_fft).real).mean().cpu().numpy().item())
 del GT_fft, sphere
 
 device = "cuda:1"
@@ -88,7 +88,7 @@ for i in range(0, n_bins):
     radius = i*((full_size[0]/2) / n_bins)
     sphere = get_sphere(full_size, radius, shell_size, device)
 
-    NN_freqs.append(torch.abs((sphere*NN_fft).real).mean().cpu().numpy()[0])
+    NN_freqs.append(torch.abs((sphere*NN_fft).real).mean().cpu().numpy().item())
 del NN_fft, sphere
 
 device = "cuda:2"
@@ -103,7 +103,7 @@ for i in range(0, n_bins):
     radius = i*((full_size[0]/2) / n_bins)
     sphere = get_sphere(full_size, radius, shell_size, device)
 
-    SZ_freqs.append(torch.abs((sphere*SZ_fft).real).mean().cpu().numpy()[0])
+    SZ_freqs.append(torch.abs((sphere*SZ_fft).real).mean().cpu().numpy().item())
 del SZ_fft, sphere
 
 fig = plt.figure()
