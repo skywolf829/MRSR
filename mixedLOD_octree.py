@@ -1413,7 +1413,7 @@ folder : str, name : str, metric : str, value : float):
         #command = command + " -M PW_REL -P 0.001"
         max_diff = nodes.max() - nodes.min()
         REL_target = (max_diff / (10**(value/10))) **0.5
-        REL_target *= 75
+        #REL_target *= 75
         #command = command + " -M REL -R " + str(REL_target)
         #command = command + " -M REL -R 0.0025"
         command = command + " -M PW_REL -P " + str(REL_target)
@@ -1729,6 +1729,7 @@ if __name__ == '__main__':
     parser.add_argument('--distributed',default="false",type=str2bool)
     parser.add_argument('--use_compressor',default="true",type=str2bool)
     parser.add_argument('--save_netcdf',default="false",type=str2bool)
+    parser.add_argument('--save_netcdf_octree',default="false",type=str2bool)
     parser.add_argument('--save_TKE',default="false",type=str2bool)
 
     parser.add_argument('--compressor',default="zfp",type=str)
@@ -1995,6 +1996,39 @@ if __name__ == '__main__':
                 dim_0 = rootgrp.createVariable("velocity magnitude", np.float32, ("u","v"))
             dim_0[:] = img_upscaled[0,0].cpu().numpy()
         del img_upscaled
+
+        if(args['save_netcdf_octree']):
+
+            upscaling.change_method('nearest')
+
+            data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels = \
+            create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
+
+            img_upscaled_point = nodes_to_full_img(nodes, full_shape, 
+            max_LOD, upscaling, 
+            downscaling_technique, device, data_levels, 
+            mask_levels, data_downscaled_levels, 
+            mask_downscaled_levels, mode)
+            while(len(data_levels)>0):
+                del data_levels[0]
+                del mask_levels[0]
+                del data_downscaled_levels[0]
+                del mask_downscaled_levels[0]
+
+            from netCDF4 import Dataset
+            rootgrp = Dataset(save_name+"octree.nc", "w", format="NETCDF4")
+            rootgrp.createDimension("u")
+            rootgrp.createDimension("v")
+            if(mode == "3D"):
+                rootgrp.createDimension("w")
+            rootgrp.createDimension("channels", img_upscaled_point.shape[1])
+            if(mode == "3D"):
+                dim_0 = rootgrp.createVariable("velocity magnitude", np.float32, ("u","v","w"))
+            elif(mode == "2D"):
+                dim_0 = rootgrp.createVariable("velocity magnitude", np.float32, ("u","v"))
+            dim_0[:] = img_upscaled_point[0,0].cpu().numpy()
+            del img_upscaled_point
+
         if(args['debug']):           
 
             img_seams = nodes_to_full_img_seams(nodes, full_shape,
