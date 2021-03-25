@@ -1870,6 +1870,7 @@ if __name__ == '__main__':
                     del mask_downscaled_levels[0]
                 p : float = PSNR(img_upscaled, img_gt).cpu().item()
                 print("Pre compression PSNR: " + str(p))
+                del img_upscaled
             else:
                 p = m
             if(args['use_compressor']):
