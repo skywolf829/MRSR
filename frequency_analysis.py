@@ -17,10 +17,10 @@ input_folder = os.path.join(FlowSTSR_folder_path, "TestingData")
 parser = argparse.ArgumentParser(description='Test fourier space results')
 
 parser.add_argument('--datafolder',default="")
-parser.add_argument('--GT',default="isomag3D_compressiontest.nc")
-parser.add_argument('--NN',default="isomag3D_compressiontest_NN.nc")
-parser.add_argument('--octree',default="isomag3D_compressiontest_NN_octree.nc")
-parser.add_argument('--SZ',default="isomag3D_compressiontest_SZ.nc")
+parser.add_argument('--GT',default="mixing3D_compressiontest.nc")
+parser.add_argument('--NN',default="mixing3D_compressiontest_NN.nc")
+parser.add_argument('--octree',default="mixing3D_compressiontest_NN_octree.nc")
+parser.add_argument('--SZ',default="mixing3D_compressiontest_SZ.nc")
 parser.add_argument('--device',default="cuda:0")
 
 args = vars(parser.parse_args())
@@ -65,7 +65,7 @@ SZ_freqs = []
 xs = []
 
 GT = torch.tensor(np.array(Dataset(os.path.join(input_folder, args['GT']), 'r', 
-format="NETCDF4")['velocity magnitude']), device=device)
+format="NETCDF4")['pressure']), device=device)
 if(len(GT.shape) == 3):
     GT_fft = fft.fftn(GT, dim=(-3, -2, -1))
 elif(len(GT.shape) == 2):
@@ -93,7 +93,7 @@ for i in range(0, n_bins):
     GT_freqs.append(torch.abs((sphere*GT_fft).real).mean().cpu().numpy().item())
 del GT_fft, sphere
 
-device = "cuda:1"
+device = "cuda:0"
 NN = torch.tensor(np.array(Dataset(os.path.join(input_folder, args['NN']), 'r', 
 format="NETCDF4")['velocity magnitude']), device=device)
 if(len(NN.shape) == 3):
@@ -117,7 +117,7 @@ for i in range(0, n_bins):
     NN_freqs.append(torch.abs((sphere*NN_fft).real).mean().cpu().numpy().item())
 del NN_fft, sphere
 
-device = "cuda:2"
+device = "cuda:0"
 OT = torch.tensor(np.array(Dataset(os.path.join(input_folder, args['octree']), 'r', 
 format="NETCDF4")['velocity magnitude']), device=device)
 if(len(OT.shape) == 3):
@@ -142,7 +142,7 @@ for i in range(0, n_bins):
 del OT_fft, sphere
 
 
-device = "cuda:3"
+device = "cuda:0"
 SZ = torch.tensor(np.array(Dataset(os.path.join(input_folder, args['SZ']), 'r', 
 format="NETCDF4")['velocity magnitude']), device=device)
 if(len(SZ.shape) == 3):
@@ -174,7 +174,7 @@ plt.plot(xs, np.array(NN_freqs), label="Ours", color="blue")
 plt.plot(xs, np.array(octree_freqs), label="SR-octree", color="gray")
 plt.plot(xs, np.array(SZ_freqs), label="SZ", color="green")
 
-plt.title("Iso3D magnitude")
+plt.title("Mixing3d pressure")
 plt.ylabel("Power")
 plt.xlabel("Wavenumber")
 plt.legend()
@@ -182,13 +182,13 @@ plt.yscale("log")
 plt.xscale("log")
 print("xs")
 print(xs)
-print("GT_freqs, NN_freqs, octree_freqs, and SZ_freqs")
+print("GT_freqs")
 print(GT_freqs)
-print()
+print("NN freqs")
 print(NN_freqs)
-print()
+print("Octree freqs")
 print(octree_freqs)
-print()
+print("SZ frequs")
 print(SZ_freqs)
 fig.tight_layout()
 plt.show()
