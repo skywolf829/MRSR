@@ -17,10 +17,10 @@ input_folder = os.path.join(FlowSTSR_folder_path, "TestingData")
 parser = argparse.ArgumentParser(description='Test fourier space results')
 
 parser.add_argument('--datafolder',default="")
-parser.add_argument('--GT',default="mixing3D_compressiontest.nc")
-parser.add_argument('--NN',default="mixing3D_compressiontest_NN.nc")
-parser.add_argument('--octree',default="mixing3D_compressiontest_NN_octree.nc")
-parser.add_argument('--SZ',default="mixing3D_compressiontest_SZ.nc")
+parser.add_argument('--GT',default="isomag3D_compressiontest.nc")
+parser.add_argument('--NN',default="isomag3D_compressiontest_NN.nc")
+parser.add_argument('--octree',default="isomag3D_compressiontest_NN_octree.nc")
+parser.add_argument('--SZ',default="isomag3D_compressiontest_SZ.nc")
 parser.add_argument('--device',default="cuda:0")
 
 args = vars(parser.parse_args())
@@ -65,7 +65,7 @@ SZ_freqs = []
 xs = []
 
 GT = torch.tensor(np.array(Dataset(os.path.join(input_folder, args['GT']), 'r', 
-format="NETCDF4")['pressure']), device=device)
+format="NETCDF4")['velocity magnitude']), device=device)
 if(len(GT.shape) == 3):
     GT_fft = fft.fftn(GT, dim=(-3, -2, -1))
 elif(len(GT.shape) == 2):
@@ -169,16 +169,17 @@ del SZ_fft, sphere
 
 fig = plt.figure()
 
+xs = np.array(xs)
 plt.plot(xs, np.array(GT_freqs), label="Raw data", color="red")
 plt.plot(xs, np.array(NN_freqs), label="Ours", color="blue")
 plt.plot(xs, np.array(octree_freqs), label="SR-octree", color="gray")
 plt.plot(xs, np.array(SZ_freqs), label="SZ", color="green")
 
-plt.title("Mixing3d pressure")
+plt.title("Iso2D magnitude")
 plt.ylabel("Power")
 plt.xlabel("Wavenumber")
-plt.legend()
-plt.yscale("log")
+#plt.legend()
+#plt.yscale("log")
 plt.xscale("log")
 print("xs")
 print(xs)
@@ -193,3 +194,20 @@ print(SZ_freqs)
 fig.tight_layout()
 plt.show()
 plt.savefig("powerspectra.png")
+
+plt.clf()
+
+fig = plt.figure()
+plt.plot(xs[(xs >= 10) & (xs <= 100)], np.array(GT_freqs)[(xs >= 10) & (xs <= 100)], label="Raw data", color="red")
+plt.plot(xs[(xs >= 10) & (xs <= 100)], np.array(NN_freqs)[(xs >= 10) & (xs <= 100)], label="Ours", color="blue")
+plt.plot(xs[(xs >= 10) & (xs <= 100)], np.array(octree_freqs)[(xs >= 10) & (xs <= 100)], label="SR-octree", color="gray")
+plt.plot(xs[(xs >= 10) & (xs <= 100)], np.array(SZ_freqs)[(xs >= 10) & (xs <= 100)], label="SZ", color="green")
+
+plt.title("Mixing3d pressure")
+plt.ylabel("Power")
+plt.xlabel("Wavenumber")
+#plt.legend()
+#plt.yscale("log")
+plt.xscale("log")
+fig.tight_layout()
+plt.show()
