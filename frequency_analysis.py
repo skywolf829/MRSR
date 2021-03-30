@@ -181,7 +181,7 @@ plt.xlabel("Wavenumber")
 plt.yscale("log")
 plt.xscale("log")
 print("'xs': ")
-print(xs)
+print(list(xs))
 
 print(",")
 print("'Raw data' : ")
