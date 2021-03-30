@@ -174,7 +174,7 @@ plt.plot(xs, np.array(NN_freqs), label="Ours", color="blue")
 plt.plot(xs, np.array(octree_freqs), label="SR-octree", color="gray")
 plt.plot(xs, np.array(SZ_freqs), label="SZ", color="green")
 
-plt.title("Iso2D magnitude")
+plt.title("Iso3D magnitude")
 plt.ylabel("Power")
 plt.xlabel("Wavenumber")
 #plt.legend()
