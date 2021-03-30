@@ -90,7 +90,7 @@ for i in range(0, n_bins):
         sphere = get_circle(full_size, radius, shell_size, device)
     xs.append(radius)
 
-    GT_freqs.append((torch.abs((sphere*GT_fft).real).mean()/sphere.sum()).cpu().numpy().item())
+    GT_freqs.append((torch.abs((sphere*GT_fft).real).sum()/sphere.sum()).cpu().numpy().item())
 del GT_fft, sphere
 
 device = "cuda:0"
@@ -114,7 +114,7 @@ for i in range(0, n_bins):
         sphere = get_sphere(full_size, radius, shell_size, device)
     elif(len(NN_fft.shape) == 2):
         sphere = get_circle(full_size, radius, shell_size, device)
-    NN_freqs.append((torch.abs((sphere*NN_fft).real).mean()/sphere.sum()).cpu().numpy().item())
+    NN_freqs.append((torch.abs((sphere*NN_fft).real).sum()/sphere.sum()).cpu().numpy().item())
 del NN_fft, sphere
 
 device = "cuda:0"
@@ -138,7 +138,7 @@ for i in range(0, n_bins):
         sphere = get_sphere(full_size, radius, shell_size, device)
     elif(len(OT_fft.shape) == 2):
         sphere = get_circle(full_size, radius, shell_size, device)
-    octree_freqs.append((torch.abs((sphere*OT_fft).real).mean()/sphere.sum()).cpu().numpy().item())
+    octree_freqs.append((torch.abs((sphere*OT_fft).real).sum()/sphere.sum()).cpu().numpy().item())
 del OT_fft, sphere
 
 
@@ -164,7 +164,7 @@ for i in range(0, n_bins):
     elif(len(SZ_fft.shape) == 2):
         sphere = get_circle(full_size, radius, shell_size, device)
 
-    SZ_freqs.append((torch.abs((sphere*SZ_fft).real).mean()/sphere.sum()).cpu().numpy().item())
+    SZ_freqs.append((torch.abs((sphere*SZ_fft).real).sum()/sphere.sum()).cpu().numpy().item())
 del SZ_fft, sphere
 
 fig = plt.figure()
