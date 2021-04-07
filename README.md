@@ -1,2 +1,3 @@
-# FlowSTSR
- Spatiotemporal super-resolution for flow data
+# MRSR
+
+Multiresolution super resolution for scientific data.
