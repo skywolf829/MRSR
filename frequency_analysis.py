@@ -17,10 +17,10 @@ input_folder = os.path.join(FlowSTSR_folder_path, "TestingData")
 parser = argparse.ArgumentParser(description='Test fourier space results')
 
 parser.add_argument('--datafolder',default="")
-parser.add_argument('--GT',default="isomag3D_compressiontest.nc")
-parser.add_argument('--NN',default="isomag3D_compressiontest_NN.nc")
-parser.add_argument('--octree',default="isomag3D_compressiontest_NN_octree.nc")
-parser.add_argument('--SZ',default="isomag3D_compressiontest_SZ.nc")
+parser.add_argument('--GT',default="mixing3D_compressiontest.nc")
+parser.add_argument('--NN',default="mixing3D_compressiontest_NN.nc")
+parser.add_argument('--octree',default="mixing3D_compressiontest_NN_octree.nc")
+parser.add_argument('--SZ',default="mixing3D_compressiontest_SZ.nc")
 parser.add_argument('--device',default="cuda:0")
 
 args = vars(parser.parse_args())
@@ -65,7 +65,7 @@ SZ_freqs = []
 xs = []
 
 GT = torch.tensor(np.array(Dataset(os.path.join(input_folder, args['GT']), 'r', 
-format="NETCDF4")['velocity magnitude']), device=device)
+format="NETCDF4")['pressure']), device=device)
 if(len(GT.shape) == 3):
     GT_fft = fft.fftn(GT, dim=(-3, -2, -1))
 elif(len(GT.shape) == 2):
@@ -77,7 +77,7 @@ elif(len(GT_fft.shape) == 2):
     GT_fft = torch.roll(GT_fft, shifts=(GT_fft.shape[0]//2, GT_fft.shape[1]//2), dims=(-2, -1))
 
 n_bins = int(GT_fft.shape[0] / 2)
-shell_size = 7
+shell_size = 3
 full_size = list(GT_fft.shape)
 GT_fft = GT_fft.to("cuda:0")
 device = "cuda:0"
@@ -174,7 +174,7 @@ plt.plot(xs, np.array(NN_freqs), label="Ours", color="blue")
 plt.plot(xs, np.array(octree_freqs), label="SR-octree", color="gray")
 plt.plot(xs, np.array(SZ_freqs), label="SZ", color="green")
 
-plt.title("Iso3D magnitude")
+plt.title("Mixing3D pressure")
 plt.ylabel("Power")
 plt.xlabel("Wavenumber")
 #plt.legend()

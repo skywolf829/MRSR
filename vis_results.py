@@ -9,7 +9,7 @@ if __name__ == '__main__':
     
     parser.add_argument('--save_folder',default="2x_results",
     type=str,help='Folder to save images to')
-    parser.add_argument('--output_file_name',default="isoVF3D_2x",
+    parser.add_argument('--output_file_name',default="iso3D_2x",
     type=str,help='filename to visualize in output folder')
     parser.add_argument('--start_ts', default=4000, type=int)
     parser.add_argument('--ts_skip', default=10, type=int)
@@ -39,7 +39,7 @@ if __name__ == '__main__':
             args['ts_skip'])
             y = results[method][metric]
             if(len(y) > 0):
-                print(method + " " + metric + " " + str(np.array(y)[1:].mean()))
+                print(method + " " + metric + " " + str(np.median(np.array(y)[1:])))
             plt.plot(x, y, label=method)
         plt.legend()
         plt.xlabel("Simulation timestep")
