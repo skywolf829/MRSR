@@ -377,9 +377,10 @@ class LocalDataset(torch.utils.data.Dataset):
         self.subsample_dist = 1
         print("Initializing dataset")
         for filename in os.listdir(self.opt['data_folder']):
+
             self.item_names.append(filename)
 
-            '''
+            
             if(opt['load_data_at_start'] or (self.num_items > 0 and \
             (opt['scaling_mode'] == "magnitude" or opt['scaling_mode'] == "channel"))):
                 print("Loading " + filename)   
@@ -415,7 +416,7 @@ class LocalDataset(torch.utils.data.Dataset):
                             self.channel_maxs[i] = d[i].max()
                         if(d[i].min() < self.channel_mins[i]):
                             self.channel_mins[i] = d[i].min()
-            '''
+            
             self.num_items += 1
         self.item_names.sort()
 
