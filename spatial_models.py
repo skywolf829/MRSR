@@ -761,6 +761,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
         train_sampler = torch.utils.data.distributed.DistributedSampler(dataset, 
         num_replicas=opt['num_nodes']*opt['gpus_per_node'],rank=rank)
         dataloader = torch.utils.data.DataLoader(
+            batch_size=1,
             dataset=dataset,
             shuffle=False,
             num_workers=opt["num_workers"],
@@ -769,6 +770,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
         )
     else:
         dataloader = torch.utils.data.DataLoader(
+            batch_size=1,
             dataset=dataset,
             shuffle=True,
             num_workers=opt["num_workers"],
