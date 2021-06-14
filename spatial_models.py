@@ -937,7 +937,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
             volumes_seen += 1
 
             if((rank == 0 and opt['train_distributed']) or not opt['train_distributed']):
-                if(volumes_seen % 50 == 0):
+                if(volumes_seen % 100000 == 0):
                     rec_numpy = fake.detach().cpu().numpy()[0]
                     rec_cm = toImg(rec_numpy)
                     rec_cm -= rec_cm.min()
