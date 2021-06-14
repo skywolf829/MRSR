@@ -89,19 +89,19 @@ sim_name, timestep, field, num_components, num_workers):
     return full
 
 
-save_dir = "./TestingData/iso1024mag"
+save_dir = "./TrainingData/iso1024mag"
 name = "isotropic1024coarse"
 t0 = time.time()
 count = 0
-startts = 1021
-endts = 1101
+startts = 1
+endts = 5000
 ts_skip = 10
 frames = []
 for i in range(startts, endts, ts_skip):
     print("TS %i/%i" % (i, endts))
     f = get_full_frame_parallel(0, 1024, 1,#x
     0, 1024, 1, #y
-    0, 1024, 1, #z
+    512, 513, 1, #z
     name, i, 
     "u", 3, 
     16)    
