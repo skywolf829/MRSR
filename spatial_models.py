@@ -784,6 +784,9 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
         t_io_start = time.time()
         t_update_start = time.time()
         #for iteration in range(len(dataset)):
+        
+        if(rank == 0):
+            print("Before enumerate")
         for batch_num, real_hr in enumerate(dataloader):
             #print("Original data shape: %s" % str(real_hr.shape))
             #print("IO time: %0.06f" % (time.time() - t_io_start))
