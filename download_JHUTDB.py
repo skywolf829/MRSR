@@ -89,7 +89,7 @@ sim_name, timestep, field, num_components, num_workers):
     return full
 
 
-save_dir = "./TrainingData/iso1024mag"
+save_dir = "./TrainingData/Isomag2D"
 name = "isotropic1024coarse"
 t0 = time.time()
 count = 0
