@@ -936,6 +936,12 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                 generator_optimizer.step()
             volumes_seen += 1
 
+            if(rank == 0):
+                num_total = opt['epochs']*len(dataset)
+                print_to_log_and_console("%i/%i: Dloss=%.02f Gloss=%.02f L1=%.04f AMD=%.02f AAD=%.02f" %
+                (volumes_seen, num_total, D_loss, G_loss, rec_loss, mags.mean(), angles.mean()), 
+                os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
+
             if(False and ((rank == 0 and opt['train_distributed']) or not opt['train_distributed'])):
                 if(volumes_seen % 100000 == 0):
                     rec_numpy = fake.detach().cpu().numpy()[0]
