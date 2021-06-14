@@ -939,6 +939,7 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
             volumes_seen += 1
 
             if(rank == 0):
+                num_total = opt['epochs']*len(dataset)
                 num_total = int(num_total / (opt['num_nodes'] * opt['gpus_per_node']))
                 print_to_log_and_console("%i/%i: Dloss=%.02f Gloss=%.02f L1=%.04f AMD=%.02f AAD=%.02f" %
                 (volumes_seen, num_total, D_loss, G_loss, rec_loss, mags.mean(), angles.mean()), 
