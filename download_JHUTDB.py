@@ -105,9 +105,9 @@ for i in range(startts, endts, ts_skip):
     name, i, 
     "u", 3, 
     16)    
-    #f = f[:,:,:,0]
+    f = f[:,:,:,0]
     f = np.linalg.norm(f, axis=3)
-    f = np.expand_dims(f, 0)[...,0]
+    f = np.expand_dims(f, 0)
     print(f.shape)
     #frames.append(f)
     f_h5 = h5py.File(os.path.join(save_dir, str(i-1)+ '.h5'), 'w')
