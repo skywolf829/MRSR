@@ -111,7 +111,7 @@ for i in range(startts, endts, ts_skip):
     print(f.shape)
     #frames.append(f)
     f_h5 = h5py.File(os.path.join(save_dir, str(i-1)+ '.h5'), 'w')
-    f_h5.create_dataset("data", data=f)
+    f_h5.create_dataset("data", data=f[...,0])
     f_h5.close()
     print("Finished " + str(i))
     count += 1
