@@ -105,6 +105,7 @@ for i in range(startts, endts, ts_skip):
     name, i, 
     "u", 3, 
     16)    
+    print(f.shape)
     f = f[:,:,:,0]
     f = np.linalg.norm(f, axis=3)
     f = np.expand_dims(f, 0)
