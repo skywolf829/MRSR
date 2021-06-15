@@ -302,8 +302,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--test_mse',default="True",type=str2bool,help='Enables tests for mse')
     parser.add_argument('--test_psnr',default="True",type=str2bool,help='Enables tests for mse')
-    parser.add_argument('--test_amd',default="True",type=str2bool,help='Enables tests for average magnitude difference')
-    parser.add_argument('--test_aad',default="True",type=str2bool,help='Enables tests for average angle difference')
+    parser.add_argument('--test_amd',default="False",type=str2bool,help='Enables tests for average magnitude difference')
+    parser.add_argument('--test_aad',default="False",type=str2bool,help='Enables tests for average angle difference')
     parser.add_argument('--test_mre',default="True",type=str2bool,help='Enables tests for maximum relative error')
     parser.add_argument('--test_ssim',default="True",type=str2bool,help='Enables tests for maximum relative error')
     parser.add_argument('--test_streamline',default="False",type=str2bool,help='Enables streamline error tests')
