@@ -20,8 +20,9 @@ for i in range(1, 123):
      i_format = "%04d" % i
      folder = os.path.join(load_folder, "jet_"+i_format)
      load_name = "jet_hr_"+i_format+".dat"
-
-     save_name = "%04d" % (i-1)
+     
+     save_name = "%04d.h5" % (i-1)
+     print("loading " + load_name)
 
      data = np.fromfile(os.path.join(load_folder, folder, load_name), dtype=np.float32)
      data = data.reshape([120, 720, 480])
@@ -38,11 +39,12 @@ for i in range(1, 123):
      print(data.shape)
 
      imgs.append(data[0,64])
-
-     f_h5 = h5py.File(os.path.join(save_folder, save_name+'.h5'), 'w')
+     print("saving " + save_name)
+     f_h5 = h5py.File(os.path.join(save_folder, save_name), 'w')
      f_h5.create_dataset("data", data=data)
      f_h5.close()
 
+print("Saving gif")
 imageio.mimwrite("Combustion_hr.gif", imgs)
 
 
