@@ -365,7 +365,7 @@ if __name__ == '__main__':
     with torch.no_grad():
         for i in range(len(dataset)):
             if(p):
-                print("Loading dataset item : " + str(i), + " name: " + dataset.item_names[i])
+                print("Loading dataset item : " + str(i) + " name: " + dataset.item_names[i])
             start_load_time = time.time()
             if(args['debug']):
                 if(args['mode'] == "3D"):
