@@ -89,12 +89,12 @@ sim_name, timestep, field, num_components, num_workers):
     return full
 
 
-save_dir = "./TrainingData/Isomag2D"
-name = "isotropic1024coarse"
+save_dir = "./TestingData/Mixing2D"
+name = "mixing"
 t0 = time.time()
 count = 0
-startts = 1031
-endts = 5000
+startts = 0
+endts = 1000
 ts_skip = 10
 frames = []
 for i in range(startts, endts, ts_skip):
