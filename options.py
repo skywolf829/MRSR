@@ -17,6 +17,7 @@ class Options():
         opt["min_dimension_size"]      = 16        # Smallest a dimension can go to upscale from
         opt["cropping_resolution"]     = 96
         opt["train_date_time"]         = None      # The day/time the model was trained (finish time)
+        opt['training_data_amount']    = 1.0
         
         opt['dataset_name']            = "isotropic1024coarse"
         opt['num_dataset_timesteps']   = 100

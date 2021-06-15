@@ -420,6 +420,12 @@ class LocalDataset(torch.utils.data.Dataset):
             self.num_items += 1
         self.item_names.sort()
 
+        if(opt['training_data_amount'] < 1.0):
+            end = int(opt['training_data_amount'] * len(self.item_names))
+            while(len(self.item_names) > end):
+                self.item_names.pop(len(self.item_names)-1)
+    
+
     def __len__(self):
         return self.num_items
 
