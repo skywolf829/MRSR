@@ -46,7 +46,7 @@ for i in range(1, 123):
      f_h5.close()
 
 print("Saving gif")
-imageio.mimwrite("Combustion_mf.gif", imgs)
+imageio.mimwrite("Combustion_vort.gif", imgs)
 
 
 '''
