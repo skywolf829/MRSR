@@ -12,14 +12,15 @@ from netCDF4 import Dataset
 
 FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 
+
 load_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Combustion_raw")
-save_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Combustion_HR")
+save_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Combustion_MF")
 
 imgs = []
 for i in range(1, 123):
      i_format = "%04d" % i
      folder = os.path.join(load_folder, "jet_"+i_format)
-     load_name = "jet_hr_"+i_format+".dat"
+     load_name = "jet_mixfrac_"+i_format+".dat"
      
      save_name = "%04d.h5" % (i-1)
      print("loading " + load_name)
@@ -45,11 +46,11 @@ for i in range(1, 123):
      f_h5.close()
 
 print("Saving gif")
-imageio.mimwrite("Combustion_hr.gif", imgs)
+imageio.mimwrite("Combustion_mf.gif", imgs)
 
 
 '''
-name = "jet_hr_0080"
+name = "jet_mixfrac_0080"
 data = np.fromfile(os.path.join(FlowSTSR_folder_path, "InputData", "jet_0080", name+".dat"), dtype=np.float32)
 data = data.reshape([120, 720, 480])
 print(data.min())
@@ -70,7 +71,6 @@ rootgrp.createDimension("z")
 dim_0 = rootgrp.createVariable(name, np.float32, ("x","y","z"))
 dim_0[:] = data
 '''
-
 
 '''
 results_powerspectrum = {
