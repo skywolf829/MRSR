@@ -1,5 +1,5 @@
 #!/bin/sh
-cd /lus/theta-fs0/projects/DL4VIS/FlowSTSR
+cd /lus/theta-fs0/projects/DL4VIS/MRSR
 
 #python3 test_SSR.py --output_file_name iso2D_2x --full_resolution 1024 --channels 1 --save_name bilinear --scale_factor 2 --testing_method bilinear --print True --device cuda:1 --data_folder isomag2D --mode 2D 
 #python3 test_SSR.py --output_file_name iso2D_2x --full_resolution 1024 --channels 1 --save_name bicubic --scale_factor 2 --testing_method bicubic --print True --device cuda:2 --data_folder isomag2D --mode 2D 
