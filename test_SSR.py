@@ -499,10 +499,8 @@ if __name__ == '__main__':
 
             if(args['test_psnr']):
                 psnr_item = psnr_func(
-                    GT_data[:,:,6:GT_data.shape[2]-6,
-                    6:GT_data.shape[3]-6,6:GT_data.shape[4]-6], 
-                    LR_data[:,:,6:LR_data.shape[2]-6,
-                    6:LR_data.shape[3]-6,6:LR_data.shape[4]-6], 
+                    GT_data,
+                    LR_data, 
                     args['device'] if args['test_on_gpu'] else "cpu").item()
                 if(p):
                     print("PSNR: " + str(psnr_item))
