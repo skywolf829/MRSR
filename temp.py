@@ -12,9 +12,62 @@ from netCDF4 import Dataset
 
 FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 
+load_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Combustion_raw")
+save_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Combustion_HR")
+
+imgs = []
+for i in range(1, 123):
+     i_format = "%04d" % i
+     folder = os.path.join(load_folder, "jet_"+i_format)
+     load_name = "jet_hr_"+i_format+".dat"
+
+     save_name = "%04d" % (i-1)
+
+     data = np.fromfile(os.path.join(load_folder, folder, load_name), dtype=np.float32)
+     data = data.reshape([120, 720, 480])
+     print(data.min())
+     print(data.max())
+     print(data.mean())
+     data -= data.min()
+     #data = np.log10(1+data)
+     data = data / data.max()
+     print(data.shape)
+     data = torch.tensor(data).unsqueeze(0).unsqueeze(0)
+     data = F.interpolate(data, mode='trilinear', size=[128, 768, 512])
+     data = data[0].cpu().numpy()
+     print(data.shape)
+
+     imgs.append(data[0,64])
+
+     f_h5 = h5py.File(os.path.join(save_folder, save_name+'.h5'), 'w')
+     f_h5.create_dataset("data", data=data)
+     f_h5.close()
+
+imageio.mimwrite("Combustion_hr.gif", imgs)
 
 
-
+'''
+name = "jet_hr_0080"
+data = np.fromfile(os.path.join(FlowSTSR_folder_path, "InputData", "jet_0080", name+".dat"), dtype=np.float32)
+data = data.reshape([120, 720, 480])
+print(data.min())
+print(data.max())
+print(data.mean())
+data -= data.min()
+#data = np.log10(1+data)
+data = data / data.max()
+print(data.shape)
+data = torch.tensor(data).unsqueeze(0).unsqueeze(0)
+data = F.interpolate(data, mode='trilinear', size=[128, 768, 512])
+data = data[0,0].cpu().numpy()
+print(data.shape)
+rootgrp = Dataset(name+".nc", "w", format="NETCDF4")
+rootgrp.createDimension("x")
+rootgrp.createDimension("y")
+rootgrp.createDimension("z")
+dim_0 = rootgrp.createVariable(name, np.float32, ("x","y","z"))
+dim_0[:] = data
+'''
 
 
 '''
