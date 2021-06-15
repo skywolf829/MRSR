@@ -425,6 +425,9 @@ class LocalDataset(torch.utils.data.Dataset):
             while(len(self.item_names) > end):
                 self.item_names.pop(len(self.item_names)-1)
                 self.num_items -= 1
+        if(opt['coarse_training'] > 2):
+            self.item_names = self.item_names[::opt['coarse_training']]
+            self.num_items = len(self.item_names)
     
 
     def __len__(self):

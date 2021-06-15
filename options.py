@@ -18,7 +18,8 @@ class Options():
         opt["cropping_resolution"]     = 96
         opt["train_date_time"]         = None      # The day/time the model was trained (finish time)
         opt['training_data_amount']    = 1.0
-        
+        opt['coarse_training']         = 1
+
         opt['dataset_name']            = "isotropic1024coarse"
         opt['num_dataset_timesteps']   = 100
         opt['x_resolution']            = 1024
