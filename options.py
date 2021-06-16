@@ -41,6 +41,7 @@ class Options():
         opt["padding"]                 = 1
         opt["stride"]                  = 1
         opt['conv_groups']             = 1
+        opt['SR_per_model']            = 2
         opt['separate_chans']          = False
         opt['B']                      = 0.2
 

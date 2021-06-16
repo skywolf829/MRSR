@@ -35,6 +35,7 @@ if __name__ == '__main__':
     parser.add_argument('--pre_padding',default=None,type=str2bool, help='Padding before entering network')
     parser.add_argument('--kernel_size',default=None, type=int,help='Conv kernel size')
     parser.add_argument('--stride',default=None, type=int,help='Conv stride length')
+    parser.add_argument('--SR_per_model',default=None, type=int,help='SR factor per model')
     
     
     parser.add_argument('--x_resolution',default=None, type=int,help='x')    
