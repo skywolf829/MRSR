@@ -422,6 +422,9 @@ class LocalDataset(torch.utils.data.Dataset):
 
         if(opt['training_data_amount'] < 1.0):
             end = int(opt['training_data_amount'] * len(self.item_names))
+            import random
+            random.seed(0)
+            random.shuffle(self.item_names)
             while(len(self.item_names) > end):
                 self.item_names.pop(len(self.item_names)-1)
                 self.num_items -= 1
