@@ -12,7 +12,26 @@ from netCDF4 import Dataset
 
 FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 
+load_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Combustion_vort")
+save_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Combustion_vort_octants")
+for filename in os.listdir(load_folder):
+     f = h5py.File(os.path.join(load_folder, filename), 'r')
+     f_data = f['data']
+     oct_no = 0
 
+     for z in range(0, f_data.shape[1], 128):
+          for y in range(0, f_data.shape[2], 128):
+               for x in range(0, f_data.shape[3], 128):
+                    d = f_data[:,z:z+128,y:y+128,x:x+128]
+                    f_h5_oct = h5py.File(os.path.join(save_folder, str(oct_no)+filename), 'w')
+                    f_h5_oct.create_dataset("data", data=d)
+                    f_h5_oct.close()
+                    oct_no += 1
+
+     f.close()
+
+
+'''
 load_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Combustion_raw")
 save_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Combustion_vort")
 
@@ -47,6 +66,8 @@ for i in range(1, 123):
 
 print("Saving gif")
 imageio.mimwrite("Combustion_vort.gif", imgs)
+'''
+
 
 
 '''
