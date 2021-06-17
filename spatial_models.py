@@ -948,8 +948,8 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
                 (volumes_seen, num_total, D_loss, G_loss, rec_loss, mags.mean(), angles.mean()), 
                 os.path.join(opt["save_folder"], opt["save_name"]), "log.txt")
 
-            if(False and ((rank == 0 and opt['train_distributed']) or not opt['train_distributed'])):
-                if(volumes_seen % 100000 == 0):
+            if(((rank == 0 and opt['train_distributed']) or not opt['train_distributed'])):
+                if(volumes_seen % 50 == 0):
                     rec_numpy = fake.detach().cpu().numpy()[0]
                     rec_cm = toImg(rec_numpy)
                     rec_cm -= rec_cm.min()
