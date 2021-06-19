@@ -92,3 +92,25 @@ python3 test_SSR.py --output_file_name Isomag2D_2x_trainingdatatest --full_resol
 
 #python3 test_SSR.py --output_file_name Combustion_vort_2x --channels 1 --save_name trilinear --scale_factor 2 --testing_method trilinear --model_name Combustion_vort --print True --device cuda:0 --data_folder Combustion_vort --mode 3D 
 #python3 test_SSR.py --output_file_name Combustion_vort_2x --channels 1 --save_name model --scale_factor 2 --testing_method model --model_name Combustion_vort --print True --device cuda:0 --data_folder Combustion_vort --mode 3D 
+
+###############################################
+
+python3 test_SSR.py --output_file_name Mixing2D_2x_generalization --full_resolution 1024 --channels 1 --save_name bilinear --scale_factor 2 --testing_method bilinear --model_name Isomag2D_100percent --print True --device cuda:0 --data_folder Mixing2D --mode 2D 
+python3 test_SSR.py --output_file_name Mixing2D_2x_generalization --full_resolution 1024 --channels 1 --save_name bicubic --scale_factor 2 --testing_method bicubic --model_name Isomag2D_100percent --print True --device cuda:0 --data_folder Mixing2D --mode 2D 
+python3 test_SSR.py --output_file_name Mixing2D_2x_generalization --full_resolution 1024 --channels 1 --save_name model --scale_factor 2 --testing_method model --model_name Isomag2D_100percent --print True --device cuda:0 --data_folder Mixing2D --mode 2D 
+
+python3 test_SSR.py --output_file_name Mixing2D_4x_generalization --full_resolution 1024 --channels 1 --save_name bilinear --scale_factor 4 --testing_method bilinear --model_name Isomag2D_100percent --print True --device cuda:0 --data_folder Mixing2D --mode 2D 
+python3 test_SSR.py --output_file_name Mixing2D_4x_generalization --full_resolution 1024 --channels 1 --save_name bicubic --scale_factor 4 --testing_method bicubic --model_name Isomag2D_100percent --print True --device cuda:0 --data_folder Mixing2D --mode 2D 
+python3 test_SSR.py --output_file_name Mixing2D_4x_generalization --full_resolution 1024 --channels 1 --save_name model --scale_factor 4 --testing_method model --model_name Isomag2D_100percent --print True --device cuda:0 --data_folder Mixing2D --mode 2D 
+
+python3 test_SSR.py --output_file_name Mixing2D_8x_generalization --full_resolution 1024 --channels 1 --save_name bilinear --scale_factor 8 --testing_method bilinear --model_name Isomag2D_100percent --print True --device cuda:0 --data_folder Mixing2D --mode 2D 
+python3 test_SSR.py --output_file_name Mixing2D_8x_generalization --full_resolution 1024 --channels 1 --save_name bicubic --scale_factor 8 --testing_method bicubic --model_name Isomag2D_100percent --print True --device cuda:0 --data_folder Mixing2D --mode 2D 
+python3 test_SSR.py --output_file_name Mixing2D_8x_generalization --full_resolution 1024 --channels 1 --save_name model --scale_factor 8 --testing_method model --model_name Isomag2D_100percent --print True --device cuda:0 --data_folder Mixing2D --mode 2D 
+
+python3 test_SSR.py --output_file_name Mixing2D_16x_generalization --full_resolution 1024 --channels 1 --save_name bilinear --scale_factor 16 --testing_method bilinear --model_name Isomag2D_100percent --print True --device cuda:0 --data_folder Mixing2D --mode 2D 
+python3 test_SSR.py --output_file_name Mixing2D_16x_generalization --full_resolution 1024 --channels 1 --save_name bicubic --scale_factor 16 --testing_method bicubic --model_name Isomag2D_100percent --print True --device cuda:0 --data_folder Mixing2D --mode 2D 
+python3 test_SSR.py --output_file_name Mixing2D_16x_generalization --full_resolution 1024 --channels 1 --save_name model --scale_factor 16 --testing_method model --model_name Isomag2D_100percent --print True --device cuda:0 --data_folder Mixing2D --mode 2D 
+
+python3 test_SSR.py --output_file_name Mixing2D_32x_generalization --full_resolution 1024 --channels 1 --save_name bilinear --scale_factor 32 --testing_method bilinear --model_name Isomag2D_100percent --print True --device cuda:0 --data_folder Mixing2D --mode 2D 
+python3 test_SSR.py --output_file_name Mixing2D_32x_generalization --full_resolution 1024 --channels 1 --save_name bicubic --scale_factor 32 --testing_method bicubic --model_name Isomag2D_100percent --print True --device cuda:0 --data_folder Mixing2D --mode 2D 
+python3 test_SSR.py --output_file_name Mixing2D_32x_generalization --full_resolution 1024 --channels 1 --save_name model --scale_factor 32 --testing_method model --model_name Isomag2D_100percent --print True --device cuda:0 --data_folder Mixing2D --mode 2D 
