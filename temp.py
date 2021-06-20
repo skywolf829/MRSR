@@ -12,7 +12,7 @@ from netCDF4 import Dataset
 
 FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 
-load_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Isomag2D")
+load_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Combustion_vort_octants")
 #save_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Combustion_vort_octants")
 for filename in os.listdir(load_folder):
      print(filename)
