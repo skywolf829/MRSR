@@ -352,6 +352,7 @@ if __name__ == '__main__':
         "mre": [],
         "streamline_error_mean": [],
         "streamline_error_std": [],
+        "inner_psnr": [],
         "inner_mre": [],
         "img_psnr": [],
         "img_ssim": [],
