@@ -17,7 +17,7 @@ load_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Isomag2D")
 for filename in os.listdir(load_folder):
      print(filename)
      f = h5py.File(os.path.join(load_folder, filename), 'r+')
-     f_data = f['data']
+     f_data = np.array(f['data'])
      oct_no = 0
 
      f_data -= f_data.mean()
