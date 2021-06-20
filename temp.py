@@ -12,13 +12,18 @@ from netCDF4 import Dataset
 
 FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 
-load_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Combustion_vort")
-save_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Combustion_vort_octants")
+load_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Isomag2D")
+#save_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Combustion_vort_octants")
 for filename in os.listdir(load_folder):
-     f = h5py.File(os.path.join(load_folder, filename), 'r')
+     f = h5py.File(os.path.join(load_folder, filename), 'r+')
      f_data = f['data']
      oct_no = 0
 
+     f_data -= f_data.mean()
+     f_data *= (1 / (max(abs(f_data.max(), f_data.min()))+ 1e-6))
+     f['data'] = f_data
+     
+     '''
      for z in range(0, f_data.shape[1], 128):
           for y in range(0, f_data.shape[2], 128):
                for x in range(0, f_data.shape[3], 128):
@@ -27,6 +32,7 @@ for filename in os.listdir(load_folder):
                     f_h5_oct.create_dataset("data", data=d)
                     f_h5_oct.close()
                     oct_no += 1
+     '''
 
      f.close()
 
