@@ -350,16 +350,18 @@ class TestingDataset(torch.utils.data.Dataset):
     def __init__(self, location):
         self.location = location
         print("Initializing dataset")
+        self.ext = ""
         self.item_names = []
         for filename in os.listdir(location):
-            self.item_names.append(filename)
-        self.item_names.sort()
+            self.item_names.append(filename.split(".")[0])
+            self.ext = filename.split(".")[1]
+        self.item_names.sort(key=int)
         print("Dataset has " + str(len(self.item_names)) + " items")
     def __len__(self):
         return len(self.item_names)
     def __getitem__(self, index):       
         print("Loading " + str(index))
-        f = h5py.File(os.path.join(self.location, self.item_names[index]), 'r')
+        f = h5py.File(os.path.join(self.location, self.item_names[index]+"."+self.ext), 'r')
         a = torch.Tensor(f['data'])
         f.close()
         return a.unsqueeze(0)
