@@ -22,7 +22,8 @@ for filename in os.listdir(load_folder):
 
      f_data -= f_data.mean()
      f_data *= (1 / (max(f_data.max(), abs(f_data.min()))+ 1e-6))
-     f['data'] = f_data
+     del f['data']
+     f.create_dataset("data", data=f_data)
 
      '''
      for z in range(0, f_data.shape[1], 128):
