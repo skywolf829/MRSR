@@ -506,6 +506,24 @@ if __name__ == '__main__':
                     print("PSNR: " + str(psnr_item))
                 d['psnr'].append(psnr_item)
 
+                if(args['mode'] == '2D'):
+                    inner_psnr_item = psnr_func(
+                        GT_data[:,:,6:GT_data.shape[2]-6,
+                                6:GT_data.shape[3]-6], 
+                                LR_data[:,:,6:LR_data.shape[2]-6,
+                                6:LR_data.shape[3]-6], args['device'] if args['test_on_gpu'] else "cpu").item()
+                elif(args['mode'] == '3D'):
+                    inner_psnr_item = psnr_func(
+                        GT_data[:,:,6:GT_data.shape[2]-6,
+                                6:GT_data.shape[3]-6,
+                                6:GT_data.shape[4]-6], 
+                                LR_data[:,:,6:LR_data.shape[2]-6,
+                                6:LR_data.shape[3]-6,
+                                6:LR_data.shape[4]-6], args['device'] if args['test_on_gpu'] else "cpu").item()
+                if(p):
+                    print("Inner PSNR: " + str(inner_psnr_item))
+                d['inner_psnr'].append(inner_psnr_item)
+
             if(args['test_mre']):
                 mre_item = mre_func(GT_data, LR_data, args['device'] if args['test_on_gpu'] else "cpu").item()
                 if(p):
