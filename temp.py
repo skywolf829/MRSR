@@ -21,7 +21,7 @@ for filename in os.listdir(load_folder):
      oct_no = 0
 
      f_data -= f_data.mean()
-     f_data *= (1 / (max(abs(f_data.max(), f_data.min()))+ 1e-6))
+     f_data *= (1 / (max(f_data.max(), abs(f_data.min()))+ 1e-6))
      f['data'] = f_data
 
      '''
