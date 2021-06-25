@@ -850,7 +850,7 @@ def mixedLOD_octree_SR_compress(
         met = criterion_met(criterion, allowed_error, GT_image, new_img, max_diff).item()
 
         if(not met):
-            print("If statement : " + str(time.time() - t))
+            #print("If statement : " + str(time.time() - t))
             t = time.time()
             remove_node_from_data_caches(n, full_shape, data_levels, mask_levels, mode)
             n.data = original_data
