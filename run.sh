@@ -34,5 +34,5 @@ cd ~/MRSR
 
 python3 -u train_spatial_SR.py --save_name Vorts --train_distributed True --gpus_per_node 4 \
 --num_workers 0 --data_folder TrainingData/Vorts --mode 3D --patch_size 96 --training_patch_size 96 \
---x_resolution 128 --y_resolution 128 --z_resolution 128 --epochs 200 --min_dimension_size 4 \
+--x_resolution 128 --y_resolution 128 --z_resolution 128 --epochs 200 --min_dimension_size 8 \
 --cropping_resolution 96
