@@ -15,8 +15,8 @@ FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 
 
 load_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "0.h5")
-f = h5py.File(load_folder, 'w')
-rootgrp = Dataset("supernova.nc", "r", format="NETCDF4")
+f = h5py.File(load_folder, 'r')
+rootgrp = Dataset("supernova.nc", "w", format="NETCDF4")
 rootgrp.createDimension("x")
 rootgrp.createDimension("y")
 rootgrp.createDimension("z")
