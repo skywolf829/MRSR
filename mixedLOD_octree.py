@@ -162,7 +162,6 @@ def PSNR(x, GT, max_diff : Optional[torch.Tensor] = None) -> torch.Tensor:
     if(max_diff is None):
         max_diff = GT.max() - GT.min()
     p = 20 * torch.log10(torch.tensor(max_diff)) - 10*torch.log10(MSE(x, GT))
-    print(p)
     return p
 
 @torch.jit.script
