@@ -21,7 +21,7 @@ rootgrp.createDimension("x")
 rootgrp.createDimension("y")
 rootgrp.createDimension("z")
 dim_0 = rootgrp.createVariable("supernova", np.float32, ("x","y","z"))
-dim_0[:] = f['data']
+dim_0[:] = f['data'][0]
 
 
 
