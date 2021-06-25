@@ -1,8 +1,8 @@
 #!/bin/sh
-cd /lus/theta-fs0/projects/DL4VIS/FlowSTSR
+#cd /lus/theta-fs0/projects/DL4VIS/FlowSTSR
 export PATH="$HOME/sz/bin:$PATH"
-export PATH="$HOME/zfp/bin:$PATH"
-export PATH="$HOME/fpzip/bin:$PATH"
+#export PATH="$HOME/zfp/bin:$PATH"
+#export PATH="$HOME/fpzip/bin:$PATH"
 
 
 # 2D iso1024 mag
@@ -30,7 +30,7 @@ export PATH="$HOME/fpzip/bin:$PATH"
 #python3 -u sz_test.py --metric mre --channels 1 --file isomag3D_compressiontest.h5 --start_value 0.03 --end_value 0.031 --value_skip 0.02 --dims 3 --nx 1024 --ny 1024 --nz 1024 --output_folder mag3D_compression_test --save_TKE false --save_netcdf true
 
 # 3D mixing dataset
-python3 -u mixedLOD_octree.py --save_name NN_SZ --downscaling_technique avgpool3D --upscaling_technique model --model_name SSR_mixing_p --criterion psnr --start_metric 41.5 --end_metric 42 --metric_skip 1.5 --output_folder mixing3D_compression_test --max_LOD 5 --min_chunk 16 --mode 3D --file mixing3D_compressiontest.h5 --dims 3 --nx 512 --ny 512 --nz 512 --use_compressor true --distributed true --compressor sz --load_existing true --save_netcdf true --save_netcdf_octree true --debug true --preupscaling_PSNR false --device cuda:0 --dynamic_downscaling true --interpolation_heuristic true 
+#python3 -u mixedLOD_octree.py --save_name NN_SZ --downscaling_technique avgpool3D --upscaling_technique model --model_name SSR_mixing_p --criterion psnr --start_metric 41.5 --end_metric 42 --metric_skip 1.5 --output_folder mixing3D_compression_test --max_LOD 5 --min_chunk 16 --mode 3D --file mixing3D_compressiontest.h5 --dims 3 --nx 512 --ny 512 --nz 512 --use_compressor true --distributed true --compressor sz --load_existing true --save_netcdf true --save_netcdf_octree true --debug true --preupscaling_PSNR false --device cuda:0 --dynamic_downscaling true --interpolation_heuristic true 
 #python3 -u sz_test.py --metric mre --channels 1 --file mixing3D_compressiontest2.h5 --start_value 0.005 --end_value 0.95 --value_skip .005 --dims 3 --nx 512 --ny 512 --nz 512 --output_folder mixing3D_compression_test2 --save_netcdf false
 #python3 mixedLOD_octree.py --downscaling_technique avgpool3D --upscaling_technique model --model_name SSR_mix3D_LW --criterion psnr --start_metric 20 --end_metric 100 --metric_skip 5 --output_folder mix3D_compression --mode 3D --file mixing3D_compressiontest.h5 --dims 3 --nx 128 --ny 128 --nz 128 --use_compressor true --compressor sz --load_existing false --debug true --device cuda:2 &
 #python3 sz_test.py --metric psnr --file 1010.h5 --start_value 20 --end_value 80 --value_skip .5 --dims 3 --nx 512 --ny 512 --nz 512 --output_folder mix3D_1010_psnr_compression
@@ -38,3 +38,17 @@ python3 -u mixedLOD_octree.py --save_name NN_SZ --downscaling_technique avgpool3
 
 # 3D iso1024 VF
 #python3 mixedLOD_octree.py --downscaling_technique avgpool3D --upscaling_technique model --model_name SSR_iso3D_VF --criterion psnr --start_metric 20 --end_metric 100 --metric_skip 5 --output_folder iso3D_VF_compression --mode 3D --file iso3D_VF_compressiontest.h5 --dims 3 --nx 128 --ny 128 --nz 128 --use_compressor true --compressor sz --load_existing false --debug true --device cuda:3 &
+
+
+# Vort dataset
+python3 -u mixedLOD_octree.py --save_name NN_SZ --downscaling_technique avgpool3D \
+--upscaling_technique model --model_name Vorts --criterion psnr --start_metric 30 \
+--end_metric 55 --metric_skip 0.5 --output_folder Vorts_compression_test --max_LOD 5 \
+--min_chunk 4 --mode 3D --file Vorts_compressiontest.h5 --dims 3 --nx 128 --ny 128 \
+--nz 128 --use_compressor true --distributed false --compressor sz --load_existing false \
+--save_netcdf true --save_netcdf_octree true --debug true --preupscaling_PSNR false \
+--device cuda:0 --dynamic_downscaling true --interpolation_heuristic true 
+
+python3 -u sz_test.py --metric mre --channels 1 --file Vorts_compressiontest.h5 \
+--start_value 0.005 --end_value 0.95 --value_skip .005 --dims 3 --nx 128 --ny 128 \
+--nz 128 --output_folder Vorts_compression_test --save_netcdf false
