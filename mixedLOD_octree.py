@@ -849,7 +849,7 @@ def mixedLOD_octree_SR_compress(
 
 
         met = criterion_met(criterion, allowed_error, GT_image, new_img, max_diff)
-        print(met)
+        print(met.item())
         if(not met):
             #print("If statement : " + str(time.time() - t))
             t = time.time()
