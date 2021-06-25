@@ -161,7 +161,9 @@ def MSE(x, GT) -> torch.Tensor:
 def PSNR(x, GT, max_diff : Optional[torch.Tensor] = None) -> torch.Tensor:
     if(max_diff is None):
         max_diff = GT.max() - GT.min()
+    print("Going to calculate")
     p = 20 * torch.log10(torch.tensor(max_diff)) - 10*torch.log10(MSE(x, GT))
+    print("Calculated")
     return p
 
 @torch.jit.script
@@ -844,6 +846,7 @@ def mixedLOD_octree_SR_compress(
         # Otherwise, we keep the downsample, and add the node back as a 
         # leaf node
         t = time.time()
+
 
         met = criterion_met(criterion, allowed_error, GT_image, new_img, max_diff)
 
