@@ -1,3 +1,4 @@
+from numpy.lib.npyio import load
 import torch
 import torch.nn.functional as F
 from utility_functions import AvgPool3D
@@ -12,32 +13,65 @@ from netCDF4 import Dataset
 
 FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 
-load_folder = os.path.join(FlowSTSR_folder_path, "TestingData", "Mixing2D")
-#save_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Combustion_vort_octants")
+'''
+load_folder = os.path.join(FlowSTSR_folder_path, "..", "15plume3d421.vec")
+data = np.fromfile(load_folder, dtype=np.float32)[3:]
+data = data.reshape([512, 126, 126, 3])[...,2]
+print(data.min())
+print(data.max())
+print(data.mean())
+#data = np.log10(1+data)
+data -= data.mean()
+data *= ( 1 / (max(data.max(), abs(data.min()))+1e-6))
+print(data.shape)
+rootgrp = Dataset("plume2.nc", "w", format="NETCDF4")
+rootgrp.createDimension("x")
+rootgrp.createDimension("y")
+rootgrp.createDimension("z")
+dim_0 = rootgrp.createVariable("plume", np.float32, ("x","y","z"))
+dim_0[:] = data
+
+'''
+
+
+load_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Supernova_raw")
+save_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Supernova")
+i = 0
 for filename in os.listdir(load_folder):
      print(filename)
-     f = h5py.File(os.path.join(load_folder, filename), 'r+')
-     f_data = np.array(f['data'])
-     oct_no = 0
+     data = np.fromfile(os.path.join(load_folder, filename), dtype=np.float32)
+     data = data.reshape([432, 432, 432])
+     print(data.min())
+     print(data.max())
+     print(data.mean())
+     #data = np.log10(1+data)
+     data -= data.mean()
+     data *= ( 1 / (max(data.max(), abs(data.min()))+1e-6))
+     data = torch.tensor(data).unsqueeze(0).unsqueeze(0)
+     data = F.interpolate(data, mode="trilinear", size=[448, 448, 448]).numpy()[0,0]
 
-     f_data -= f_data.mean()
-     f_data *= (1 / (max(f_data.max(), abs(f_data.min()))+ 1e-6))
-     del f['data']
-     f.create_dataset("data", data=f_data)
+     f = h5py.File(os.path.join(save_folder, str(i)+".h5"), 'w')
+     #f_data = np.array(f['data'])
+     #oct_no = 0
+
+     #f_data -= f_data.mean()
+     #f_data *= (1 / (max(f_data.max(), abs(f_data.min()))+ 1e-6))
+     #del f['data']
+     f.create_dataset("data", data=np.expand_dims(data, 0)) 
 
      '''
      for z in range(0, f_data.shape[1], 128):
           for y in range(0, f_data.shape[2], 128):
                for x in range(0, f_data.shape[3], 128):
                     d = f_data[:,z:z+128,y:y+128,x:x+128]
-                    f_h5_oct = h5py.File(os.path.join(save_folder, str(oct_no)+filename), 'w')
+                    f_h5_oct = h5py.File(os.path.join(save_folder, str(oct_no)+"_"+filename), 'w')
                     f_h5_oct.create_dataset("data", data=d)
                     f_h5_oct.close()
                     oct_no += 1
      '''
 
      f.close()
-
+     i += 1
 
 '''
 load_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Combustion_raw")
@@ -79,19 +113,17 @@ imageio.mimwrite("Combustion_vort.gif", imgs)
 
 
 '''
-name = "jet_vort_0080"
-data = np.fromfile(os.path.join(FlowSTSR_folder_path, "InputData", "jet_0080", name+".dat"), dtype=np.float32)
-data = data.reshape([120, 720, 480])
+name = "dark_matter_density"
+data = np.fromfile(os.path.join(FlowSTSR_folder_path, "InputData", "Nyx", name+".dat"), dtype=np.float32)
+data = data.reshape([512, 512, 512])
 print(data.min())
 print(data.max())
 print(data.mean())
 data -= data.min()
-#data = np.log10(1+data)
+data = np.log10(1+data)
 data = data / data.max()
-print(data.shape)
-data = torch.tensor(data).unsqueeze(0).unsqueeze(0)
-data = F.interpolate(data, mode='trilinear', size=[128, 768, 512])
-data = data[0,0].cpu().numpy()
+data -= data.mean()
+data *= ( 1 / (max(data.max(), abs(data.min()))+1e-6))
 print(data.shape)
 rootgrp = Dataset(name+".nc", "w", format="NETCDF4")
 rootgrp.createDimension("x")
@@ -165,8 +197,8 @@ plt.show()
 plt.savefig("powerspectra_zoom.png")
 '''
 
-'''
 
+'''
 results_psnr = {
      "Iso2D magnitude": {
           "NN": [48.04, 39.64, 32.28, 27.57, 24.64, 22.42],
@@ -181,6 +213,18 @@ results_psnr = {
           #"NN_old": [51.52, 45.99, 39.68, 36.90, 31.59],
           "NN":[53.38, 46.536, 40.001, 34.998, 31.59],
           "Trilinear interpolation": [51.00, 42.37, 36.75, 33.14, 30.72]
+     },
+     "Mixing2D magnitude": {
+          "NN":[45.43, 39.12, 32.86, 26.67, 22.50, 19.63],
+          "Bilinear interp.": [44.08, 34.91, 28.48, 23.88, 20.90, 18.96],
+          "Bicubic interp.": [45.36, 35.83, 29.13, 24.29, 21.14, 19.09]
+     }
+}
+results_inner_psnr = {
+     "Mixing2D magnitude": {
+          "NN":[57.11, 45.16, 33.93, 26.83, 22.63, 19.71],
+          "Bilinear interp.": [43.92, 34.77, 28.36, 23.86, 20.90, 18.98],
+          "Bicubic interp.": [45.25, 35.71, 29.01, 24.25, 21.15, 19.12]
      }
 }
 results_ssim = {
@@ -197,6 +241,11 @@ results_ssim = {
           #"NN_old": [0.999, 0.999, 0.996, 0.984, 0.962],
           "NN":[0.9997, 0.9992, 0.9953, 0.9829, 0.962],
           "Trilinear interpolation": [0.999, 0.997, 0.990, 0.974, 0.953]
+     },
+     "Mixing2D magnitude": {
+          "NN":[0.997, 0.975, 0.834, 0.576, 0.372, 0.239],
+          "Bilinear interp.": [0.978, 0.879, 0.669, 0.448, 0.298, 0.194],
+          "Bicubic interp.": [0.983, 0.900, 0.700, 0.471, 0.314, 0.207]
      }
 }
 font = {#'font.family' : 'normal',
@@ -205,24 +254,28 @@ font = {#'font.family' : 'normal',
 plt.rcParams.update(font)
 fig, ax1 = plt.subplots()
 
-d = "Mixing3D pressure"
+d = "Mixing2D magnitude"
 markers = {
      "NN" : "^",
      "Bilinear interpolation": "s",
      "Trilinear interpolation": "s",
-     "Bicubic interpolation": "o"
+     "Bicubic interpolation": "o",
+     "Bilinear interp.": "s",     
+     "Bicubic interp.": "o"
 }
 colors = {
      "NN" : "blue",
      "Bilinear interpolation": "green",
      "Trilinear interpolation": "orange",
-     "Bicubic interpolation": "red"
+     "Bicubic interpolation": "red",
+     "Bilinear interp.": "green",     
+     "Bicubic interp.": "red"
 }
-for method in results_psnr[d].keys():
+for method in results_inner_psnr[d].keys():
      xs = []
-     for i in range(len(results_psnr[d][method])):
+     for i in range(len(results_inner_psnr[d][method])):
           xs.append(int(2**(i+1)))
-     ax1.plot(xs, results_psnr[d][method], label=method, 
+     ax1.plot(xs, results_inner_psnr[d][method], label=method, 
      marker=markers[method], color = colors[method])
 
 ax2 = ax1.twinx()
@@ -238,9 +291,9 @@ for i in range(len(xs)):
      xs_labels.append(str(xs[i]))
 print(xs)
 #plt.legend()
-ax1.set_ylabel("PSNR (dB)")
+ax1.set_ylabel("Inner PSNR (dB)")
 ax2.set_ylabel("SSIM")
-ax2.set_ylim(0.8)
+ax2.set_ylim(0.15)
 #plt.ylabel("PSNR (dB)")
 plt.xscale("log")
 plt.xticks(xs, xs_labels)
@@ -250,8 +303,8 @@ plt.title(d)
 fig.tight_layout()
 #plt.savefig(os.path.join(save_folder, metric+"_psnr.png"))
 plt.show()
-
 '''
+
 
 '''
 files_to_convert = [
