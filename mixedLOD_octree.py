@@ -449,6 +449,7 @@ class UpscalingMethod(nn.Module):
         if(distributed and torch.cuda.device_count() > 1):
             for i in range(torch.cuda.device_count()):
                 self.devices.append("cuda:"+str(i))
+        print("Loaded models")
 
     def forward(self, in_frame : torch.Tensor, scale_factor : float,
     lod : Optional[int] = None) -> torch.Tensor:
