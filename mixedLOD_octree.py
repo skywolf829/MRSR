@@ -111,8 +111,8 @@ class OctreeNodeList:
         return found
     def __len__(self) -> int:
         return len(self.node_list)
-    #def __getitem__(self, key : int) -> OctreeNode:
-    #    return self.node_list[key]
+    def __getitem__(self, key : int) -> OctreeNode:
+        return self.node_list[key]
     def __str__(self):
         s : str = "["
         for i in range(len(self.node_list)):
