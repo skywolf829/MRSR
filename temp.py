@@ -13,27 +13,19 @@ from netCDF4 import Dataset
 
 FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 
-'''
-load_folder = os.path.join(FlowSTSR_folder_path, "..", "15plume3d421.vec")
-data = np.fromfile(load_folder, dtype=np.float32)[3:]
-data = data.reshape([512, 126, 126, 3])[...,2]
-print(data.min())
-print(data.max())
-print(data.mean())
-#data = np.log10(1+data)
-data -= data.mean()
-data *= ( 1 / (max(data.max(), abs(data.min()))+1e-6))
-print(data.shape)
-rootgrp = Dataset("plume2.nc", "w", format="NETCDF4")
+
+load_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "0.h5")
+f = h5py.File(load_folder, 'w')
+rootgrp = Dataset("supernova.nc", "w", format="NETCDF4")
 rootgrp.createDimension("x")
 rootgrp.createDimension("y")
 rootgrp.createDimension("z")
-dim_0 = rootgrp.createVariable("plume", np.float32, ("x","y","z"))
-dim_0[:] = data
+dim_0 = rootgrp.createVariable("supernova", np.float32, ("x","y","z"))
+dim_0[:] = f['data']
+
+
 
 '''
-
-
 load_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Supernova_raw")
 save_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Supernova")
 i = 0
@@ -59,7 +51,7 @@ for filename in os.listdir(load_folder):
      #del f['data']
      f.create_dataset("data", data=np.expand_dims(data, 0)) 
 
-     '''
+     
      for z in range(0, f_data.shape[1], 128):
           for y in range(0, f_data.shape[2], 128):
                for x in range(0, f_data.shape[3], 128):
@@ -68,10 +60,11 @@ for filename in os.listdir(load_folder):
                     f_h5_oct.create_dataset("data", data=d)
                     f_h5_oct.close()
                     oct_no += 1
-     '''
+     
 
      f.close()
      i += 1
+'''
 
 '''
 load_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Combustion_raw")
