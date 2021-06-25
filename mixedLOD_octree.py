@@ -181,7 +181,6 @@ def pw_relative_error(x, GT) -> torch.Tensor:
 def psnr_criterion(GT_image, img, min_PSNR : torch.Tensor,
 max_diff : Optional[torch.Tensor] = None) -> torch.Tensor:
     meets = PSNR(img, GT_image, max_diff) > min_PSNR
-    print(meets)
     return meets
 
 @torch.jit.script
@@ -850,7 +849,7 @@ def mixedLOD_octree_SR_compress(
 
 
         met = criterion_met(criterion, allowed_error, GT_image, new_img, max_diff)
-
+        print(met)
         if(not met):
             #print("If statement : " + str(time.time() - t))
             t = time.time()
