@@ -33,6 +33,6 @@ cd ~/MRSR
 #--cropping_resolution 512
 
 python3 -u train_spatial_SR.py --save_name Plume --train_distributed True --gpus_per_node 4 \
---num_workers 0 --data_folder TrainingData/Plume --mode 3D --patch_size 96 --training_patch_size 96 \
+--num_workers 0 --data_folder TrainingData/Plume --mode 3D --patch_size 64 --training_patch_size 64 \
 --x_resolution 512 --y_resolution 128 --z_resolution 128 --epochs 200 --min_dimension_size 8 \
---cropping_resolution 96
+--cropping_resolution 64
