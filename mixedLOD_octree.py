@@ -65,7 +65,7 @@ def get_location2D(full_height: int, full_width : int, depth : int, index : int)
     return (final_x, final_y)
 
 @torch.jit.script
-def get_location3D(full_depth : int, full_height: int, full_width : int, 
+def get_location3D(full_width : int, full_height: int, full_depth : int, 
 depth : int, index : int) -> Tuple[int, int, int]:
     final_x : int = 0
     final_y : int = 0
