@@ -751,6 +751,8 @@ data_levels: List[torch.Tensor], mask_levels: List[torch.Tensor], mode : str):
         x_start, y_start, z_start = get_location3D(full_shape[2], full_shape[3], full_shape[4], node.depth, node.index)
         ind = node.LOD
         print(node.data.shape)
+        print(node.depth)
+        print(node.index)
         print(ind)
         print(x_start)
         print(y_start)
