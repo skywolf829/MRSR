@@ -64,8 +64,8 @@ export PATH="$HOME/sz/bin:$PATH"
 #--device cuda:0 --dynamic_downscaling true --interpolation_heuristic true 
 
 python3 -u sz_test.py --metric mre --channels 1 --file Plume_compressiontest.h5 \
---start_value 0.003 --end_value 0.96 --value_skip .004 --dims 3 --nx 512 --ny 128 \
---nz 128 --output_folder Plume_compression_test --save_netcdf false
+--start_value 0.003 --end_value 0.96 --value_skip .004 --dims 3 --nx 128 --ny 128 \
+--nz 512 --output_folder Plume_compression_test --save_netcdf false
 
 # CombustionVort dataset
 #python3 -u mixedLOD_octree.py --save_name NN_SZ --downscaling_technique avgpool3D \
