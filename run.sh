@@ -32,7 +32,7 @@ cd ~/MRSR
 #--num_blocks 3 --base_num_kernels 96 --x_resolution 1024 --y_resolution 1024 --training_data_amount 0.02 --epochs 2500 \
 #--cropping_resolution 512
 
-python3 -u train_spatial_SR.py --save_name Vorts --train_distributed True --gpus_per_node 4 \
---num_workers 0 --data_folder TrainingData/Vorts --mode 3D --patch_size 96 --training_patch_size 96 \
---x_resolution 128 --y_resolution 128 --z_resolution 128 --epochs 200 --min_dimension_size 8 \
+python3 -u train_spatial_SR.py --save_name Supernova --train_distributed True --gpus_per_node 4 \
+--num_workers 0 --data_folder TrainingData/Supernova --mode 3D --patch_size 96 --training_patch_size 96 \
+--x_resolution 448 --y_resolution 448 --z_resolution 448 --epochs 200 --min_dimension_size 28 \
 --cropping_resolution 96
