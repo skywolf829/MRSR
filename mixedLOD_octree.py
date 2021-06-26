@@ -1939,8 +1939,6 @@ if __name__ == '__main__':
         
         torch.cuda.empty_cache()
         with torch.no_grad():
-            print(img_upscaled.shape)
-            print(img_gt.shape)
             final_psnr : float = PSNR(img_upscaled, img_gt).cpu().item()
             final_mse : float = MSE(img_upscaled, img_gt).cpu().item()
             final_mre : float = relative_error(img_upscaled, img_gt).cpu().item()
@@ -1956,18 +1954,25 @@ if __name__ == '__main__':
                     img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20]).cpu().item()
             elif(len(img_upscaled.shape) == 5):
                 final_ssim : float = ssim3D(img_upscaled.detach().to("cuda:1"), img_gt.detach().to("cuda:1")).cpu().item()
-                print(img_upscaled.shape)
-                print(img_gt.shape)
+                
                 final_inner_mre : float = relative_error(
-                    img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20,
+                    img_upscaled[:,:,
+                        20:img_upscaled.shape[2]-20,
+                        20:img_upscaled.shape[3]-20,
                         20:img_upscaled.shape[4]-20], 
-                    img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20,
-                        img_gt.shape[4]-20]).cpu().item()
+                    img_gt[:,:,
+                        20:img_gt.shape[2]-20,
+                        20:img_gt.shape[3]-20,
+                        20:img_gt.shape[4]-20]).cpu().item()
                 final_inner_pwmre: float = pw_relative_error(
-                    img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20,
+                    img_upscaled[:,:,
+                        20:img_upscaled.shape[2]-20,
+                        20:img_upscaled.shape[3]-20,
                         20:img_upscaled.shape[4]-20], 
-                    img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20,
-                        img_gt.shape[4]-20]).cpu().item()
+                    img_gt[:,:,
+                        20:img_gt.shape[2]-20,
+                        20:img_gt.shape[3]-20,
+                        20:img_gt.shape[4]-20]).cpu().item()
         print(img_upscaled.shape)
         print("Final stats:")
         print("Target - " + criterion + " " + str(criterion_value))
