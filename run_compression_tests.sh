@@ -64,7 +64,7 @@ export PATH="$HOME/sz/bin:$PATH"
 #--device cuda:0 --dynamic_downscaling true --interpolation_heuristic true 
 
 python3 -u sz_test.py --metric mre --channels 1 --file Plume_compressiontest.h5 \
---start_value 0.2 --end_value 0.5 --value_skip .05 --dims 3 --nx 512 --ny 128 \
+--start_value 0.5 --end_value 0.96 --value_skip .05 --dims 3 --nx 512 --ny 128 \
 --nz 128 --output_folder Plume_compression_test --save_netcdf false
 
 # CombustionVort dataset
