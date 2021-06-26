@@ -1956,6 +1956,8 @@ if __name__ == '__main__':
                     img_gt[:,:,20:img_gt.shape[2]-20,20:img_gt.shape[3]-20]).cpu().item()
             elif(len(img_upscaled.shape) == 5):
                 final_ssim : float = ssim3D(img_upscaled.detach().to("cuda:1"), img_gt.detach().to("cuda:1")).cpu().item()
+                print(img_upscaled.shape)
+                print(img_gt.shape)
                 final_inner_mre : float = relative_error(
                     img_upscaled[:,:,20:img_upscaled.shape[2]-20,20:img_upscaled.shape[3]-20,
                         20:img_upscaled.shape[4]-20], 
