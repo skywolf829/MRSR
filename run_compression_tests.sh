@@ -49,9 +49,9 @@ export PATH="$HOME/sz/bin:$PATH"
 #--save_netcdf true --save_netcdf_octree true --debug true --preupscaling_PSNR true \
 #--device cuda:0 --dynamic_downscaling true --interpolation_heuristic true 
 
-python3 -u sz_test.py --metric mre --channels 1 --file Vorts_compressiontest.h5 \
---start_value 0.2 --end_value 0.8 --value_skip .01 --dims 3 --nx 128 --ny 128 \
---nz 128 --output_folder Vorts_compression_test --save_netcdf false
+#python3 -u sz_test.py --metric mre --channels 1 --file Vorts_compressiontest.h5 \
+#--start_value 0.2 --end_value 0.8 --value_skip .01 --dims 3 --nx 128 --ny 128 \
+#--nz 128 --output_folder Vorts_compression_test --save_netcdf false
 
 
 # Plume dataset
@@ -63,9 +63,9 @@ python3 -u sz_test.py --metric mre --channels 1 --file Vorts_compressiontest.h5 
 #--save_netcdf false --save_netcdf_octree true --debug true --preupscaling_PSNR true \
 #--device cuda:0 --dynamic_downscaling true --interpolation_heuristic true 
 
-#python3 -u sz_test.py --metric mre --channels 1 --file Plume_compressiontest.h5 \
-#--start_value 0.5 --end_value 0.96 --value_skip .05 --dims 3 --nx 512 --ny 128 \
-#--nz 128 --output_folder Plume_compression_test --save_netcdf false
+python3 -u sz_test.py --metric mre --channels 1 --file Plume_compressiontest.h5 \
+--start_value 0.003 --end_value 0.96 --value_skip .004 --dims 3 --nx 512 --ny 128 \
+--nz 128 --output_folder Plume_compression_test --save_netcdf false
 
 # CombustionVort dataset
 #python3 -u mixedLOD_octree.py --save_name NN_SZ --downscaling_technique avgpool3D \
