@@ -7,9 +7,9 @@ import os
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
     
-    parser.add_argument('--save_folder',default="8x_results",
+    parser.add_argument('--save_folder',default="Plume_16x_results",
     type=str,help='Folder to save images to')
-    parser.add_argument('--output_file_name',default="Vorts_8x",
+    parser.add_argument('--output_file_name',default="Plume_16x",
     type=str,help='filename to visualize in output folder')
     parser.add_argument('--start_ts', default=21, type=int)
     parser.add_argument('--ts_skip', default=1, type=int)

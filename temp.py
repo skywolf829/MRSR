@@ -213,8 +213,12 @@ results_psnr = {
           "Bicubic interp.": [45.36, 35.83, 29.13, 24.29, 21.14, 19.09]
      },
      "Vorts": {
-          "NN":[39.68, 32.84, 25.01],
-          "Trilinear interpolation": [36.90, 27.94, 22.24]
+          "NN":[39.73, 35.17, 25.59, 19.06],
+          "Trilinear interpolation": [36.90, 27.94, 22.24, 19.34]
+     },
+     "Plume":{
+          "NN":[50.55, 42.90, 37.53, 33.71],
+          "Trilinear interpolation":[47.33, 40.18, 34.82, 29.26]
      }
 }
 results_inner_psnr = {
@@ -245,8 +249,12 @@ results_ssim = {
           "Bicubic interp.": [0.983, 0.900, 0.700, 0.471, 0.314, 0.207]
      },
      "Vorts": {
-          "NN":[0.961, 0.872, 0.541],
-          "Trilinear interpolation": [0.933, 0.698, 0.348]
+          "NN":[0.961, 0.920, 0.576, 0.150],
+          "Trilinear interpolation": [0.933, 0.698, 0.348, 0.145]
+     },
+     "Plume":{
+          "NN":[0.997, 0.986, 0.955, 0.906],
+          "Trilinear interpolation":[0.994, 0.967, 0.902, 0.746]
      }
 }
 font = {#'font.family' : 'normal',

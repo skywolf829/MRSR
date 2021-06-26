@@ -3,9 +3,9 @@ import os
 import numpy as np
 import torch
 import torch.nn as nn
-from skimage.measure import compare_ssim
+#from skimage.measure import compare_ssim
 from math import log10
-import scipy
+#import scipy
 import math
 import numbers
 from torch.nn import functional as F
