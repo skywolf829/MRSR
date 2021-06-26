@@ -50,7 +50,7 @@ export PATH="$HOME/sz/bin:$PATH"
 #--device cuda:0 --dynamic_downscaling true --interpolation_heuristic true 
 
 python3 -u sz_test.py --metric mre --channels 1 --file Vorts_compressiontest.h5 \
---start_value 0.07 --end_value 0.2 --value_skip .005 --dims 3 --nx 128 --ny 128 \
+--start_value 0.2 --end_value 0.8 --value_skip .01 --dims 3 --nx 128 --ny 128 \
 --nz 128 --output_folder Vorts_compression_test --save_netcdf false
 
 
