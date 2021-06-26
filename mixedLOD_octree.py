@@ -65,7 +65,7 @@ def get_location2D(full_height: int, full_width : int, depth : int, index : int)
     return (final_x, final_y)
 
 @torch.jit.script
-def get_location3D(full_height: int, full_width : int, full_depth : int,
+def get_location3D(full_depth : int, full_height: int, full_width : int, 
 depth : int, index : int) -> Tuple[int, int, int]:
     final_x : int = 0
     final_y : int = 0
@@ -750,14 +750,6 @@ data_levels: List[torch.Tensor], mask_levels: List[torch.Tensor], mode : str):
     elif(mode == "3D"):
         x_start, y_start, z_start = get_location3D(full_shape[2], full_shape[3], full_shape[4], node.depth, node.index)
         ind = node.LOD
-        print(node.data.shape)
-        print(node.depth)
-        print(node.index)
-        print(ind)
-        print(curr_ds_ratio)
-        print(x_start)
-        print(y_start)
-        print(z_start)
         data_levels[ind][:,:,
             int(x_start/curr_ds_ratio): \
             int(x_start/curr_ds_ratio)+node.data.shape[2],
