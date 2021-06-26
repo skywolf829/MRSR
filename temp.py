@@ -13,7 +13,7 @@ from netCDF4 import Dataset
 
 FlowSTSR_folder_path = os.path.dirname(os.path.abspath(__file__))
 
-
+'''
 load_folder = os.path.join(FlowSTSR_folder_path, "TrainingData", "Supernova", "0.h5")
 f = h5py.File(load_folder, 'r')
 rootgrp = Dataset("supernova.nc", "w", format="NETCDF4")
@@ -22,7 +22,7 @@ rootgrp.createDimension("y")
 rootgrp.createDimension("z")
 dim_0 = rootgrp.createVariable("supernova", np.float32, ("x","y","z"))
 dim_0[:] = f['data'][0]
-
+'''
 
 
 '''
@@ -191,7 +191,7 @@ plt.savefig("powerspectra_zoom.png")
 '''
 
 
-'''
+
 results_psnr = {
      "Iso2D magnitude": {
           "NN": [48.04, 39.64, 32.28, 27.57, 24.64, 22.42],
@@ -211,6 +211,10 @@ results_psnr = {
           "NN":[45.43, 39.12, 32.86, 26.67, 22.50, 19.63],
           "Bilinear interp.": [44.08, 34.91, 28.48, 23.88, 20.90, 18.96],
           "Bicubic interp.": [45.36, 35.83, 29.13, 24.29, 21.14, 19.09]
+     },
+     "Vorts": {
+          "NN":[39.68, 32.84, 25.01],
+          "Trilinear interpolation": [36.90, 27.94, 22.24]
      }
 }
 results_inner_psnr = {
@@ -239,6 +243,10 @@ results_ssim = {
           "NN":[0.997, 0.975, 0.834, 0.576, 0.372, 0.239],
           "Bilinear interp.": [0.978, 0.879, 0.669, 0.448, 0.298, 0.194],
           "Bicubic interp.": [0.983, 0.900, 0.700, 0.471, 0.314, 0.207]
+     },
+     "Vorts": {
+          "NN":[0.961, 0.872, 0.541],
+          "Trilinear interpolation": [0.933, 0.698, 0.348]
      }
 }
 font = {#'font.family' : 'normal',
@@ -247,7 +255,7 @@ font = {#'font.family' : 'normal',
 plt.rcParams.update(font)
 fig, ax1 = plt.subplots()
 
-d = "Mixing2D magnitude"
+d = "Vorts"
 markers = {
      "NN" : "^",
      "Bilinear interpolation": "s",
@@ -264,11 +272,11 @@ colors = {
      "Bilinear interp.": "green",     
      "Bicubic interp.": "red"
 }
-for method in results_inner_psnr[d].keys():
+for method in results_psnr[d].keys():
      xs = []
-     for i in range(len(results_inner_psnr[d][method])):
+     for i in range(len(results_psnr[d][method])):
           xs.append(int(2**(i+1)))
-     ax1.plot(xs, results_inner_psnr[d][method], label=method, 
+     ax1.plot(xs, results_psnr[d][method], label=method, 
      marker=markers[method], color = colors[method])
 
 ax2 = ax1.twinx()
@@ -284,7 +292,7 @@ for i in range(len(xs)):
      xs_labels.append(str(xs[i]))
 print(xs)
 #plt.legend()
-ax1.set_ylabel("Inner PSNR (dB)")
+ax1.set_ylabel("PSNR (dB)")
 ax2.set_ylabel("SSIM")
 ax2.set_ylim(0.15)
 #plt.ylabel("PSNR (dB)")
@@ -296,7 +304,7 @@ plt.title(d)
 fig.tight_layout()
 #plt.savefig(os.path.join(save_folder, metric+"_psnr.png"))
 plt.show()
-'''
+
 
 
 '''

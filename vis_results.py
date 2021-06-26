@@ -7,12 +7,12 @@ import os
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
     
-    parser.add_argument('--save_folder',default="2x_results",
+    parser.add_argument('--save_folder',default="8x_results",
     type=str,help='Folder to save images to')
-    parser.add_argument('--output_file_name',default="iso3D_2x",
+    parser.add_argument('--output_file_name',default="Vorts_8x",
     type=str,help='filename to visualize in output folder')
-    parser.add_argument('--start_ts', default=4000, type=int)
-    parser.add_argument('--ts_skip', default=10, type=int)
+    parser.add_argument('--start_ts', default=21, type=int)
+    parser.add_argument('--ts_skip', default=1, type=int)
     
     
     args = vars(parser.parse_args())
@@ -30,10 +30,25 @@ if __name__ == '__main__':
     method_names = list(results.keys())
     metric_names = list(results[method_names[0]].keys())
 
+    font = {#'font.family' : 'normal',
+        #'font.weight' : 'bold',
+        'font.size'   : 15}
+    plt.rcParams.update(font)
+
     for metric in metric_names:
         fig = plt.figure()
+        if(metric == "psnr"):
+            y_label = "PSNR (dB)"
+        elif(metric == "inner_psnr"):
+            y_label = "Inner PSNR (dB)"
+        elif(metric == "ssim"):
+            y_label = "SSIM"
+        else:
+            y_label = metric
 
         for method in method_names:
+            #if(method == "model"):
+            #    continue
             x = np.arange(args['start_ts'], 
             args['start_ts'] + args['ts_skip']*len(results[method][metric]),
             args['ts_skip'])
@@ -43,7 +58,8 @@ if __name__ == '__main__':
             plt.plot(x, y, label=method)
         plt.legend()
         plt.xlabel("Simulation timestep")
-        plt.ylabel(metric)
-        plt.title(args['output_file_name'] + " - " + metric)
+        plt.ylabel(y_label)
+        #plt.title(args['output_file_name'] + " - " + metric)
         plt.savefig(os.path.join(save_folder, metric+".png"))
+        #plt.show()
         plt.clf()

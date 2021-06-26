@@ -8,7 +8,7 @@ import copy
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test a trained SSR model')
     
-    parser.add_argument('--save_folder',default="mixing3D_compression_test",
+    parser.add_argument('--save_folder',default="Vorts_compression_test",
     type=str,help='Folder to save images to')
     parser.add_argument('--output_file_name',default="results.pkl",
     type=str,help='filename to visualize in output folder')    
@@ -21,8 +21,9 @@ if __name__ == '__main__':
     results_file = os.path.join(save_folder, args['output_file_name'])
     
     make_all = False
-    full_file_size = 524209
+    #full_file_size = 524209
     #full_file_size = 4096
+    full_file_size = 8192
     #full_file_size = 4194306
     results = load_obj(results_file)
     save_obj(results, results_file)
@@ -34,8 +35,8 @@ if __name__ == '__main__':
 
     print(results.keys())
  
-    for metric in results["SZ"].keys():
-        results["SZ"][metric] = np.delete(results["SZ"][metric], [168])
+    #for metric in results["SZ"].keys():
+    #    results["SZ"][metric] = np.delete(results["SZ"][metric], [168])
         #results[tester][metric].pop(0)
     #for metric in results[tester].keys():
        #results[tester][metric] = np.delete(results[tester][metric], [np.arange(0,51)])
@@ -43,7 +44,7 @@ if __name__ == '__main__':
 
     font = {#'font.family' : 'normal',
         #'font.weight' : 'bold',
-        'font.size'   : 18}
+        'font.size'   : 12}
     plt.rcParams.update(font)
     for method in [tester, 'SZ']:
         file_size = results[method]['file_size']
@@ -78,7 +79,7 @@ if __name__ == '__main__':
 
         x = np.array(results[tester]['rec_psnr'][:])
         y = np.array(results[tester]["compression_ratio"])
-        for i in range(1):
+        for i in range(0):
             y = np.delete(y, x.argmin())
             x = np.delete(x, x.argmin())
         for i in range(0):
@@ -98,11 +99,11 @@ if __name__ == '__main__':
         #x = np.array([1.0, .9991, 0.9934, 0.9892])
         #y = np.array([1, 442.6, 3543.8, 4846.7])
 
-        ordering = np.argsort(x)        
-        x = x[ordering]        
-        y = y[ordering]
-        plt.step(y, x, label="Ours without dynamic downscaling", where='post', linestyle='--')
-        plt.plot(y, x, 'C2o', alpha=0.5, color = "orange")
+        #ordering = np.argsort(x)        
+        #x = x[ordering]        
+        #y = y[ordering]
+        #plt.step(y, x, label="Ours without dynamic downscaling", where='post', linestyle='--')
+        #plt.plot(y, x, 'C2o', alpha=0.5, color = "orange")
         
         
         x = np.array(results["SZ"]['rec_psnr'])
