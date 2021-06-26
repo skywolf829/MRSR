@@ -74,11 +74,10 @@ if __name__ == '__main__':
         data_channels = []
         f_size_kb = 0
         for i in range(args['channels']):            
-            command = "sz -z -f -i " + args['file'] + ".dat -" + str(args['dims']) + " "
-            if(args['dims'] == 2):
-                command = command + str(args['nx']) + " " + str(args['ny'])
+            command = "sz -z -f -i " + args['file'] + ".dat -" + str(args['dims']) + " " + \
+                str(args['nx']) + " " + str(args['ny'])
             if(args['dims'] == 3):
-                command = command + str(args['nz']) + " " + str(args['ny']) + " " + str(args['nx'])
+                command = command + " " + str(args['nz'])
             if(args['metric'] == "psnr"):
                 command = command + " -M PSNR -S " + str(value)
             elif(args['metric'] == "mre"):
