@@ -33,6 +33,6 @@ cd /lus/theta-fs0/projects/DL4VIS/MRSR
 #--cropping_resolution 512
 
 python3 -u train_spatial_SR.py --save_name CombustionVort --train_distributed True --gpus_per_node 8 \
---num_workers 0 --data_folder TrainingData/Supernova --mode 3D --patch_size 96 --training_patch_size 96 \
+--num_workers 0 --data_folder TrainingData/Combustion_vort --mode 3D --patch_size 96 --training_patch_size 96 \
 --x_resolution 128 --y_resolution 768 --z_resolution 512 --epochs 15 --min_dimension_size 8 \
 --cropping_resolution 96
