@@ -1939,6 +1939,8 @@ if __name__ == '__main__':
         
         torch.cuda.empty_cache()
         with torch.no_grad():
+            print(img_upscaled.shape)
+            print(img_gt.shape)
             final_psnr : float = PSNR(img_upscaled, img_gt).cpu().item()
             final_mse : float = MSE(img_upscaled, img_gt).cpu().item()
             final_mre : float = relative_error(img_upscaled, img_gt).cpu().item()
