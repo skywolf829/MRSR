@@ -42,8 +42,8 @@ export PATH="$HOME/sz/bin:$PATH"
 
 # Vort dataset
 python3 -u mixedLOD_octree.py --save_name NN_SZ --downscaling_technique avgpool3D \
---upscaling_technique model --model_name Vorts --criterion psnr --start_metric 30 \
---end_metric 55 --metric_skip 0.5 --output_folder Vorts_compression_test --max_LOD 5 \
+--upscaling_technique model --model_name Vorts --criterion psnr --start_metric 28 \
+--end_metric 60 --metric_skip 1.0 --output_folder Vorts_compression_test --max_LOD 5 \
 --min_chunk 4 --mode 3D --file Vorts_compressiontest.h5 --dims 3 --nx 128 --ny 128 \
 --nz 128 --use_compressor true --distributed false --compressor sz --load_existing false \
 --save_netcdf true --save_netcdf_octree true --debug true --preupscaling_PSNR true \
