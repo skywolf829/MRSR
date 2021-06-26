@@ -754,6 +754,7 @@ data_levels: List[torch.Tensor], mask_levels: List[torch.Tensor], mode : str):
         print(node.depth)
         print(node.index)
         print(ind)
+        print(curr_ds_ratio)
         print(x_start)
         print(y_start)
         print(z_start)
