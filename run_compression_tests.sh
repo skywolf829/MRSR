@@ -41,16 +41,16 @@ export PATH="$HOME/sz/bin:$PATH"
 
 # Mixing 2D dataset
 python3 -u mixedLOD_octree.py --save_name NN_SZ --downscaling_technique avgpool2D \
---upscaling_technique model --model_name Mixing2D --criterion psnr --start_metric 27 \
---end_metric 60 --metric_skip 1.0 --output_folder Mixing2D_compression_test --max_LOD 7 \
+--upscaling_technique model --model_name Mixing2D --criterion psnr --start_metric 36 \
+--end_metric 60 --metric_skip 100.0 --output_folder Mixing2D_compression_test --max_LOD 7 \
 --min_chunk 8 --mode 2D --file Mixing2D_compressiontest.h5 --dims 2 --nx 1024 --ny 1024 \
---use_compressor true --distributed false --compressor sz --load_existing false \
---save_netcdf false --save_netcdf_octree false --debug true --preupscaling_PSNR true \
+--use_compressor true --distributed false --compressor sz --load_existing true \
+--save_netcdf true --save_netcdf_octree true --debug true --preupscaling_PSNR true \
 --device cuda:0 --dynamic_downscaling true --interpolation_heuristic true 
 
 python3 -u sz_test.py --metric mre --channels 1 --file Mixing2D_compressiontest.h5 \
---start_value 0.004 --end_value 0.98 --value_skip .004 --dims 2 --nx 1024 --ny 1024 \
---output_folder Mixing2D_compression_test --save_netcdf false
+--start_value 0.056 --end_value 0.98 --value_skip 1.004 --dims 2 --nx 1024 --ny 1024 \
+--output_folder Mixing2D_compression_test --save_netcdf true
 
 
 # Vort dataset
