@@ -1915,11 +1915,13 @@ if __name__ == '__main__':
         data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels = \
             create_caches_from_nodelist(nodes, full_shape, max_LOD, device, mode)
 
+        t01 = time.time()
         img_upscaled = nodes_to_full_img(nodes, full_shape, 
         max_LOD, upscaling, 
         downscaling_technique, device, data_levels, 
         mask_levels, data_downscaled_levels, 
         mask_downscaled_levels, mode)
+        print("Recon time %f" % (time.time() - t01))
         while(len(data_levels)>0):
             del data_levels[0]
             del mask_levels[0]
