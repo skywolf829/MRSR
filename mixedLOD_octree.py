@@ -2045,10 +2045,11 @@ if __name__ == '__main__':
             del img_upscaled_point
 
         if(args['debug']):           
-
+            upscaling.change_method(upscaling_technique)
+            t01 = time.time()
             img_seams = nodes_to_full_img_seams(nodes, full_shape,
             upscaling, device, mode)
-
+            print("Upscaling with seams time: %f" % (time.time() - t01))
             imageio.imwrite(os.path.join(save_folder, save_name+"_seams.png"), 
                     to_img(img_seams, mode))
 
