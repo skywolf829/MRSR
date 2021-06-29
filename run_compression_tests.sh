@@ -69,7 +69,7 @@ export PATH="$HOME/sz/bin:$PATH"
 
 # Plume dataset
 python3 -u mixedLOD_octree.py --save_name NN_SZ --downscaling_technique avgpool3D \
---upscaling_technique model --model_name Plume --criterion psnr --start_metric 38 \
+--upscaling_technique model --model_name Plume --criterion psnr --start_metric 40 \
 --end_metric 60 --metric_skip 100.0 --output_folder Plume_compression_test --max_LOD 5 \
 --min_chunk 4 --mode 3D --file Plume_compressiontest.h5 --dims 3 --nx 512 --ny 128 \
 --nz 128 --use_compressor true --distributed false --compressor sz --load_existing false \
