@@ -58,7 +58,7 @@ python3 -u mixedLOD_octree.py --save_name NN_SZ --downscaling_technique avgpool3
 --upscaling_technique model --model_name Vorts --criterion psnr --start_metric 35 \
 --end_metric 60 --metric_skip 100.0 --output_folder Vorts_compression_test --max_LOD 5 \
 --min_chunk 4 --mode 3D --file Vorts_compressiontest.h5 --dims 3 --nx 128 --ny 128 \
---nz 128 --use_compressor true --distributed false --compressor sz --load_existing false \
+--nz 128 --use_compressor true --distributed false --compressor sz --load_existing true \
 --save_netcdf false --save_netcdf_octree false --debug true --preupscaling_PSNR true \
 --device cuda:0 --dynamic_downscaling true --interpolation_heuristic false 
 
