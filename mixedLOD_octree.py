@@ -1857,7 +1857,7 @@ if __name__ == '__main__':
                 end_time : float = time.time()
                 compress_time = end_time - start_time            
                 num_nodes : int = len(nodes)
-
+            print("Compression time %f" % compress_time)
             if(args['preupscaling_PSNR']):
                 upscaling.change_method(upscaling_technique)
                 data_levels, mask_levels, data_downscaled_levels, mask_downscaled_levels = \
