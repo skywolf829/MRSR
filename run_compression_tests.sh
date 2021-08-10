@@ -3,7 +3,7 @@
 export PATH="$HOME/sz/bin:$PATH"
 #export PATH="$HOME/zfp/bin:$PATH"
 #export PATH="$HOME/fpzip/bin:$PATH"
-
+#export PATH="$HOME/tthresh/build:$PATH"
 
 # 2D iso1024 mag
 #python3 mixedLOD_octree.py --downscaling_technique avgpool2D --upscaling_technique bilinear --criterion psnr --start_metric 20 --end_metric 100 --metric_skip 5 --output_folder mag2D_4010_psnr_compression --mode 2D --file 4010.h5 --dims 2 --nx 1024 --ny 1024 --use_compressor true --compressor sz --load_existing true 
