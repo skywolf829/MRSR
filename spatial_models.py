@@ -787,12 +787,12 @@ def train_single_scale(rank, generators, discriminators, opt, dataset):
         
         if(rank == 0):
             print("Before enumerate")
-        for batch_num, real_hr in enumerate(dataloader):
+        for batch_num, dataset_item in enumerate(dataloader):
             #print("Original data shape: %s" % str(real_hr.shape))
             #print("IO time: %0.06f" % (time.time() - t_io_start))
             t_update_start = time.time()
             
-            real_hr = real_hr.to(opt["device"])       
+            real_hr = dataset_item.clone().to(opt["device"])
             if opt['scaling_mode'] == "channel":
                 mins = []
                 maxs = []

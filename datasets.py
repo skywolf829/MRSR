@@ -504,65 +504,65 @@ class LocalDataset(torch.utils.data.Dataset):
         if(self.opt['load_data_at_start']):
             data = self.items[index]
         else:
-
             #print("trying to load " + str(self.item_names[index]) + ".h5")
             f = h5py.File(os.path.join(self.opt['data_folder'], self.item_names[index]), 'r')
-            x_start = 0
-            x_end = self.opt['x_resolution']
-            y_start = 0
-            y_end = self.opt['y_resolution']
-            if(self.opt['mode'] == "3D"):
-                z_start = 0
-                z_end = self.opt['z_resolution']
-                if((z_end-z_start) / self.subsample_dist > self.opt['cropping_resolution']):
-                    z_start = torch.randint(self.opt['z_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1]).item()
-                    z_end = z_start + self.opt['cropping_resolution']*self.subsample_dist
+            data = f['data']
+            f.close()
 
-            if((y_end-y_start) / self.subsample_dist > self.opt['cropping_resolution']):
-                y_start = torch.randint(self.opt['y_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1]).item()
-                y_end = y_start + self.opt['cropping_resolution']*self.subsample_dist
-            if((x_end-x_start) / self.subsample_dist > self.opt['cropping_resolution']):
-                x_start = torch.randint(self.opt['x_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1]).item()
-                x_end = x_start + self.opt['cropping_resolution']*self.subsample_dist
+        x_start = 0
+        x_end = self.opt['x_resolution']
+        y_start = 0
+        y_end = self.opt['y_resolution']
+        if(self.opt['mode'] == "3D"):
+            z_start = 0
+            z_end = self.opt['z_resolution']
+            if((z_end-z_start) / self.subsample_dist > self.opt['cropping_resolution']):
+                z_start = torch.randint(self.opt['z_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1]).item()
+                z_end = z_start + self.opt['cropping_resolution']*self.subsample_dist
+
+        if((y_end-y_start) / self.subsample_dist > self.opt['cropping_resolution']):
+            y_start = torch.randint(self.opt['y_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1]).item()
+            y_end = y_start + self.opt['cropping_resolution']*self.subsample_dist
+        if((x_end-x_start) / self.subsample_dist > self.opt['cropping_resolution']):
+            x_start = torch.randint(self.opt['x_resolution'] - self.opt['cropping_resolution']*self.subsample_dist, [1]).item()
+            x_end = x_start + self.opt['cropping_resolution']*self.subsample_dist
+        
+        if(self.opt['downsample_mode'] == "average_pooling"):
+            #print("converting " + self.item_names[index] + " to tensor")
+            if(self.opt['mode'] == "3D"):
+                data =  torch.tensor(data[:,x_start:x_end,
+                    y_start:y_end,
+                    z_start:z_end])
+            elif(self.opt['mode'] == "2D"):
+                data =  torch.tensor(data[:,x_start:x_end,
+                    y_start:y_end])
             
-            if(self.opt['downsample_mode'] == "average_pooling"):
-                #print("converting " + self.item_names[index] + " to tensor")
-                if(self.opt['mode'] == "3D"):
-                    data =  torch.tensor(f['data'][:,x_start:x_end,
-                        y_start:y_end,
-                        z_start:z_end])
+            if(self.subsample_dist > 1):
+                if(self.opt["mode"] == "3D"):
+                    data = AvgPool3D(data.unsqueeze(0), self.subsample_dist)[0]
                 elif(self.opt['mode'] == "2D"):
-                    data =  torch.tensor(f['data'][:,x_start:x_end,
-                        y_start:y_end])
-                f.close()
+                    data = AvgPool2D(data.unsqueeze(0), self.subsample_dist)[0]
                 
-                if(self.subsample_dist > 1):
-                    if(self.opt["mode"] == "3D"):
-                        data = AvgPool3D(data.unsqueeze(0), self.subsample_dist)[0]
-                    elif(self.opt['mode'] == "2D"):
-                        data = AvgPool2D(data.unsqueeze(0), self.subsample_dist)[0]
+        elif(self.opt['downsample_mode'] == "subsampling"):
+            if(self.opt["mode"] == "3D"):
+                data =  torch.tensor(data[:,x_start:x_end:self.subsample_dist,
+                    y_start:y_end:self.subsample_dist,
+                    z_start:z_end:self.subsample_dist])
+            elif(self.opt['mode'] == "2D"):       
+                data =  torch.tensor(data[:,x_start:x_end:self.subsample_dist,
+                    y_start:y_end:self.subsample_dist])
+        else:
+            if(self.opt["mode"] == "3D"):
+                data =  torch.tensor(data[:,x_start:x_end,
+                    y_start:y_end,
+                    z_start:z_end])
+            elif(self.opt['mode'] == "2D"):   
+                data =  torch.tensor(data[:,x_start:x_end:self.subsample_dist,
+                    y_start:y_end:self.subsample_dist])
                     
-            elif(self.opt['downsample_mode'] == "subsampling"):
-                if(self.opt["mode"] == "3D"):
-                    data =  torch.tensor(f['data'][:,x_start:x_end:self.subsample_dist,
-                        y_start:y_end:self.subsample_dist,
-                        z_start:z_end:self.subsample_dist])
-                elif(self.opt['mode'] == "2D"):       
-                    data =  torch.tensor(f['data'][:,x_start:x_end:self.subsample_dist,
-                        y_start:y_end:self.subsample_dist])                 
-                f.close()
-            else:
-                if(self.opt["mode"] == "3D"):
-                    data =  torch.tensor(f['data'][:,x_start:x_end,
-                        y_start:y_end,
-                        z_start:z_end])
-                elif(self.opt['mode'] == "2D"):   
-                    data =  torch.tensor(f['data'][:,x_start:x_end:self.subsample_dist,
-                        y_start:y_end:self.subsample_dist])
-                f.close()
-                data = F.interpolate(data.unsqueeze(0), scaling_factor=float(1/self.subsample_dist), 
-                mode=self.opt['downsample_mode'], align_corners=True)[0]
-            #print("converted " + self.item_names[index] + ".h5 to tensor")
+            data = F.interpolate(data.unsqueeze(0), scaling_factor=float(1/self.subsample_dist), 
+                mode = self.opt['downsample_mode'], align_corners=True)[0]
+        #print("converted " + self.item_names[index] + ".h5 to tensor")
 
 
         '''
