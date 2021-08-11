@@ -32,7 +32,12 @@ cd /lus/theta-fs0/projects/DL4VIS/MRSR
 #--num_blocks 3 --base_num_kernels 96 --x_resolution 1024 --y_resolution 1024 --training_data_amount 0.02 --epochs 2500 \
 #--cropping_resolution 512
 
-python3 -u train_spatial_SR.py --save_name Supernova --train_distributed True --gpus_per_node 4 \
+#python3 -u train_spatial_SR.py --save_name Supernova --train_distributed True --gpus_per_node 4 \
+#--num_workers 0 --data_folder TrainingData/Supernova --mode 3D --patch_size 96 --training_patch_size 96 \
+#--x_resolution 448 --y_resolution 448 --z_resolution 448 --epochs 10 --min_dimension_size 28 \
+#--cropping_resolution 96
+
+python3 -u train_spatial_SR.py --save_name IsoMag3D --train_distributed True --gpus_per_node 8 \
 --num_workers 0 --data_folder TrainingData/Supernova --mode 3D --patch_size 96 --training_patch_size 96 \
---x_resolution 448 --y_resolution 448 --z_resolution 448 --epochs 10 --min_dimension_size 28 \
---cropping_resolution 96
+--x_resolution 1024 --y_resolution 1024 --z_resolution 1024 --epochs 50 --min_dimension_size 128 \
+--cropping_resolution 96 --load_data_at_start true
