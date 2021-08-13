@@ -89,25 +89,25 @@ sim_name, timestep, field, num_components, num_workers):
     return full
 
 
-save_dir = "./TrainingData/Isomag3D"
-name = "isotropic1024coarse"
+save_dir = "./TrainingData/Mixing3D"
+name = "mixing"
 t0 = time.time()
 count = 0
 startts = 1
-endts = 5028
-ts_skip = 100
+endts = 1001
+ts_skip = 20
 frames = []
 for i in range(startts, endts, ts_skip):
     print("TS %i/%i" % (i, endts))
-    f = get_full_frame_parallel(0, 1024, 1,#x
-    0, 1024, 1, #y
-    0, 1024, 1, #z
+    f = get_full_frame_parallel(0, 1024, 2,#x
+    0, 1024, 2, #y
+    0, 1024, 2, #z
     name, i, 
-    "u", 3, 
+    "p", 1, 
     16)    
     print(f.shape)
     #f = f[:,:,:,0]
-    f = np.linalg.norm(f, axis=len(f.shape)-1)
+    #f = np.linalg.norm(f, axis=len(f.shape)-1)
     f = np.expand_dims(f, 0)
     print(f.shape)
     #frames.append(f)
