@@ -220,38 +220,38 @@ python3 test_SSR.py --output_file_name iso3D_16x --full_resolution 1024 --channe
 #--data_folder Vorts --mode 3D 
 
 ##############################################################
-python3 test_SSR.py --output_file_name CombustionVort_2x --full_resolution 128 \
---channels 1 --save_name trilinear --scale_factor 2 --testing_method trilinear \
---print True --model_name CombustionVort --device cuda:0 --data_folder Combustion_vort --mode 3D 
+#python3 test_SSR.py --output_file_name CombustionVort_2x --full_resolution 128 \
+#--channels 1 --save_name trilinear --scale_factor 2 --testing_method trilinear \
+#--print True --model_name CombustionVort --device cuda:0 --data_folder Combustion_vort --mode 3D 
 
-python3 test_SSR.py --output_file_name CombustionVort_2x --full_resolution 128 \
---channels 1 --save_name model --scale_factor 2 --testing_method model \
---model_name CombustionVort --print True --device cuda:0 --parallel False \
---data_folder Combustion_vort --mode 3D 
+#python3 test_SSR.py --output_file_name CombustionVort_2x --full_resolution 128 \
+#--channels 1 --save_name model --scale_factor 2 --testing_method model \
+#--model_name CombustionVort --print True --device cuda:0 --parallel False \
+#--data_folder Combustion_vort --mode 3D 
 
-python3 test_SSR.py --output_file_name CombustionVort_4x --full_resolution 128 \
---channels 1 --model_name CombustionVort --save_name trilinear --scale_factor 4 --testing_method trilinear \
---print True --device cuda:0 --data_folder Combustion_vort --mode 3D 
+#python3 test_SSR.py --output_file_name CombustionVort_4x --full_resolution 128 \
+#--channels 1 --model_name CombustionVort --save_name trilinear --scale_factor 4 --testing_method trilinear \
+#--print True --device cuda:0 --data_folder Combustion_vort --mode 3D 
 
-python3 test_SSR.py --output_file_name CombustionVort_4x --full_resolution 128 \
---channels 1 --save_name model --scale_factor 4 --testing_method model \
---model_name CombustionVort --print True --device cuda:0 --parallel False \
---data_folder Combustion_vort --mode 3D 
+#python3 test_SSR.py --output_file_name CombustionVort_4x --full_resolution 128 \
+#--channels 1 --save_name model --scale_factor 4 --testing_method model \
+#--model_name CombustionVort --print True --device cuda:0 --parallel False \
+#--data_folder Combustion_vort --mode 3D 
 
-python3 test_SSR.py --output_file_name CombustionVort_8x --full_resolution 128 \
---channels 1 --model_name CombustionVort --save_name trilinear --scale_factor 8 --testing_method trilinear \
---print True --device cuda:0 --data_folder Combustion_vort --mode 3D
+#python3 test_SSR.py --output_file_name CombustionVort_8x --full_resolution 128 \
+#--channels 1 --model_name CombustionVort --save_name trilinear --scale_factor 8 --testing_method trilinear \
+#--print True --device cuda:0 --data_folder Combustion_vort --mode 3D
 
-python3 test_SSR.py --output_file_name CombustionVort_8x --full_resolution 128 \
---channels 1 --save_name model --scale_factor 8 --testing_method model \
---model_name CombustionVort --print True --device cuda:0 --parallel False \
---data_folder Combustion_vort --mode 3D 
+#python3 test_SSR.py --output_file_name CombustionVort_8x --full_resolution 128 \
+#--channels 1 --save_name model --scale_factor 8 --testing_method model \
+#--model_name CombustionVort --print True --device cuda:0 --parallel False \
+#--data_folder Combustion_vort --mode 3D 
 
-python3 test_SSR.py --output_file_name CombustionVort_16x --full_resolution 128 \
---channels 1 --model_name CombustionVort --save_name trilinear --scale_factor 16 --testing_method trilinear \
---print True --device cuda:0 --data_folder Combustion_vort --mode 3D 
+#python3 test_SSR.py --output_file_name CombustionVort_16x --full_resolution 128 \
+#--channels 1 --model_name CombustionVort --save_name trilinear --scale_factor 16 --testing_method trilinear \
+#--print True --device cuda:0 --data_folder Combustion_vort --mode 3D 
 
-python3 test_SSR.py --output_file_name CombustionVort_16x --full_resolution 128 \
---channels 1 --save_name model --scale_factor 16 --testing_method model \
---model_name CombustionVort --print True --device cuda:0 --parallel False \
---data_folder Combustion_vort --mode 3D 
+#python3 test_SSR.py --output_file_name CombustionVort_16x --full_resolution 128 \
+#--channels 1 --save_name model --scale_factor 16 --testing_method model \
+#--model_name CombustionVort --print True --device cuda:0 --parallel False \
+#--data_folder Combustion_vort --mode 3D 
