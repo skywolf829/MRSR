@@ -103,30 +103,27 @@ window_size : torch.Tensor, channel : int, size_average : Optional[bool] = True)
     return ans
 
 def _ssim_3D(img1, img2, window, window_size, channel, size_average = True):
-    img1 = img1.to("cuda:2")
-    img2 = img2.to("cuda:3")
+    mu1 = F.conv3d(img1.to("cuda:2"), window.to("cuda:2"), padding = window_size//2, groups = channel).to("cuda:2")
+    mu2 = F.conv3d(img2.to("cuda:3"), window.to("cuda:3"), padding = window_size//2, groups = channel).to("cuda:3")
 
-    mu1 = F.conv3d(img1, window.to("cuda:2"), padding = window_size//2, groups = channel).to("cuda:1")
-    mu2 = F.conv3d(img2, window.to("cuda:3"), padding = window_size//2, groups = channel).to("cuda:1")
+    mu1_sq = mu1.pow(2)
+    mu2_sq = mu2.pow(2)
 
-    mu1_sq = mu1.pow(2).to("cuda:1")
-    mu2_sq = mu2.pow(2).to("cuda:1")
+    mu1_mu2 = mu1.to("cuda:4")*mu2.to("cuda:4")
 
-    mu1_mu2 = mu1*mu2
-
-    sigma1_sq = F.conv3d(img1*img1, window.to("cuda:2"), padding = window_size//2, groups = channel).to("cuda:1") - mu1_sq
-    sigma2_sq = F.conv3d(img2*img2, window.to("cuda:3"), padding = window_size//2, groups = channel).to("cuda:1") - mu2_sq
-    sigma12 = F.conv3d(img1.to("cuda:4")*img2.to("cuda:4"), window.to("cuda:4"), padding = window_size//2, groups = channel).to("cuda:1") - mu1_mu2
+    sigma1_sq = F.conv3d(img1.to("cuda:4")*img1.to("cuda:4"), window.to("cuda:4"), padding = window_size//2, groups = channel).to("cuda:2") - mu1_sq.to("cuda:2")
+    sigma2_sq = F.conv3d(img2.to("cuda:5")*img2.to("cuda:5"), window.to("cuda:5"), padding = window_size//2, groups = channel).to("cuda:3") - mu2_sq.to("cuda:3")
+    sigma12 = F.conv3d(img1.to("cuda:6")*img2.to("cuda:6"), window.to("cuda:6"), padding = window_size//2, groups = channel) - mu1_mu2.to("cuda:6")
 
     C1 = 0.01**2
     C2 = 0.03**2
 
     #ssim_map = ((2*mu1_mu2 + C1)*(2*sigma12 + C2))/((mu1_sq + mu2_sq + C1)*(sigma1_sq + sigma2_sq + C2))
     
-    mu1_sq += mu2_sq
+    mu1_sq += mu2_sq.to("cuda:2")
     mu1_sq += C1
 
-    sigma1_sq += sigma2_sq
+    sigma1_sq += sigma2_sq.to("cuda:2")
     sigma1_sq += C2
 
     mu1_sq *= sigma1_sq
@@ -137,14 +134,14 @@ def _ssim_3D(img1, img2, window, window_size, channel, size_average = True):
     sigma12 *= 2
     sigma12 += C2
 
-    mu1_mu2 *= sigma12
+    mu1_mu2 *= sigma12.to("cuda:4")
 
-    mu1_mu2 /= mu1_sq
+    mu1_mu2 /= mu1_sq.to("cuda:4")
 
     if size_average:
-        return mu1_mu2.mean()
+        return mu1_mu2.mean().to('cuda:0')
     else:
-        return mu1_mu2.mean(1).mean(1).mean(1)
+        return mu1_mu2.mean(1).mean(1).mean(1).to('cuda:0')
 
 def ssim(img1, img2, window_size = 11, size_average = True):
     (_, channel, _, _) = img1.size()
