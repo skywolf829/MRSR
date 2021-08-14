@@ -53,16 +53,16 @@ cd /lus/theta-fs0/projects/DL4VIS/MRSR
 
 ###############################################
 
-python3 test_SSR.py --output_file_name iso3D_2x --full_resolution 1024 --channels 1 --save_name trilinear --scale_factor 2 --testing_method trilinear --print True --device cuda:0 --data_folder Isomag3D --mode 3D 
+python3 test_SSR.py --output_file_name iso3D_2x --full_resolution 1024 --channels 1 --save_name trilinear --scale_factor 2 --testing_method trilinear --print True --model_name IsoMag3D --device cuda:0 --data_folder Isomag3D --mode 3D 
 python3 test_SSR.py --output_file_name iso3D_2x --full_resolution 1024 --channels 1 --save_name model --scale_factor 2 --testing_method model --model_name IsoMag3D --print True --device cuda:0 --parallel True --data_folder Isomag3D --mode 3D
 
-python3 test_SSR.py --output_file_name iso3D_4x --full_resolution 1024 --channels 1 --save_name trilinear --scale_factor 4 --testing_method trilinear --print True --device cuda:0 --data_folder Isomag3D --mode 3D 
+python3 test_SSR.py --output_file_name iso3D_4x --full_resolution 1024 --channels 1 --save_name trilinear --scale_factor 4 --testing_method trilinear --print True --model_name IsoMag3D --device cuda:0 --data_folder Isomag3D --mode 3D 
 python3 test_SSR.py --output_file_name iso3D_4x --full_resolution 1024 --channels 1 --save_name model --scale_factor 4 --testing_method model --model_name IsoMag3D --print True --device cuda:0 --parallel True --data_folder Isomag3D --mode 3D
 
-python3 test_SSR.py --output_file_name iso3D_8x --full_resolution 1024 --channels 1 --save_name trilinear --scale_factor 8 --testing_method trilinear --print True --device cuda:0 --data_folder Isomag3D --mode 3D 
+python3 test_SSR.py --output_file_name iso3D_8x --full_resolution 1024 --channels 1 --save_name trilinear --scale_factor 8 --testing_method trilinear --print True --model_name IsoMag3D --device cuda:0 --data_folder Isomag3D --mode 3D 
 python3 test_SSR.py --output_file_name iso3D_8x --full_resolution 1024 --channels 1 --save_name model --scale_factor 8 --testing_method model --model_name IsoMag3D --print True --device cuda:0 --parallel True --data_folder Isomag3D --mode 3D
 
-python3 test_SSR.py --output_file_name iso3D_16x --full_resolution 1024 --channels 1 --save_name trilinear --scale_factor 16 --testing_method trilinear --print True --device cuda:0 --data_folder Isomag3D --mode 3D 
+python3 test_SSR.py --output_file_name iso3D_16x --full_resolution 1024 --channels 1 --save_name trilinear --scale_factor 16 --testing_method trilinear --print True --model_name IsoMag3D --device cuda:0 --data_folder Isomag3D --mode 3D 
 python3 test_SSR.py --output_file_name iso3D_16x --full_resolution 1024 --channels 1 --save_name model --scale_factor 16 --testing_method model --model_name IsoMag3D --print True --device cuda:0 --parallel True --data_folder Isomag3D --mode 3D
 
 #################################################

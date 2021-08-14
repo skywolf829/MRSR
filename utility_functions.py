@@ -103,8 +103,8 @@ window_size : torch.Tensor, channel : int, size_average : Optional[bool] = True)
     return ans
 
 def _ssim_3D(img1, img2, window, window_size, channel, size_average = True):
-    mu1 = F.conv3d(img1, window, padding = window_size//2, groups = channel).to("cuda:2")
-    mu2 = F.conv3d(img2, window, padding = window_size//2, groups = channel).to("cuda:2")
+    mu1 = F.conv3d(img1.to("cuda:2"), window.to("cuda:2"), padding = window_size//2, groups = channel).to("cuda:2")
+    mu2 = F.conv3d(img2.to("cuda:2"), window.to("cuda:2"), padding = window_size//2, groups = channel).to("cuda:2")
 
     mu1_sq = mu1.pow(2).to("cuda:2")
     mu2_sq = mu2.pow(2).to("cuda:2")
