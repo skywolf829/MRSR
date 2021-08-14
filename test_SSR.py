@@ -555,6 +555,8 @@ if __name__ == '__main__':
                 elif(args['mode'] == '3D'):
                     ssim_item = ssim3D(GT_data, LR_data).item()
                 d['ssim'].append(ssim_item)
+                if(p):
+                    print("SSIM: " + str(ssim_item))
             if(args['test_streamline']):
                 streamline_avg, streamline_std = streamline_func(GT_data, LR_data, args['device'])
                 d["streamline_error_mean"].append(streamline_avg)
