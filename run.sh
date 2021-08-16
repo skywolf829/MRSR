@@ -42,7 +42,7 @@ cd /lus/theta-fs0/projects/DL4VIS/MRSR
 #--x_resolution 1024 --y_resolution 1024 --z_resolution 1024 --epochs 150 --min_dimension_size 64 \
 #--cropping_resolution 96 --load_data_at_start true
 
-python3 -u train_spatial_SR.py --save_name Mixing3D --train_distributed True --gpus_per_node 8 \
+python3 -u train_spatial_SR.py --save_name Mixing3D --train_distributed false --gpus_per_node 8 \
 --num_workers 0 --data_folder TrainingData/Mixing3D --mode 3D --patch_size 96 --training_patch_size 96 \
 --x_resolution 512 --y_resolution 512 --z_resolution 512 --epochs 150 --min_dimension_size 16 \
 --cropping_resolution 96 --load_data_at_start true --alpha_2 0 
